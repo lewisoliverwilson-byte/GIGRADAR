@@ -38,9 +38,11 @@ async function fetchLastfmArtists() {
       const items = data?.topartists?.artist || [];
       if (!items.length) break;
       items.forEach((a, i) => {
+        const artistId = toArtistId(a.name);
+        if (!artistId) return; // skip artists whose name produces an empty ID
         artists.push({
           name:        a.name,
-          artistId:    toArtistId(a.name),
+          artistId,
           normName:    normaliseName(a.name),
           listeners:   parseInt(a.listeners || 0, 10),
           lastfmRank:  (page - 1) * 50 + i + 1,
