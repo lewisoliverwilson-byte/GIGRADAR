@@ -1261,6 +1261,43 @@ ul { list-style: none; }
   transition: opacity var(--transition);
 }
 .link-btn:hover { opacity: 0.75; }
+.verify-icon {
+  font-size: 40px;
+  text-align: center;
+  margin-bottom: 12px;
+}
+.verify-code-preview {
+  background: rgba(139,92,246,0.08);
+  border: 1px solid rgba(139,92,246,0.2);
+  border-radius: var(--radius-sm);
+  padding: 10px 14px;
+  font-size: 13px;
+  color: var(--muted);
+  margin-bottom: 20px;
+  text-align: center;
+  font-family: monospace;
+  letter-spacing: 2px;
+}
+#verifyCodeInput {
+  text-align: center;
+  font-size: 24px;
+  font-weight: 700;
+  letter-spacing: 8px;
+  height: 54px;
+}
+.verified-badge {
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: #10b981;
+  color: #fff;
+  font-size: 9px;
+  font-weight: 800;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
 
 /* =============================================
    TOAST

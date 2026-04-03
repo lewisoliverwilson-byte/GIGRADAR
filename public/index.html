@@ -123,6 +123,23 @@
       </form>
       <p class="modal-switch">Already have an account? <button class="link-btn" id="switchToLogin">Sign in</button></p>
     </div>
+
+    <!-- VERIFY EMAIL -->
+    <div id="verifyForm" style="display:none">
+      <div class="verify-icon">✉️</div>
+      <h2 class="modal-title">Check your email</h2>
+      <p class="modal-subtitle" id="verifySubtitle">We've sent a 6-digit code to your email address.</p>
+      <div class="verify-code-preview" id="verifyCodePreview"></div>
+      <form id="verifyFormEl" novalidate>
+        <div class="form-group">
+          <label for="verifyCodeInput">Verification code</label>
+          <input type="text" id="verifyCodeInput" placeholder="000000" maxlength="6" autocomplete="one-time-code" inputmode="numeric" />
+        </div>
+        <p class="form-error" id="verifyError"></p>
+        <button type="submit" class="btn btn-primary btn-full">Verify Email</button>
+      </form>
+      <p class="modal-switch"><button class="link-btn" id="resendCode">Resend code</button> &middot; <button class="link-btn" id="backToSignup">Back</button></p>
+    </div>
   </div>
 
   <!-- TOAST -->

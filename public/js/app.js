@@ -5,6 +5,9 @@
 /* ---- IMAGE CACHE ---- */
 const imageCache = {};
 
+/* ---- PENDING VERIFICATION ---- */
+let pendingVerification = null;
+
 /* ---- STATE ---- */
 const state = {
   user: null,
@@ -150,10 +153,12 @@ function updateNavbar() {
   const authArea = document.getElementById('authArea');
   if (state.user) {
     const initials = state.user.name.split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase();
+    const verifiedBadge = state.user.verified ? '<span class="verified-badge" title="Email verified">✓</span>' : '';
     authArea.innerHTML = `
       <div class="user-chip">
         <div class="user-avatar-sm">${esc(initials)}</div>
         <span>${esc(state.user.name.split(' ')[0])}</span>
+        ${verifiedBadge}
       </div>
       <button class="logout-btn" id="logoutBtn">Sign out</button>
     `;
@@ -254,13 +259,28 @@ function hideAuthModal() {
 function showLoginForm() {
   document.getElementById('loginForm').style.display = '';
   document.getElementById('signupForm').style.display = 'none';
+  document.getElementById('verifyForm').style.display = 'none';
   document.getElementById('loginError').textContent = '';
 }
 
 function showSignupForm() {
   document.getElementById('loginForm').style.display = 'none';
   document.getElementById('signupForm').style.display = '';
+  document.getElementById('verifyForm').style.display = 'none';
   document.getElementById('signupError').textContent = '';
+}
+
+function showVerifyForm(name, email) {
+  const code = Math.floor(100000 + Math.random() * 900000).toString();
+  pendingVerification = { name, email, code };
+  document.getElementById('loginForm').style.display = 'none';
+  document.getElementById('signupForm').style.display = 'none';
+  document.getElementById('verifyForm').style.display = '';
+  document.getElementById('verifySubtitle').textContent = `We've sent a 6-digit code to ${email}`;
+  document.getElementById('verifyCodePreview').textContent = `Demo code: ${code}`;
+  document.getElementById('verifyCodeInput').value = '';
+  document.getElementById('verifyError').textContent = '';
+  document.getElementById('verifyCodeInput').focus();
 }
 
 document.getElementById('modalClose').addEventListener('click', hideAuthModal);
@@ -307,13 +327,38 @@ document.getElementById('signupFormEl').addEventListener('submit', e => {
     document.getElementById('signupError').textContent = 'Password must be at least 6 characters.';
     return;
   }
-  state.user = { name, email };
+  showVerifyForm(name, email);
+});
+
+document.getElementById('verifyFormEl').addEventListener('submit', e => {
+  e.preventDefault();
+  const entered = document.getElementById('verifyCodeInput').value.trim();
+  if (!entered) {
+    document.getElementById('verifyError').textContent = 'Please enter the verification code.';
+    return;
+  }
+  if (!pendingVerification || entered !== pendingVerification.code) {
+    document.getElementById('verifyError').textContent = 'Incorrect code. Please try again.';
+    return;
+  }
+  const { name, email } = pendingVerification;
+  pendingVerification = null;
+  state.user = { name, email, verified: true };
   saveState();
   updateNavbar();
   hideAuthModal();
-  toast(`Welcome to GigRadar, ${name.split(' ')[0]}! 🎉`, 'success');
+  toast(`Welcome to GigRadar, ${name.split(' ')[0]}!`, 'success');
   router();
 });
+
+document.getElementById('resendCode').addEventListener('click', () => {
+  if (!pendingVerification) return;
+  const { name, email } = pendingVerification;
+  showVerifyForm(name, email);
+  toast('New code sent');
+});
+
+document.getElementById('backToSignup').addEventListener('click', showSignupForm);
 
 /* ---- SEARCH AUTOCOMPLETE ---- */
 const searchInput = document.getElementById('searchInput');
