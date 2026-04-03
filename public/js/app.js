@@ -2,6 +2,9 @@
    GIGRADAR — SPA APP
    ============================================= */
 
+/* ---- IMAGE CACHE ---- */
+const imageCache = {};
+
 /* ---- STATE ---- */
 const state = {
   user: null,
@@ -446,6 +449,7 @@ function router() {
   }
 
   window.scrollTo(0, 0);
+  loadArtistImages();
 }
 
 window.addEventListener('hashchange', router);
@@ -485,7 +489,7 @@ function artistCardHTML(artist) {
   const upcomingCount = getArtistGigs(artist.id).length;
   return `
     <div class="artist-card" onclick="navigateTo('#/artist/${esc(artist.id)}')" role="button" tabindex="0" aria-label="${esc(artist.name)}">
-      <div class="artist-card-avatar" style="background: ${artistAvatar(artist)}">
+      <div class="artist-card-avatar" style="background: ${artistAvatar(artist)}"${artist.wikipedia ? ` data-wikipedia="${esc(artist.wikipedia)}"` : ''}>
         <div class="artist-initial">${esc(artist.name[0])}</div>
         ${upcomingCount > 0 ? `<div class="upcoming-badge">${upcomingCount} gig${upcomingCount !== 1 ? 's' : ''}</div>` : ''}
       </div>
@@ -679,10 +683,10 @@ function renderArtist(id, main) {
     <div class="page">
       <!-- ARTIST HERO -->
       <div class="artist-hero">
-        <div class="artist-hero-bg" style="background: ${artistAvatar(artist)}"></div>
+        <div class="artist-hero-bg" style="background: ${artistAvatar(artist)}"${artist.wikipedia ? ` data-wikipedia="${esc(artist.wikipedia)}" data-hero-bg="1"` : ''}></div>
         <div class="artist-hero-overlay"></div>
         <div class="artist-hero-content">
-          <div class="artist-avatar-lg" style="background: ${artistAvatar(artist)}">${esc(artist.name[0])}</div>
+          <div class="artist-avatar-lg" style="background: ${artistAvatar(artist)}"${artist.wikipedia ? ` data-wikipedia="${esc(artist.wikipedia)}"` : ''}><span class="artist-initial">${esc(artist.name[0])}</span></div>
           <div class="artist-hero-info">
             <h1>${esc(artist.name)}</h1>
             <div class="artist-meta-row">
@@ -1101,6 +1105,43 @@ function renderSearch(query, main) {
   `;
 
   bindArtistCardKeys(main);
+}
+
+/* ---- ARTIST IMAGE LOADING ---- */
+async function loadArtistImages() {
+  const els = document.querySelectorAll('[data-wikipedia]:not([data-img-loaded])');
+  await Promise.all([...els].map(async el => {
+    const title = el.dataset.wikipedia;
+    el.dataset.imgLoaded = '1';
+
+    if (!(title in imageCache)) {
+      try {
+        const res = await fetch(`https://en.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(title)}`);
+        const data = await res.json();
+        imageCache[title] = data.thumbnail?.source || null;
+      } catch { imageCache[title] = null; }
+    }
+
+    const url = imageCache[title];
+    if (!url) return;
+
+    if (el.dataset.heroBg) {
+      el.style.backgroundImage = `url(${url})`;
+      el.style.backgroundSize = 'cover';
+      el.style.backgroundPosition = 'center top';
+    } else {
+      const img = document.createElement('img');
+      img.src = url;
+      img.className = 'artist-img';
+      img.alt = '';
+      img.loading = 'lazy';
+      img.onload = () => {
+        const initial = el.querySelector('.artist-initial');
+        if (initial) initial.style.opacity = '0';
+      };
+      el.insertBefore(img, el.firstChild);
+    }
+  }));
 }
 
 /* ---- ACCESSIBILITY: Artist card keyboard nav ---- */
