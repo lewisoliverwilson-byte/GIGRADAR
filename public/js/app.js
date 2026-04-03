@@ -1294,8 +1294,25 @@ function bindArtistCardKeys(main) {
   });
 }
 
+/* ---- LIVE DATA ---- */
+async function loadLiveData() {
+  const base = window.GIGRADAR_CONFIG?.apiBaseUrl;
+  if (!base) return;
+  try {
+    const [artists, gigs] = await Promise.all([
+      fetch(`${base}/artists`).then(r => r.ok ? r.json() : null).catch(() => null),
+      fetch(`${base}/gigs`).then(r => r.ok ? r.json() : null).catch(() => null)
+    ]);
+    if (artists && artists.length) window.ARTISTS = artists;
+    if (gigs    && gigs.length)    window.GIGS    = gigs;
+  } catch (e) {
+    // silently fall back to mock data
+  }
+}
+
 /* ---- INIT ---- */
 async function init() {
+  await loadLiveData();
   loadFollowingAndNotifs();
 
   // Restore Cognito session if one exists
