@@ -5,7 +5,7 @@
    ============================================= */
 
 window.GIGRADAR_CONFIG = {
-  cognitoRegion:     'eu-west-2',          // e.g. 'eu-west-2' or 'us-east-1'
-  cognitoUserPoolId: 'REPLACE_USER_POOL_ID',  // e.g. 'eu-west-2_AbcDeF123'
-  cognitoClientId:   'REPLACE_CLIENT_ID'      // e.g. '1abc2defg3hijklmno4pqrstu'
+  cognitoRegion:     'us-east-1',
+  cognitoUserPoolId: 'us-east-1_nEjVw1sJz',
+  cognitoClientId:   '21qepj83rj49q6c0lvjgju400j'
 };
