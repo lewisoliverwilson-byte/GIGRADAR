@@ -6,6 +6,7 @@
 const imageCache = {};
 
 /* ---- PENDING VERIFICATION ---- */
+// { name, email, password, cognitoUser }
 let pendingVerification = null;
 
 /* ---- STATE ---- */
@@ -19,16 +20,10 @@ const state = {
 
 /* ---- LOCALSTORAGE ---- */
 function saveState() {
-  if (state.user) localStorage.setItem('gr_user', JSON.stringify(state.user));
-  else localStorage.removeItem('gr_user');
   localStorage.setItem('gr_following', JSON.stringify([...state.following]));
 }
 
-function loadState() {
-  const u = localStorage.getItem('gr_user');
-  if (u) {
-    try { state.user = JSON.parse(u); } catch (e) { state.user = null; }
-  }
+function loadFollowingAndNotifs() {
   const f = localStorage.getItem('gr_following');
   if (f) {
     try { state.following = new Set(JSON.parse(f)); } catch (e) { state.following = new Set(); }
@@ -42,6 +37,49 @@ function loadState() {
         return s ? { ...n, read: s.read } : n;
       });
     } catch (e) {}
+  }
+}
+
+/* ---- COGNITO ---- */
+const cognitoUserPool = new AmazonCognitoIdentity.CognitoUserPool({
+  UserPoolId: window.GIGRADAR_CONFIG.cognitoUserPoolId,
+  ClientId:   window.GIGRADAR_CONFIG.cognitoClientId
+});
+
+function makeCognitoUser(email) {
+  return new AmazonCognitoIdentity.CognitoUser({
+    Username: email,
+    Pool: cognitoUserPool
+  });
+}
+
+function getSessionUser() {
+  return new Promise(resolve => {
+    const cognitoUser = cognitoUserPool.getCurrentUser();
+    if (!cognitoUser) { resolve(null); return; }
+    cognitoUser.getSession((err, session) => {
+      if (err || !session || !session.isValid()) { resolve(null); return; }
+      cognitoUser.getUserAttributes((err, attrs) => {
+        if (err) { resolve(null); return; }
+        const m = {};
+        attrs.forEach(a => { m[a.getName()] = a.getValue(); });
+        resolve({ name: m.name || m.email.split('@')[0], email: m.email, verified: true });
+      });
+    });
+  });
+}
+
+function cognitoErrorMessage(err) {
+  switch (err.code) {
+    case 'UsernameExistsException':    return 'An account with this email already exists.';
+    case 'InvalidPasswordException':   return 'Password must be at least 8 characters with uppercase and a number.';
+    case 'UserNotFoundException':      return 'No account found with this email.';
+    case 'NotAuthorizedException':     return 'Incorrect password. Please try again.';
+    case 'UserNotConfirmedException':  return 'Please verify your email before signing in.';
+    case 'CodeMismatchException':      return 'Incorrect code. Please try again.';
+    case 'ExpiredCodeException':       return 'Code expired. Please request a new one.';
+    case 'LimitExceededException':     return 'Too many attempts. Please wait a moment and try again.';
+    default: return err.message || 'Something went wrong. Please try again.';
   }
 }
 
@@ -163,6 +201,8 @@ function updateNavbar() {
       <button class="logout-btn" id="logoutBtn">Sign out</button>
     `;
     document.getElementById('logoutBtn').addEventListener('click', () => {
+      const cognitoUser = cognitoUserPool.getCurrentUser();
+      if (cognitoUser) cognitoUser.signOut();
       state.user = null;
       state.following = new Set();
       saveState();
@@ -271,13 +311,11 @@ function showSignupForm() {
 }
 
 function showVerifyForm(name, email) {
-  const code = Math.floor(100000 + Math.random() * 900000).toString();
-  pendingVerification = { name, email, code };
   document.getElementById('loginForm').style.display = 'none';
   document.getElementById('signupForm').style.display = 'none';
   document.getElementById('verifyForm').style.display = '';
   document.getElementById('verifySubtitle').textContent = `We've sent a 6-digit code to ${email}`;
-  document.getElementById('verifyCodePreview').textContent = `Demo code: ${code}`;
+  document.getElementById('verifyCodePreview').textContent = 'Check your inbox — the code expires in 24 hours.';
   document.getElementById('verifyCodeInput').value = '';
   document.getElementById('verifyError').textContent = '';
   document.getElementById('verifyCodeInput').focus();
@@ -292,22 +330,42 @@ document.getElementById('loginFormEl').addEventListener('submit', e => {
   e.preventDefault();
   const email = document.getElementById('loginEmail').value.trim();
   const password = document.getElementById('loginPassword').value;
-  if (!email || !password) {
-    document.getElementById('loginError').textContent = 'Please fill in all fields.';
-    return;
-  }
-  if (!email.includes('@')) {
-    document.getElementById('loginError').textContent = 'Please enter a valid email.';
-    return;
-  }
-  // Mock auth — derive name from email
-  const name = email.split('@')[0].replace(/[._-]/g, ' ').split(' ').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
-  state.user = { name, email };
-  saveState();
-  updateNavbar();
-  hideAuthModal();
-  toast(`Welcome back, ${name.split(' ')[0]}!`, 'success');
-  router();
+  const errorEl = document.getElementById('loginError');
+
+  if (!email || !password) { errorEl.textContent = 'Please fill in all fields.'; return; }
+  if (!email.includes('@')) { errorEl.textContent = 'Please enter a valid email.'; return; }
+
+  const btn = e.target.querySelector('button[type=submit]');
+  btn.textContent = 'Signing in…'; btn.disabled = true;
+
+  const authDetails = new AmazonCognitoIdentity.AuthenticationDetails({ Username: email, Password: password });
+  const cognitoUser = makeCognitoUser(email);
+
+  cognitoUser.authenticateUser(authDetails, {
+    onSuccess: session => {
+      btn.textContent = 'Sign In'; btn.disabled = false;
+      cognitoUser.getUserAttributes((err, attrs) => {
+        const m = {};
+        if (!err && attrs) attrs.forEach(a => { m[a.getName()] = a.getValue(); });
+        const name = m.name || email.split('@')[0];
+        state.user = { name, email, verified: true };
+        saveState();
+        updateNavbar();
+        hideAuthModal();
+        toast(`Welcome back, ${name.split(' ')[0]}!`, 'success');
+        router();
+      });
+    },
+    onFailure: err => {
+      btn.textContent = 'Sign In'; btn.disabled = false;
+      if (err.code === 'UserNotConfirmedException') {
+        pendingVerification = { name: email.split('@')[0], email, password, cognitoUser };
+        showVerifyForm(email.split('@')[0], email);
+        return;
+      }
+      errorEl.textContent = cognitoErrorMessage(err);
+    }
+  });
 });
 
 document.getElementById('signupFormEl').addEventListener('submit', e => {
@@ -323,39 +381,74 @@ document.getElementById('signupFormEl').addEventListener('submit', e => {
     document.getElementById('signupError').textContent = 'Please enter a valid email.';
     return;
   }
-  if (password.length < 6) {
-    document.getElementById('signupError').textContent = 'Password must be at least 6 characters.';
+  if (password.length < 8) {
+    document.getElementById('signupError').textContent = 'Password must be at least 8 characters.';
     return;
   }
-  showVerifyForm(name, email);
+
+  const btn = e.target.querySelector('button[type=submit]');
+  btn.textContent = 'Creating account…'; btn.disabled = true;
+
+  const attrs = [
+    new AmazonCognitoIdentity.CognitoUserAttribute({ Name: 'email', Value: email }),
+    new AmazonCognitoIdentity.CognitoUserAttribute({ Name: 'name',  Value: name })
+  ];
+
+  cognitoUserPool.signUp(email, password, attrs, null, (err, result) => {
+    btn.textContent = 'Create Account'; btn.disabled = false;
+    if (err) {
+      document.getElementById('signupError').textContent = cognitoErrorMessage(err);
+      return;
+    }
+    pendingVerification = { name, email, password, cognitoUser: result.user };
+    showVerifyForm(name, email);
+  });
 });
 
 document.getElementById('verifyFormEl').addEventListener('submit', e => {
   e.preventDefault();
-  const entered = document.getElementById('verifyCodeInput').value.trim();
-  if (!entered) {
-    document.getElementById('verifyError').textContent = 'Please enter the verification code.';
-    return;
-  }
-  if (!pendingVerification || entered !== pendingVerification.code) {
-    document.getElementById('verifyError').textContent = 'Incorrect code. Please try again.';
-    return;
-  }
-  const { name, email } = pendingVerification;
-  pendingVerification = null;
-  state.user = { name, email, verified: true };
-  saveState();
-  updateNavbar();
-  hideAuthModal();
-  toast(`Welcome to GigRadar, ${name.split(' ')[0]}!`, 'success');
-  router();
+  const code = document.getElementById('verifyCodeInput').value.trim();
+  const errorEl = document.getElementById('verifyError');
+
+  if (!code) { errorEl.textContent = 'Please enter the verification code.'; return; }
+  if (!pendingVerification) { errorEl.textContent = 'Session expired. Please sign up again.'; return; }
+
+  const btn = e.target.querySelector('button[type=submit]');
+  btn.textContent = 'Verifying…'; btn.disabled = true;
+
+  pendingVerification.cognitoUser.confirmRegistration(code, true, (err) => {
+    btn.textContent = 'Verify Email'; btn.disabled = false;
+    if (err) { errorEl.textContent = cognitoErrorMessage(err); return; }
+
+    // Auto sign-in after verification
+    const { name, email, password } = pendingVerification;
+    pendingVerification = null;
+    const authDetails = new AmazonCognitoIdentity.AuthenticationDetails({ Username: email, Password: password });
+    makeCognitoUser(email).authenticateUser(authDetails, {
+      onSuccess: () => {
+        state.user = { name, email, verified: true };
+        saveState();
+        updateNavbar();
+        hideAuthModal();
+        toast(`Welcome to GigRadar, ${name.split(' ')[0]}!`, 'success');
+        router();
+      },
+      onFailure: () => {
+        // Verification succeeded but auto-login failed — send them to login
+        showLoginForm();
+        document.getElementById('loginEmail').value = email;
+        toast('Email verified! Please sign in.');
+      }
+    });
+  });
 });
 
 document.getElementById('resendCode').addEventListener('click', () => {
   if (!pendingVerification) return;
-  const { name, email } = pendingVerification;
-  showVerifyForm(name, email);
-  toast('New code sent');
+  pendingVerification.cognitoUser.resendConfirmationCode((err) => {
+    if (err) { toast(cognitoErrorMessage(err)); return; }
+    toast('Verification code resent');
+  });
 });
 
 document.getElementById('backToSignup').addEventListener('click', showSignupForm);
@@ -1202,8 +1295,12 @@ function bindArtistCardKeys(main) {
 }
 
 /* ---- INIT ---- */
-function init() {
-  loadState();
+async function init() {
+  loadFollowingAndNotifs();
+
+  // Restore Cognito session if one exists
+  state.user = await getSessionUser();
+
   updateNavbar();
   renderNotifPanel();
 

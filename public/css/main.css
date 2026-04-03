@@ -1275,8 +1275,6 @@ ul { list-style: none; }
   color: var(--muted);
   margin-bottom: 20px;
   text-align: center;
-  font-family: monospace;
-  letter-spacing: 2px;
 }
 #verifyCodeInput {
   text-align: center;
