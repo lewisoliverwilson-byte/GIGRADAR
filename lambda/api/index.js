@@ -23,6 +23,7 @@ function notFound(msg = 'Not found') {
 async function getArtists() {
   const result = await ddb.send(new ScanCommand({ TableName: ARTISTS_TABLE }));
   const artists = (result.Items || [])
+    .filter(a => a.name && !a.artistId.startsWith('_')) // exclude internal meta records
     .sort((a, b) => (a.lastfmRank || 9999) - (b.lastfmRank || 9999));
   return ok(artists);
 }
