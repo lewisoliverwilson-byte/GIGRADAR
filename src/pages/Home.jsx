@@ -22,7 +22,11 @@ export default function Home() {
 
   const followedArtists = artists.filter(a => following.has(a.artistId));
   const followedGigs    = gigs.filter(g => following.has(g.artistId));
-  const topArtists      = artists.slice(0, 12);
+  // Featured: artists with upcoming gigs, sorted by most gigs first, then by rank
+  const featuredArtists = artists
+    .filter(a => a.upcoming > 0)
+    .sort((a, b) => (b.upcoming - a.upcoming) || (a.lastfmRank - b.lastfmRank))
+    .slice(0, 12);
   const upcomingGigs    = gigs.filter(g => g.date >= new Date().toISOString().split('T')[0]).slice(0, 10);
 
   if (loading) return <PageSkeleton />;
@@ -80,14 +84,17 @@ export default function Home() {
         </section>
       )}
 
-      {/* Top artists */}
+      {/* Featured: artists with upcoming gigs */}
       <section>
         <div className="flex items-center justify-between mb-4">
-          <h2 className="text-lg font-bold">Top UK artists</h2>
+          <div>
+            <h2 className="text-lg font-bold">On tour now</h2>
+            <p className="text-xs text-gray-500 mt-0.5">Top UK artists with upcoming gigs</p>
+          </div>
           <Link to="/artists" className="text-sm text-brand hover:underline">See all 1,000 →</Link>
         </div>
         <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-3">
-          {topArtists.map(a => <ArtistCard key={a.artistId} artist={a} />)}
+          {featuredArtists.map(a => <ArtistCard key={a.artistId} artist={a} />)}
         </div>
       </section>
 
