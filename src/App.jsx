@@ -8,6 +8,9 @@ import Home from './pages/Home.jsx';
 import Artists from './pages/Artists.jsx';
 import ArtistDetail from './pages/ArtistDetail.jsx';
 import Gigs from './pages/Gigs.jsx';
+import Discover from './pages/Discover.jsx';
+import Search from './pages/Search.jsx';
+import VenuePage from './pages/VenuePage.jsx';
 import Profile from './pages/Profile.jsx';
 import NotFound from './pages/NotFound.jsx';
 
@@ -24,6 +27,9 @@ export default function App() {
                 <Route path="/artists"               element={<Artists />} />
                 <Route path="/artists/:id"           element={<ArtistDetail />} />
                 <Route path="/gigs"                  element={<Gigs />} />
+                <Route path="/discover"              element={<Discover />} />
+                <Route path="/search"                element={<Search />} />
+                <Route path="/venues/:slug"          element={<VenuePage />} />
                 <Route path="/profile"               element={<Profile />} />
                 <Route path="*"                      element={<NotFound />} />
               </Routes>

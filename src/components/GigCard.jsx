@@ -94,6 +94,14 @@ export default function GigCard({ gig, showArtist = false }) {
             </div>
           ) : isPast ? (
             <p className="text-[11px] text-gray-600">Past event</p>
+          ) : gig.isFreeEntry ? (
+            <div className="mt-0.5">
+              <span className="inline-block text-[11px] font-semibold bg-emerald-500/15 text-emerald-400 border border-emerald-500/30 rounded-md px-2 py-0.5">Free entry</span>
+            </div>
+          ) : gig.ticketType === 'door' ? (
+            <div className="mt-0.5">
+              <span className="inline-block text-[11px] font-semibold bg-amber-500/15 text-amber-400 border border-amber-500/30 rounded-md px-2 py-0.5">Pay on door</span>
+            </div>
           ) : buyLinks.length > 0 ? (
             <div className="flex flex-wrap gap-1.5 mt-0.5">
               {buyLinks.slice(0, 4).map((t, i) => (
@@ -111,7 +119,9 @@ export default function GigCard({ gig, showArtist = false }) {
                 </a>
               ))}
             </div>
-          ) : null}
+          ) : (
+            <p className="text-[11px] text-gray-600 mt-0.5">Check venue for tickets</p>
+          )}
         </div>
       </div>
     </div>

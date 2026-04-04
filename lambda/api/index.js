@@ -5,6 +5,7 @@ const ddb = DynamoDBDocumentClient.from(new DynamoDBClient({ region: process.env
 
 const ARTISTS_TABLE = 'gigradar-artists';
 const GIGS_TABLE    = 'gigradar-gigs';
+const VENUES_TABLE  = 'gigradar-venues';
 
 const CORS = {
   'Access-Control-Allow-Origin':  '*',
@@ -50,6 +51,49 @@ async function getArtistGigs(artistId) {
     ScanIndexForward:          true
   }));
   return ok(result.Items || []);
+}
+
+/* ---- GET /venues ---- */
+async function getVenues() {
+  const result = await ddb.send(new ScanCommand({ TableName: VENUES_TABLE }));
+  const venues = (result.Items || [])
+    .filter(v => v.isActive && v.name)
+    .sort((a, b) => (b.upcoming || 0) - (a.upcoming || 0));
+  return ok(venues);
+}
+
+/* ---- GET /venues/:slug ---- */
+async function getVenue(slug) {
+  const result = await ddb.send(new ScanCommand({
+    TableName: VENUES_TABLE,
+    FilterExpression: 'slug = :s',
+    ExpressionAttributeValues: { ':s': slug },
+  }));
+  const venue = (result.Items || [])[0];
+  if (!venue) return notFound('Venue not found');
+  return ok(venue);
+}
+
+/* ---- GET /venues/:slug/gigs ---- */
+async function getVenueGigs(slug) {
+  // Resolve venue to get venueId and name
+  const vRes = await ddb.send(new ScanCommand({
+    TableName: VENUES_TABLE,
+    FilterExpression: 'slug = :s',
+    ExpressionAttributeValues: { ':s': slug },
+  }));
+  const venue = (vRes.Items || [])[0];
+  if (!venue) return notFound('Venue not found');
+
+  const yearAgo = new Date(Date.now() - 365 * 864e5).toISOString().split('T')[0];
+  const result  = await ddb.send(new ScanCommand({
+    TableName: GIGS_TABLE,
+    FilterExpression: '(canonicalVenueId = :vid OR venueName = :vname) AND #d >= :yearAgo',
+    ExpressionAttributeNames:  { '#d': 'date' },
+    ExpressionAttributeValues: { ':vid': venue.venueId, ':vname': venue.name, ':yearAgo': yearAgo },
+  }));
+  const gigs = (result.Items || []).sort((a, b) => a.date.localeCompare(b.date));
+  return ok(gigs);
 }
 
 /* ---- GET /gigs?upcoming=true&limit=N ---- */
@@ -100,6 +144,17 @@ exports.handler = async (event) => {
 
   // GET /gigs
   if (rawPath === '/gigs') return getGigs(params);
+
+  // GET /venues
+  if (rawPath === '/venues') return getVenues();
+
+  // GET /venues/:slug/gigs
+  const venueGigsMatch = rawPath.match(/^\/venues\/([^/]+)\/gigs$/);
+  if (venueGigsMatch) return getVenueGigs(decodeURIComponent(venueGigsMatch[1]));
+
+  // GET /venues/:slug
+  const venueMatch = rawPath.match(/^\/venues\/([^/]+)$/);
+  if (venueMatch) return getVenue(decodeURIComponent(venueMatch[1]));
 
   return notFound();
 };

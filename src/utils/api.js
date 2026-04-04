@@ -13,4 +13,7 @@ export const api = {
   getArtist:     (id)       => get(`/artists/${id}`),
   getArtistGigs: (id)       => get(`/artists/${id}/gigs`),
   getGigs:       (params)   => get(`/gigs${params ? '?' + new URLSearchParams(params) : ''}`),
+  getVenues:     ()         => get('/venues'),
+  getVenue:      (slug)     => get(`/venues/${slug}`),
+  getVenueGigs:  (slug)     => get(`/venues/${slug}/gigs`),
 };

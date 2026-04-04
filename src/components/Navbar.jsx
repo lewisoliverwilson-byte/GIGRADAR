@@ -20,22 +20,23 @@ export default function Navbar() {
 
         {/* Nav links */}
         <nav className="hidden sm:flex items-center gap-5">
-          <NavLink to="/"        end className={navLinkClass}>Home</NavLink>
-          <NavLink to="/artists"     className={navLinkClass}>Artists</NavLink>
-          <NavLink to="/gigs"        className={navLinkClass}>Gigs</NavLink>
+          <NavLink to="/"         end className={navLinkClass}>Home</NavLink>
+          <NavLink to="/discover"     className={navLinkClass}>Discover</NavLink>
+          <NavLink to="/artists"      className={navLinkClass}>Artists</NavLink>
+          <NavLink to="/gigs"         className={navLinkClass}>Gigs</NavLink>
         </nav>
 
         <div className="flex-1" />
 
         {/* Search */}
         <button
-          onClick={() => navigate('/artists')}
+          onClick={() => navigate('/search')}
           className="hidden sm:flex items-center gap-2 bg-surface-2 border border-white/5 rounded-lg px-3 py-1.5 text-gray-400 text-sm hover:border-brand/40 transition-colors"
         >
           <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
           </svg>
-          Search artists...
+          Search artists, venues...
         </button>
 
         {/* Auth */}
@@ -54,10 +55,6 @@ export default function Navbar() {
                 <Link to="/profile" onClick={() => setMenuOpen(false)}
                   className="block px-4 py-2 text-sm text-gray-300 hover:text-white hover:bg-surface-3 transition-colors">
                   Profile
-                </Link>
-                <Link to="/settings/notifications" onClick={() => setMenuOpen(false)}
-                  className="block px-4 py-2 text-sm text-gray-300 hover:text-white hover:bg-surface-3 transition-colors">
-                  Notifications
                 </Link>
                 <button
                   onClick={() => { logout(); setMenuOpen(false); }}

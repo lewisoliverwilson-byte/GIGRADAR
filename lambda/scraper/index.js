@@ -27,6 +27,7 @@ const SKIDDLE_KEY     = process.env.SKIDDLE_API_KEY     || '';
 const SETLISTFM_KEY   = process.env.SETLISTFM_API_KEY   || '';
 const ARTISTS_TABLE   = 'gigradar-artists';
 const GIGS_TABLE      = 'gigradar-gigs';
+const VENUES_TABLE    = 'gigradar-venues';
 
 const sleep = ms => new Promise(r => setTimeout(r, ms));
 
@@ -43,6 +44,19 @@ function toArtistId(name) {
     .replace(/[^a-z0-9]+/g, '-')
     .replace(/^-|-$/g, '');
   return id;
+}
+
+// ─── Venue ID / slug helpers ─────────────────────────────────────────────────
+
+function toVenueId(name, city) {
+  return `venue#${normaliseName(name || '')}#${normaliseName(city || '')}`;
+}
+
+function toVenueSlug(name, city) {
+  const slugify = s => (s || '').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '');
+  const n = slugify(name);
+  const c = slugify(city);
+  return c ? `${c}-${n}` : n;
 }
 
 // ─── Currency symbol helper ──────────────────────────────────────────────────
@@ -875,6 +889,35 @@ async function upsertGig(gig) {
     .catch(e => console.error(`Gig upsert ${gig.gigId}:`, e.message));
 }
 
+// ─── Build venue records from gig data ──────────────────────────────────────
+
+async function upsertVenues(gigsArr, today) {
+  const venueMap = new Map();
+  for (const gig of gigsArr) {
+    if (!gig.venueName) continue;
+    const vid  = toVenueId(gig.venueName, gig.venueCity);
+    const slug = toVenueSlug(gig.venueName, gig.venueCity);
+    const v    = venueMap.get(vid) || { venueId: vid, slug, name: gig.venueName, city: gig.venueCity || '', upcoming: 0 };
+    if (gig.date >= today) v.upcoming++;
+    venueMap.set(vid, v);
+  }
+  let saved = 0;
+  for (const [, v] of venueMap) {
+    await ddb.send(new UpdateCommand({
+      TableName: VENUES_TABLE,
+      Key: { venueId: v.venueId },
+      UpdateExpression: 'SET #n = :n, slug = :s, city = :c, upcoming = :u, isActive = :a, lastUpdated = :t',
+      ExpressionAttributeNames: { '#n': 'name' },
+      ExpressionAttributeValues: {
+        ':n': v.name, ':s': v.slug, ':c': v.city,
+        ':u': v.upcoming, ':a': true, ':t': new Date().toISOString(),
+      },
+    })).catch(() => {});
+    saved++;
+  }
+  console.log(`Venues: upserted ${saved} venues`);
+}
+
 // ─── Main handler ────────────────────────────────────────────────────────────
 
 exports.handler = async () => {
@@ -911,15 +954,19 @@ exports.handler = async () => {
   const merged = mergeGigs([tmGigs, bitGigs, skiGigs, skGigs, diceGigs, raGigs, seeGigs, gigGigs, wgtGigs, ebGigs, slmGigs]);
   console.log(`Merged: ${merged.length} unique gigs`);
 
-  // 4. Upsert gigs
+  // 4. Upsert gigs (stamping canonicalVenueId for venue pages)
+  const today = new Date().toISOString().split('T')[0];
   let saved = 0;
   for (const gig of merged) {
+    gig.canonicalVenueId = toVenueId(gig.venueName, gig.venueCity);
     await upsertGig(gig);
     saved++;
   }
 
+  // 4b. Build venue records from merged gig data
+  await upsertVenues(merged, today);
+
   // 5. Update upcoming counts per artist
-  const today = new Date().toISOString().split('T')[0];
   const countMap = {};
   for (const gig of merged) {
     if (gig.date >= today) countMap[gig.artistId] = (countMap[gig.artistId] || 0) + 1;
