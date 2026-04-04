@@ -43,11 +43,11 @@ export default function Home() {
           style={{ background: 'radial-gradient(ellipse 70% 60% at 50% 0%, rgba(139,92,246,0.12) 0%, transparent 70%)' }} />
 
         <h1 className="relative text-4xl sm:text-5xl font-extrabold tracking-tight mb-3 leading-tight">
-          Every gig.<br />
+          Every UK gig.<br />
           <span className="text-brand">One place.</span>
         </h1>
         <p className="relative text-gray-400 text-base sm:text-lg max-w-lg mx-auto">
-          We scan Ticketmaster, Songkick, Dice, Bandsintown and more — every 6 hours — for the top 1,000 artists worldwide.
+          We scan Ticketmaster, Songkick, Dice, Bandsintown and more — every 6 hours — for the top 1,000 UK artists.
         </p>
 
         {!user ? (
@@ -59,7 +59,7 @@ export default function Home() {
         {/* Stats */}
         <div className="relative flex justify-center gap-6 sm:gap-10 mt-6 text-center">
           {[
-            ['1,000', 'artists worldwide'],
+            ['1,000', 'UK artists'],
             ['10+', 'ticket sources'],
             ['Every 6h', 'updated'],
           ].map(([val, label]) => (
@@ -102,9 +102,9 @@ export default function Home() {
       <section>
         <SectionHeader
           title="On tour now"
-          subtitle="Top artists with upcoming gigs"
+          subtitle="Top UK artists with upcoming gigs"
           linkTo="/artists"
-          linkText="See all artists →"
+          linkText="See all 1,000 →"
         />
         <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 gap-3">
           {featuredArtists.map(a => <ArtistCard key={a.artistId} artist={a} />)}
