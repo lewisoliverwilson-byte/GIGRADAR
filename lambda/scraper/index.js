@@ -46,6 +46,15 @@ function toArtistId(name) {
   return id;
 }
 
+// ─── Tribute / cover band filter ────────────────────────────────────────────
+// Exclude events where the matched act name signals it's a cover/tribute act
+
+const TRIBUTE_RE = /tribute|cover band|salute to|the music of|\bcovers\b|in the style of|celebrating |legacy of |experience\b/i;
+
+function isTributeAct(name) {
+  return TRIBUTE_RE.test(name || '');
+}
+
 // ─── Venue ID / slug helpers ─────────────────────────────────────────────────
 
 function toVenueId(name, city) {
@@ -131,9 +140,10 @@ async function fetchTicketmaster(artists) {
         const venue   = ev._embedded?.venues?.[0];
         const date    = ev.dates?.start?.localDate;
         if (!date || !venue) continue;
-        // Verify at least one attraction matches this artist
+        // Verify at least one attraction matches this artist (and isn't a tribute/cover act)
         const attract = ev._embedded?.attractions || [];
-        if (attract.length > 0 && !attract.some(a => normaliseName(a.name) === normaliseName(artist.name))) continue;
+        const match   = attract.find(a => normaliseName(a.name) === normaliseName(artist.name) && !isTributeAct(a.name));
+        if (attract.length > 0 && !match) continue;
         const pr    = ev.priceRanges?.[0];
         const sym   = currSym(pr?.currency);
         const price = pr ? `${sym}${Math.round(pr.min)}${pr.max !== pr.min ? `–${sym}${Math.round(pr.max)}` : ''}` : null;
@@ -957,11 +967,14 @@ exports.handler = async () => {
   // 4. Upsert gigs (stamping canonicalVenueId for venue pages)
   const today = new Date().toISOString().split('T')[0];
   let saved = 0;
+  let skippedTribute = 0;
   for (const gig of merged) {
+    if (isTributeAct(gig.artistName)) { skippedTribute++; continue; }
     gig.canonicalVenueId = toVenueId(gig.venueName, gig.venueCity);
     await upsertGig(gig);
     saved++;
   }
+  if (skippedTribute) console.log(`Skipped ${skippedTribute} tribute/cover act gigs`);
 
   // 4b. Build venue records from merged gig data
   await upsertVenues(merged, today);
