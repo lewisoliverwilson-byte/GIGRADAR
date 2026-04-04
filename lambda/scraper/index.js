@@ -693,13 +693,14 @@ async function fetchSetlistFm(artists) {
   const yearAgo = new Date(Date.now() - 365 * 864e5).toISOString().split('T')[0];
   const today   = new Date().toISOString().split('T')[0];
 
-  // Prioritise artists that have a MusicBrainz ID (Setlist.fm uses MBID as its artist key)
-  const withMbid = artists.filter(a => a.lastfmMbid);
+  // Rate limit: 1,440 req/day, scraper runs 4×/day → max 350 per run, 1 page each
+  // Artists are ranked by popularity so top 350 gives best coverage
+  const withMbid = artists.filter(a => a.lastfmMbid).slice(0, 350);
   console.log(`Setlist.fm: querying ${withMbid.length} artists with MBID`);
 
   for (const artist of withMbid) {
     try {
-      for (let page = 1; page <= 3; page++) {
+      for (let page = 1; page <= 1; page++) { // 1 page = 20 most recent setlists, enough for 12 months
         const url = `https://api.setlist.fm/rest/1.0/artist/${artist.lastfmMbid}/setlists?p=${page}`;
         const res = await fetch(url, {
           headers: {
