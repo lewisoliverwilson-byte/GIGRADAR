@@ -20,11 +20,12 @@ const { DynamoDBDocumentClient, PutCommand, UpdateCommand, ScanCommand } = requi
 
 const ddb = DynamoDBDocumentClient.from(new DynamoDBClient({ region: process.env.AWS_REGION || 'us-east-1' }));
 
-const LASTFM_KEY    = process.env.LASTFM_API_KEY;
-const TM_KEY        = process.env.TICKETMASTER_API_KEY;
-const SKIDDLE_KEY   = process.env.SKIDDLE_API_KEY || '';
-const ARTISTS_TABLE = 'gigradar-artists';
-const GIGS_TABLE    = 'gigradar-gigs';
+const LASTFM_KEY      = process.env.LASTFM_API_KEY;
+const TM_KEY          = process.env.TICKETMASTER_API_KEY;
+const SKIDDLE_KEY     = process.env.SKIDDLE_API_KEY     || '';
+const SETLISTFM_KEY   = process.env.SETLISTFM_API_KEY   || '';
+const ARTISTS_TABLE   = 'gigradar-artists';
+const GIGS_TABLE      = 'gigradar-gigs';
 
 const sleep = ms => new Promise(r => setTimeout(r, ms));
 
@@ -150,17 +151,16 @@ async function fetchTicketmaster(nameMap) {
 
 async function fetchBandsintown(artists) {
   const gigs    = [];
-  const today   = new Date().toISOString().split('T')[0];
-  const end     = new Date(Date.now() + 365 * 864e5).toISOString().split('T')[0];
+  const yearAgo = new Date(Date.now() - 365 * 864e5).toISOString().split('T')[0];
+  const yearAhead = new Date(Date.now() + 365 * 864e5).toISOString().split('T')[0];
   const APP_ID  = 'gigradar';
 
-  // Sample top 300 artists (API rate limit friendly — 250ms gaps)
-  const sample = artists.slice(0, 300);
+  // All 1,000 artists — single request per artist covers past 12 months AND next 12 months
   let fetched  = 0;
 
-  for (const artist of sample) {
+  for (const artist of artists) {
     try {
-      const url  = `https://rest.bandsintown.com/artists/${encodeURIComponent(artist.name)}/events?app_id=${APP_ID}&date=${today},${end}`;
+      const url  = `https://rest.bandsintown.com/artists/${encodeURIComponent(artist.name)}/events?app_id=${APP_ID}&date=${yearAgo},${yearAhead}`;
       const res  = await fetch(url, { headers: { Accept: 'application/json' } });
       if (!res.ok) { await sleep(100); continue; }
       const events = await res.json();
@@ -171,6 +171,7 @@ async function fetchBandsintown(artists) {
         // UK only
         if (venue.country && !['GB', 'UK', 'United Kingdom'].includes(venue.country)) continue;
         const date = ev.datetime.split('T')[0];
+        if (date < yearAgo) continue; // shouldn't happen but guard anyway
         gigs.push({
           gigId:        `bit-${ev.id}`,
           dedupKey:     dedupKey(artist.artistId, date, venue.name),
@@ -257,9 +258,10 @@ async function fetchSkiddle(nameMap) {
 // ─── 4. Songkick (scrape JSON-LD / structured data) ─────────────────────────
 
 async function fetchSongkick(artists) {
-  const gigs   = [];
-  const today  = new Date().toISOString().split('T')[0];
-  const sample = artists.slice(0, 200);
+  const gigs    = [];
+  const yearAgo = new Date(Date.now() - 365 * 864e5).toISOString().split('T')[0];
+  const yearAhead = new Date(Date.now() + 365 * 864e5).toISOString().split('T')[0];
+  const sample  = artists.slice(0, 200);
 
   for (const artist of sample) {
     try {
@@ -280,7 +282,7 @@ async function fetchSongkick(artists) {
           for (const ev of events) {
             if (!ev.startDate) continue;
             const date     = ev.startDate.split('T')[0];
-            if (date < today) continue;
+            if (date < yearAgo || date > yearAhead) continue; // 12-month window each way
             const location = ev.location?.address || ev.location || {};
             const country  = location.addressCountry || '';
             if (country && !['GB', 'UK'].includes(country)) continue;
@@ -683,6 +685,86 @@ async function fetchEventbrite(nameMap) {
   return gigs;
 }
 
+// ─── 11. Setlist.fm (past gigs — needs free API key at setlist.fm/api) ──────
+
+async function fetchSetlistFm(artists) {
+  if (!SETLISTFM_KEY) { console.log('No Setlist.fm key — skipping past gigs from this source'); return []; }
+  const gigs    = [];
+  const yearAgo = new Date(Date.now() - 365 * 864e5).toISOString().split('T')[0];
+  const today   = new Date().toISOString().split('T')[0];
+
+  // Prioritise artists that have a MusicBrainz ID (Setlist.fm uses MBID as its artist key)
+  const withMbid = artists.filter(a => a.lastfmMbid);
+  console.log(`Setlist.fm: querying ${withMbid.length} artists with MBID`);
+
+  for (const artist of withMbid) {
+    try {
+      for (let page = 1; page <= 3; page++) {
+        const url = `https://api.setlist.fm/rest/1.0/artist/${artist.lastfmMbid}/setlists?p=${page}`;
+        const res = await fetch(url, {
+          headers: {
+            'x-api-key': SETLISTFM_KEY,
+            'Accept':    'application/json',
+            'User-Agent': 'GigRadar/2.0',
+          },
+        });
+        if (res.status === 404 || res.status === 429) break;
+        if (!res.ok) break;
+        const data     = await res.json();
+        const setlists = data.setlist || [];
+        if (!setlists.length) break;
+
+        let reachedOld = false;
+        for (const sl of setlists) {
+          // Setlist.fm date format: DD-MM-YYYY
+          const parts = sl.eventDate?.split('-');
+          if (!parts || parts.length !== 3) continue;
+          const date = `${parts[2]}-${parts[1]}-${parts[0]}`; // → YYYY-MM-DD
+          if (date < yearAgo) { reachedOld = true; continue; }
+          if (date >= today)  continue; // future gigs handled by other sources
+
+          const venue   = sl.venue || {};
+          const city    = venue.city || {};
+          const country = city.country?.code || '';
+          if (country && country !== 'GB') continue;
+
+          // Build a readable setlist string from songs
+          const songs = (sl.sets?.set || []).flatMap(s => s.song || []);
+          const setlistPreview = songs.slice(0, 8).map(s => s.name).filter(Boolean).join(' · ');
+
+          gigs.push({
+            gigId:        `slm-${sl.id}`,
+            dedupKey:     dedupKey(artist.artistId, date, venue.name || ''),
+            artistId:     artist.artistId,
+            artistName:   artist.name,
+            date,
+            doorsTime:    null,
+            venueName:    venue.name || '',
+            venueId:      `venue-slm-${venue.id || normaliseName(venue.name || '')}`,
+            venueCity:    city.name || '',
+            venueCountry: 'GB',
+            isSoldOut:    false,
+            supportActs:  [],
+            setlist:      setlistPreview || null,
+            tickets: [{
+              seller:    'Setlist.fm',
+              url:       sl.url || `https://www.setlist.fm/setlist/${sl.id}.html`,
+              available: false,
+              price:     null,
+            }],
+            sources:     ['setlistfm'],
+            lastUpdated: new Date().toISOString(),
+          });
+        }
+        if (reachedOld) break; // rest of pages are older than 12 months
+      }
+    } catch (e) { console.error(`Setlist.fm ${artist.name}:`, e.message); }
+    await sleep(500); // 2 req/sec rate limit
+  }
+  console.log(`Setlist.fm: ${gigs.length} past gigs`);
+  return gigs;
+}
+
 // ─── Merge & deduplicate gigs ────────────────────────────────────────────────
 
 function mergeGigs(allGigArrays) {
@@ -709,8 +791,9 @@ function mergeGigs(allGigArrays) {
         existing.supportActs = [...actSet];
         // Sold out: if any source says available, keep available unless all say sold out
         if (!gig.isSoldOut) existing.isSoldOut = false;
-        // Use first non-null doorsTime
+        // Use first non-null doorsTime / setlist
         if (!existing.doorsTime && gig.doorsTime) existing.doorsTime = gig.doorsTime;
+        if (!existing.setlist   && gig.setlist)   existing.setlist   = gig.setlist;
         merged.set(key, existing);
       }
     }
@@ -737,21 +820,41 @@ async function fetchDeezerImage(artistName) {
 }
 
 async function enrichArtistImages(artists) {
+  // First scan DynamoDB to find which artists are missing images — avoids
+  // calling Deezer on every run for artists that already have photos.
+  const missingIds = new Set();
+  let lastKey;
+  do {
+    const params = {
+      TableName:                 ARTISTS_TABLE,
+      ProjectionExpression:      'artistId, imageUrl',
+      FilterExpression:          'attribute_not_exists(imageUrl) OR imageUrl = :n',
+      ExpressionAttributeValues: { ':n': null },
+    };
+    if (lastKey) params.ExclusiveStartKey = lastKey;
+    const result = await ddb.send(new ScanCommand(params));
+    for (const item of result.Items || []) missingIds.add(item.artistId);
+    lastKey = result.LastEvaluatedKey;
+  } while (lastKey);
+
+  const toEnrich = artists.filter(a => missingIds.has(a.artistId));
+  console.log(`Images: ${toEnrich.length}/${artists.length} artists need photos`);
+  if (!toEnrich.length) return;
+
   let enriched = 0;
-  for (const artist of artists) {
+  for (const artist of toEnrich) {
     const imageUrl = await fetchDeezerImage(artist.name);
     if (!imageUrl) { await sleep(100); continue; }
-    // Only set imageUrl if not already present (preserves any manually set image)
     await ddb.send(new UpdateCommand({
       TableName: ARTISTS_TABLE,
       Key: { artistId: artist.artistId },
-      UpdateExpression: 'SET imageUrl = if_not_exists(imageUrl, :url)',
+      UpdateExpression: 'SET imageUrl = :url',
       ExpressionAttributeValues: { ':url': imageUrl },
     })).catch(() => {});
     enriched++;
-    await sleep(150); // ~6 req/sec — well within Deezer's limits
+    await sleep(150);
   }
-  console.log(`Images: enriched ${enriched}/${artists.length} artists`);
+  console.log(`Images: enriched ${enriched}/${toEnrich.length}`);
 }
 
 // ─── Upsert to DynamoDB ──────────────────────────────────────────────────────
@@ -812,18 +915,19 @@ exports.handler = async () => {
 
   // 2. Fetch all gig sources in sequence (Lambda has one thread, respect rate limits)
   const tmGigs   = await fetchTicketmaster(nameMap);
-  const bitGigs  = await fetchBandsintown(artists);
+  const bitGigs  = await fetchBandsintown(artists);   // all 1000, past + upcoming
   const skiGigs  = await fetchSkiddle(nameMap);
-  const skGigs   = await fetchSongkick(artists);
+  const skGigs   = await fetchSongkick(artists);       // past + upcoming
   const diceGigs = await fetchDice(nameMap);
   const raGigs   = await fetchResidentAdvisor(nameMap);
   const seeGigs  = await fetchSeeTickets(nameMap);
   const gigGigs  = await fetchGigantic(nameMap);
   const wgtGigs  = await fetchWeGotTickets(nameMap);
   const ebGigs   = await fetchEventbrite(nameMap);
+  const slmGigs  = await fetchSetlistFm(artists);      // past gigs with setlists
 
   // 3. Merge & deduplicate
-  const merged = mergeGigs([tmGigs, bitGigs, skiGigs, skGigs, diceGigs, raGigs, seeGigs, gigGigs, wgtGigs, ebGigs]);
+  const merged = mergeGigs([tmGigs, bitGigs, skiGigs, skGigs, diceGigs, raGigs, seeGigs, gigGigs, wgtGigs, ebGigs, slmGigs]);
   console.log(`Merged: ${merged.length} unique gigs`);
 
   // 4. Upsert gigs

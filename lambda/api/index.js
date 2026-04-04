@@ -39,13 +39,13 @@ async function getArtist(artistId) {
 
 /* ---- GET /artists/:id/gigs ---- */
 async function getArtistGigs(artistId) {
-  const today = new Date().toISOString().split('T')[0];
+  const yearAgo = new Date(Date.now() - 365 * 864e5).toISOString().split('T')[0];
   const result = await ddb.send(new QueryCommand({
     TableName:                 GIGS_TABLE,
     IndexName:                 'artistId-date-index',
-    KeyConditionExpression:    'artistId = :id AND #d >= :today',
+    KeyConditionExpression:    'artistId = :id AND #d >= :yearAgo',
     ExpressionAttributeNames:  { '#d': 'date' },
-    ExpressionAttributeValues: { ':id': artistId, ':today': today },
+    ExpressionAttributeValues: { ':id': artistId, ':yearAgo': yearAgo },
     ScanIndexForward:          true
   }));
   return ok(result.Items || []);
