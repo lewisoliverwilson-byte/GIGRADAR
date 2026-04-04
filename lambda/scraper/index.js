@@ -261,9 +261,7 @@ async function fetchSongkick(artists) {
   const gigs    = [];
   const yearAgo = new Date(Date.now() - 365 * 864e5).toISOString().split('T')[0];
   const yearAhead = new Date(Date.now() + 365 * 864e5).toISOString().split('T')[0];
-  const sample  = artists.slice(0, 200);
-
-  for (const artist of sample) {
+  for (const artist of artists) {
     try {
       const slug = artist.name.toLowerCase().replace(/[^a-z0-9]+/g, '-');
       const url  = `https://www.songkick.com/artists/${slug}/gigography?order=asc`;
@@ -308,7 +306,7 @@ async function fetchSongkick(artists) {
         } catch { /* malformed JSON-LD */ }
       }
     } catch { /* network error */ }
-    await sleep(400); // be polite
+    await sleep(150); // 150ms — artists not on Songkick 404 quickly, keeps total under ~350s
   }
   console.log(`Songkick: ${gigs.length} gigs`);
   return gigs;
