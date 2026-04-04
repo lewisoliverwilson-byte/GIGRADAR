@@ -1,89 +1,110 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { formatDate } from '../utils/format.js';
 
-const SOURCE_LABELS = {
-  ticketmaster: 'TM',
-  bandsintown:  'BIT',
-  songkick:     'SK',
-  skiddle:      'SKI',
-  dice:         'DICE',
-  seetickets:   'SEE',
-  gigantic:     'GIG',
-  wegottickets: 'WGT',
-  eventbrite:   'EB',
-  residentadvisor: 'RA',
+// Full seller names for ticket buttons
+const SELLER_LABELS = {
+  'Ticketmaster':    'Ticketmaster',
+  'Bandsintown':     'Bandsintown',
+  'Skiddle':         'Skiddle',
+  'Dice':            'Dice',
+  'See Tickets':     'See Tickets',
+  'Gigantic':        'Gigantic',
+  'WeGotTickets':    'WeGotTickets',
+  'Eventbrite':      'Eventbrite',
+  'Resident Advisor':'RA',
+  'Songkick':        'Songkick',
+  'Setlist.fm':      'Setlist.fm',
 };
 
 export default function GigCard({ gig, showArtist = false }) {
-  const tickets     = gig.tickets || [];
-  const isSoldOut   = gig.isSoldOut || tickets.every(t => !t.available);
-  const available   = tickets.filter(t => t.available);
-  const price       = available.find(t => t.price && t.price !== 'See site')?.price
-    || (available.length ? 'See site' : null);
-  const sources     = [...new Set((gig.sources || [gig.source]).filter(Boolean))];
-  const buyUrl      = available[0]?.url || tickets[0]?.url || '#';
+  const tickets   = gig.tickets || [];
+  const today     = new Date().toISOString().split('T')[0];
+  const isPast    = gig.date && gig.date < today;
+  const isSoldOut = !isPast && (gig.isSoldOut || (tickets.length > 0 && tickets.every(t => !t.available)));
+  // Only show ticket links for available, real URLs (exclude Setlist.fm — past event info only)
+  const buyLinks  = tickets.filter(t => t.available && t.url && t.url !== '#' && t.seller !== 'Setlist.fm');
+
+  const d = gig.date ? new Date(gig.date + 'T12:00:00') : null;
 
   return (
-    <div className="card flex gap-0 overflow-hidden hover:border-white/10 transition-colors">
-      {/* Date strip */}
-      <div className="flex-shrink-0 w-16 flex flex-col items-center justify-center bg-surface-2 px-2 py-3 border-r border-white/5">
-        {gig.date ? (
-          <>
-            <span className="text-xs text-gray-500 uppercase">
-              {new Date(gig.date + 'T12:00:00').toLocaleDateString('en-GB', { month: 'short' })}
-            </span>
-            <span className="text-2xl font-bold text-white leading-none">
-              {new Date(gig.date + 'T12:00:00').getDate()}
-            </span>
-            <span className="text-xs text-gray-500">
-              {new Date(gig.date + 'T12:00:00').toLocaleDateString('en-GB', { weekday: 'short' })}
-            </span>
-          </>
-        ) : <span className="text-xs text-gray-500">TBC</span>}
-      </div>
+    <div className={`card overflow-hidden transition-colors hover:border-white/10 ${isPast ? 'opacity-70' : ''}`}>
+      <div className="flex items-stretch min-h-[72px]">
 
-      {/* Main info */}
-      <div className="flex-1 px-3 py-3 min-w-0">
-        {showArtist && gig.artistName && (
-          <Link to={`/artists/${gig.artistId}`} className="text-brand-light text-xs font-medium hover:underline block mb-0.5 truncate">
-            {gig.artistName}
-          </Link>
-        )}
-        <p className="font-semibold text-sm text-white truncate">{gig.venueName || 'Venue TBC'}</p>
-        <p className="text-gray-400 text-xs truncate mt-0.5">{[gig.venueCity, gig.venueCountry === 'GB' ? null : gig.venueCountry].filter(Boolean).join(', ')}</p>
-
-        {/* Support acts */}
-        {gig.supportActs?.length > 0 && (
-          <p className="text-gray-500 text-xs mt-1 truncate">+ {gig.supportActs.join(', ')}</p>
-        )}
-
-        {/* Bottom row */}
-        <div className="flex items-center gap-1.5 mt-2 flex-wrap">
-          {isSoldOut && <span className="badge-sold-out">Sold out</span>}
-          {sources.map(s => (
-            <span key={s} className="badge-source">{SOURCE_LABELS[s] || s}</span>
-          ))}
-          {price && !isSoldOut && (
-            <span className="text-xs text-gray-400 ml-auto">{price}</span>
+        {/* Date column */}
+        <div className="flex-shrink-0 w-14 flex flex-col items-center justify-center bg-surface-2 border-r border-white/5 py-3 gap-0.5">
+          {d ? (
+            <>
+              <span className="text-[10px] text-gray-500 uppercase tracking-wide leading-none">
+                {d.toLocaleDateString('en-GB', { month: 'short' })}
+              </span>
+              <span className="text-xl font-extrabold text-white leading-none">
+                {d.getDate()}
+              </span>
+              <span className="text-[10px] text-gray-500 leading-none">
+                {d.toLocaleDateString('en-GB', { weekday: 'short' })}
+              </span>
+            </>
+          ) : (
+            <span className="text-xs text-gray-500">TBC</span>
           )}
         </div>
-      </div>
 
-      {/* Ticket button */}
-      <div className="flex-shrink-0 flex items-center pr-3">
-        {!isSoldOut && tickets.length > 0 ? (
-          <a
-            href={buyUrl}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="text-xs font-semibold text-brand hover:text-brand-light border border-brand/40 hover:border-brand/70 rounded-lg px-2.5 py-1.5 transition-colors whitespace-nowrap"
-          >
-            Tickets
-          </a>
-        ) : isSoldOut ? (
-          <span className="text-xs text-gray-600 font-medium">Sold out</span>
-        ) : null}
+        {/* Main content */}
+        <div className="flex-1 min-w-0 px-3 py-2.5 flex flex-col justify-center gap-1">
+
+          {/* Artist name — primary text when showArtist */}
+          {showArtist && gig.artistName && (
+            <Link
+              to={`/artists/${gig.artistId}`}
+              className="font-bold text-sm text-white hover:text-brand-light transition-colors truncate leading-tight"
+            >
+              {gig.artistName}
+            </Link>
+          )}
+
+          {/* Venue + city */}
+          <div className="min-w-0">
+            <p className={`truncate leading-tight ${showArtist ? 'text-xs text-gray-400' : 'text-sm font-semibold text-white'}`}>
+              {gig.venueName || 'Venue TBC'}
+            </p>
+            {gig.venueCity && (
+              <p className="text-xs text-gray-500 truncate leading-tight">{gig.venueCity}</p>
+            )}
+          </div>
+
+          {/* Support acts */}
+          {gig.supportActs?.length > 0 && (
+            <p className="text-[11px] text-gray-600 truncate">
+              + {gig.supportActs.join(', ')}
+            </p>
+          )}
+
+          {/* Ticket links or status */}
+          {isSoldOut ? (
+            <div className="mt-0.5">
+              <span className="badge-sold-out">Sold out</span>
+            </div>
+          ) : isPast ? (
+            <p className="text-[11px] text-gray-600">Past event</p>
+          ) : buyLinks.length > 0 ? (
+            <div className="flex flex-wrap gap-1.5 mt-0.5">
+              {buyLinks.slice(0, 4).map((t, i) => (
+                <a
+                  key={i}
+                  href={t.url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-1.5 text-[11px] font-semibold bg-brand/10 text-brand-light border border-brand/25 hover:bg-brand/20 hover:border-brand/50 rounded-md px-2 py-1 transition-colors whitespace-nowrap"
+                >
+                  <span>{SELLER_LABELS[t.seller] || t.seller}</span>
+                  {t.price && t.price !== 'See site' && (
+                    <span className="text-white/60 font-normal">{t.price}</span>
+                  )}
+                </a>
+              ))}
+            </div>
+          ) : null}
+        </div>
       </div>
     </div>
   );
