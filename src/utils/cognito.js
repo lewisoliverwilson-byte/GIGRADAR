@@ -82,6 +82,17 @@ export function signIn(email, password) {
   });
 }
 
+export function getToken() {
+  return new Promise((resolve) => {
+    const u = userPool.getCurrentUser();
+    if (!u) return resolve(null);
+    u.getSession((err, session) => {
+      if (err || !session?.isValid()) return resolve(null);
+      resolve(session.getIdToken().getJwtToken());
+    });
+  });
+}
+
 export function signOut() {
   userPool.getCurrentUser()?.signOut();
 }

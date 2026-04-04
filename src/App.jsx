@@ -12,6 +12,7 @@ import Discover from './pages/Discover.jsx';
 import Search from './pages/Search.jsx';
 import VenuePage from './pages/VenuePage.jsx';
 import Profile from './pages/Profile.jsx';
+import Admin from './pages/Admin.jsx';
 import NotFound from './pages/NotFound.jsx';
 
 export default function App() {
@@ -31,6 +32,7 @@ export default function App() {
                 <Route path="/search"                element={<Search />} />
                 <Route path="/venues/:slug"          element={<VenuePage />} />
                 <Route path="/profile"               element={<Profile />} />
+                <Route path="/admin"                 element={<Admin />} />
                 <Route path="*"                      element={<NotFound />} />
               </Routes>
             </main>

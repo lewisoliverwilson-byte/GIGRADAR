@@ -1,16 +1,17 @@
 const { DynamoDBClient } = require('@aws-sdk/client-dynamodb');
-const { DynamoDBDocumentClient, ScanCommand, QueryCommand, GetCommand } = require('@aws-sdk/lib-dynamodb');
+const { DynamoDBDocumentClient, ScanCommand, QueryCommand, GetCommand, UpdateCommand } = require('@aws-sdk/lib-dynamodb');
 
 const ddb = DynamoDBDocumentClient.from(new DynamoDBClient({ region: process.env.AWS_REGION || 'us-east-1' }));
 
 const ARTISTS_TABLE = 'gigradar-artists';
 const GIGS_TABLE    = 'gigradar-gigs';
 const VENUES_TABLE  = 'gigradar-venues';
+const ADMIN_KEY     = process.env.ADMIN_API_KEY || '';
 
 const CORS = {
   'Access-Control-Allow-Origin':  '*',
-  'Access-Control-Allow-Methods': 'GET,OPTIONS',
-  'Access-Control-Allow-Headers': 'Content-Type'
+  'Access-Control-Allow-Methods': 'GET,POST,PATCH,OPTIONS',
+  'Access-Control-Allow-Headers': 'Content-Type,Authorization,x-admin-key'
 };
 
 function ok(body) {
@@ -19,12 +20,40 @@ function ok(body) {
 function notFound(msg = 'Not found') {
   return { statusCode: 404, headers: CORS, body: JSON.stringify({ error: msg }) };
 }
+function forbidden(msg = 'Forbidden') {
+  return { statusCode: 403, headers: CORS, body: JSON.stringify({ error: msg }) };
+}
+function badRequest(msg = 'Bad request') {
+  return { statusCode: 400, headers: CORS, body: JSON.stringify({ error: msg }) };
+}
+function unauthorized() {
+  return { statusCode: 401, headers: CORS, body: JSON.stringify({ error: 'Unauthorized' }) };
+}
+
+function isAdmin(event) {
+  const key = event.headers?.['x-admin-key'] || event.headers?.['X-Admin-Key'] || '';
+  return ADMIN_KEY.length > 0 && key === ADMIN_KEY;
+}
+
+function getJwtSub(event) {
+  const auth = event.headers?.['authorization'] || event.headers?.['Authorization'] || '';
+  if (!auth.startsWith('Bearer ')) return null;
+  try {
+    const payload = auth.slice(7).split('.')[1];
+    const decoded = JSON.parse(Buffer.from(payload, 'base64url').toString('utf8'));
+    return decoded.sub || null;
+  } catch { return null; }
+}
+
+function parseBody(event) {
+  try { return JSON.parse(event.body || '{}'); } catch { return {}; }
+}
 
 /* ---- GET /artists ---- */
 async function getArtists() {
   const result = await ddb.send(new ScanCommand({ TableName: ARTISTS_TABLE }));
   const artists = (result.Items || [])
-    .filter(a => a.name && !a.artistId.startsWith('_')) // exclude internal meta records
+    .filter(a => a.name && !a.artistId.startsWith('_'))
     .sort((a, b) => (a.lastfmRank || 9999) - (b.lastfmRank || 9999));
   return ok(artists);
 }
@@ -53,6 +82,121 @@ async function getArtistGigs(artistId) {
   return ok(result.Items || []);
 }
 
+/* ---- POST /artists/:id/claim ---- */
+async function submitClaim(artistId, event) {
+  const sub = getJwtSub(event);
+  if (!sub) return unauthorized();
+
+  const { email, note } = parseBody(event);
+  if (!email) return badRequest('email required');
+
+  const existing = await ddb.send(new GetCommand({ TableName: ARTISTS_TABLE, Key: { artistId } }));
+  const artist = existing.Item;
+  if (!artist) return notFound('Artist not found');
+  if (artist.claimedBy) return { statusCode: 409, headers: CORS, body: JSON.stringify({ error: 'Artist already claimed' }) };
+
+  await ddb.send(new UpdateCommand({
+    TableName: ARTISTS_TABLE,
+    Key: { artistId },
+    UpdateExpression: 'SET pendingClaim = :c',
+    ExpressionAttributeValues: {
+      ':c': { sub, email, note: note || '', timestamp: new Date().toISOString() }
+    },
+  }));
+  return ok({ ok: true });
+}
+
+/* ---- PATCH /artists/:id ---- */
+async function updateArtistProfile(artistId, event) {
+  const sub = getJwtSub(event);
+  if (!sub) return unauthorized();
+
+  const existing = await ddb.send(new GetCommand({ TableName: ARTISTS_TABLE, Key: { artistId } }));
+  const artist = existing.Item;
+  if (!artist) return notFound('Artist not found');
+  if (artist.claimedBy !== sub) return forbidden();
+
+  const allowed = ['bio', 'instagram', 'facebook', 'spotify', 'website', 'imageUrl'];
+  const data = parseBody(event);
+  const updates = Object.entries(data).filter(([k]) => allowed.includes(k));
+  if (updates.length === 0) return badRequest('No valid fields');
+
+  const sets   = updates.map(([, ], i) => `#f${i} = :v${i}`).join(', ');
+  const names  = Object.fromEntries(updates.map(([k], i) => [`#f${i}`, k]));
+  const values = Object.fromEntries(updates.map(([, v], i) => [`:v${i}`, v]));
+
+  await ddb.send(new UpdateCommand({
+    TableName: ARTISTS_TABLE,
+    Key: { artistId },
+    UpdateExpression: `SET ${sets}`,
+    ExpressionAttributeNames: names,
+    ExpressionAttributeValues: values,
+  }));
+  return ok({ ok: true });
+}
+
+/* ---- GET /admin/artists ---- */
+async function adminGetArtists(event) {
+  if (!isAdmin(event)) return forbidden();
+  const result = await ddb.send(new ScanCommand({ TableName: ARTISTS_TABLE }));
+  const artists = (result.Items || [])
+    .filter(a => a.name && !a.artistId.startsWith('_'))
+    .sort((a, b) => (a.lastfmRank || 9999) - (b.lastfmRank || 9999));
+  return ok(artists);
+}
+
+/* ---- POST /admin/artists/:id/genres ---- */
+async function adminSetGenres(artistId, event) {
+  if (!isAdmin(event)) return forbidden();
+  const { genres } = parseBody(event);
+  if (!Array.isArray(genres)) return badRequest('genres must be an array');
+
+  await ddb.send(new UpdateCommand({
+    TableName: ARTISTS_TABLE,
+    Key: { artistId },
+    UpdateExpression: 'SET genres = :g',
+    ExpressionAttributeValues: { ':g': genres },
+  }));
+  return ok({ ok: true });
+}
+
+/* ---- GET /admin/claims ---- */
+async function adminGetClaims(event) {
+  if (!isAdmin(event)) return forbidden();
+  const result = await ddb.send(new ScanCommand({
+    TableName: ARTISTS_TABLE,
+    FilterExpression: 'attribute_exists(pendingClaim)',
+  }));
+  return ok(result.Items || []);
+}
+
+/* ---- POST /admin/claims/:id/approve ---- */
+async function adminApproveClaim(artistId, event) {
+  if (!isAdmin(event)) return forbidden();
+  const existing = await ddb.send(new GetCommand({ TableName: ARTISTS_TABLE, Key: { artistId } }));
+  const artist = existing.Item;
+  if (!artist?.pendingClaim) return notFound('No pending claim');
+
+  await ddb.send(new UpdateCommand({
+    TableName: ARTISTS_TABLE,
+    Key: { artistId },
+    UpdateExpression: 'SET claimedBy = :sub, verified = :v REMOVE pendingClaim',
+    ExpressionAttributeValues: { ':sub': artist.pendingClaim.sub, ':v': true },
+  }));
+  return ok({ ok: true });
+}
+
+/* ---- POST /admin/claims/:id/reject ---- */
+async function adminRejectClaim(artistId, event) {
+  if (!isAdmin(event)) return forbidden();
+  await ddb.send(new UpdateCommand({
+    TableName: ARTISTS_TABLE,
+    Key: { artistId },
+    UpdateExpression: 'REMOVE pendingClaim',
+  }));
+  return ok({ ok: true });
+}
+
 /* ---- GET /venues ---- */
 async function getVenues() {
   const result = await ddb.send(new ScanCommand({ TableName: VENUES_TABLE }));
@@ -76,7 +220,6 @@ async function getVenue(slug) {
 
 /* ---- GET /venues/:slug/gigs ---- */
 async function getVenueGigs(slug) {
-  // Resolve venue to get venueId and name
   const vRes = await ddb.send(new ScanCommand({
     TableName: VENUES_TABLE,
     FilterExpression: 'slug = :s',
@@ -96,12 +239,11 @@ async function getVenueGigs(slug) {
   return ok(gigs);
 }
 
-/* ---- GET /gigs?upcoming=true&limit=N ---- */
+/* ---- GET /gigs ---- */
 async function getGigs(params) {
-  const today  = new Date().toISOString().split('T')[0];
-  const limit  = Math.min(parseInt(params?.limit || '200', 10), 500);
+  const today = new Date().toISOString().split('T')[0];
+  const limit = Math.min(parseInt(params?.limit || '200', 10), 500);
 
-  // Scan with date filter — acceptable at this scale
   const result = await ddb.send(new ScanCommand({
     TableName:                 GIGS_TABLE,
     FilterExpression:          '#d >= :today',
@@ -123,38 +265,60 @@ exports.handler = async (event) => {
     return { statusCode: 204, headers: CORS, body: '' };
   }
 
-  const method   = event.requestContext?.http?.method || 'GET';
-  const rawPath  = event.rawPath || '/';
-  const params   = event.queryStringParameters || {};
+  const method  = event.requestContext?.http?.method || 'GET';
+  const rawPath = event.rawPath || '/';
+  const params  = event.queryStringParameters || {};
 
-  if (method !== 'GET') {
-    return { statusCode: 405, headers: CORS, body: JSON.stringify({ error: 'Method not allowed' }) };
+  // ---- GET routes ----
+  if (method === 'GET') {
+    if (rawPath === '/artists') return getArtists();
+
+    const artistMatch = rawPath.match(/^\/artists\/([^/]+)$/);
+    if (artistMatch) return getArtist(decodeURIComponent(artistMatch[1]));
+
+    const artistGigsMatch = rawPath.match(/^\/artists\/([^/]+)\/gigs$/);
+    if (artistGigsMatch) return getArtistGigs(decodeURIComponent(artistGigsMatch[1]));
+
+    if (rawPath === '/gigs') return getGigs(params);
+
+    if (rawPath === '/venues') return getVenues();
+
+    const venueGigsMatch = rawPath.match(/^\/venues\/([^/]+)\/gigs$/);
+    if (venueGigsMatch) return getVenueGigs(decodeURIComponent(venueGigsMatch[1]));
+
+    const venueMatch = rawPath.match(/^\/venues\/([^/]+)$/);
+    if (venueMatch) return getVenue(decodeURIComponent(venueMatch[1]));
+
+    if (rawPath === '/admin/artists') return adminGetArtists(event);
+    if (rawPath === '/admin/claims')  return adminGetClaims(event);
+
+    return notFound();
   }
 
-  // GET /artists
-  if (rawPath === '/artists') return getArtists();
+  // ---- POST routes ----
+  if (method === 'POST') {
+    const claimMatch = rawPath.match(/^\/artists\/([^/]+)\/claim$/);
+    if (claimMatch) return submitClaim(decodeURIComponent(claimMatch[1]), event);
 
-  // GET /artists/:id
-  const artistMatch = rawPath.match(/^\/artists\/([^/]+)$/);
-  if (artistMatch) return getArtist(decodeURIComponent(artistMatch[1]));
+    const genresMatch = rawPath.match(/^\/admin\/artists\/([^/]+)\/genres$/);
+    if (genresMatch) return adminSetGenres(decodeURIComponent(genresMatch[1]), event);
 
-  // GET /artists/:id/gigs
-  const artistGigsMatch = rawPath.match(/^\/artists\/([^/]+)\/gigs$/);
-  if (artistGigsMatch) return getArtistGigs(decodeURIComponent(artistGigsMatch[1]));
+    const approveMatch = rawPath.match(/^\/admin\/claims\/([^/]+)\/approve$/);
+    if (approveMatch) return adminApproveClaim(decodeURIComponent(approveMatch[1]), event);
 
-  // GET /gigs
-  if (rawPath === '/gigs') return getGigs(params);
+    const rejectMatch = rawPath.match(/^\/admin\/claims\/([^/]+)\/reject$/);
+    if (rejectMatch) return adminRejectClaim(decodeURIComponent(rejectMatch[1]), event);
 
-  // GET /venues
-  if (rawPath === '/venues') return getVenues();
+    return notFound();
+  }
 
-  // GET /venues/:slug/gigs
-  const venueGigsMatch = rawPath.match(/^\/venues\/([^/]+)\/gigs$/);
-  if (venueGigsMatch) return getVenueGigs(decodeURIComponent(venueGigsMatch[1]));
+  // ---- PATCH routes ----
+  if (method === 'PATCH') {
+    const artistPatchMatch = rawPath.match(/^\/artists\/([^/]+)$/);
+    if (artistPatchMatch) return updateArtistProfile(decodeURIComponent(artistPatchMatch[1]), event);
 
-  // GET /venues/:slug
-  const venueMatch = rawPath.match(/^\/venues\/([^/]+)$/);
-  if (venueMatch) return getVenue(decodeURIComponent(venueMatch[1]));
+    return notFound();
+  }
 
-  return notFound();
+  return { statusCode: 405, headers: CORS, body: JSON.stringify({ error: 'Method not allowed' }) };
 };
