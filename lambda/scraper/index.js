@@ -719,39 +719,69 @@ function mergeGigs(allGigArrays) {
   return [...merged.values()];
 }
 
+// ─── Image enrichment: Deezer API (no key required) ─────────────────────────
+
+async function fetchDeezerImage(artistName) {
+  try {
+    const url  = `https://api.deezer.com/search/artist?q=${encodeURIComponent(artistName)}&limit=1`;
+    const res  = await fetch(url, { headers: { 'User-Agent': 'Mozilla/5.0 (compatible; GigRadar/2.0)' } });
+    if (!res.ok) return null;
+    const data = await res.json();
+    const hit  = data?.data?.[0];
+    if (!hit) return null;
+    // Deezer uses a placeholder image for artists with no photo — filter it out
+    const url2 = hit.picture_big || hit.picture_xl || hit.picture || '';
+    if (url2.includes('default') || url2.includes('placeholder')) return null;
+    return url2 || null;
+  } catch { return null; }
+}
+
+async function enrichArtistImages(artists) {
+  let enriched = 0;
+  for (const artist of artists) {
+    const imageUrl = await fetchDeezerImage(artist.name);
+    if (!imageUrl) { await sleep(100); continue; }
+    // Only set imageUrl if not already present (preserves any manually set image)
+    await ddb.send(new UpdateCommand({
+      TableName: ARTISTS_TABLE,
+      Key: { artistId: artist.artistId },
+      UpdateExpression: 'SET imageUrl = if_not_exists(imageUrl, :url)',
+      ExpressionAttributeValues: { ':url': imageUrl },
+    })).catch(() => {});
+    enriched++;
+    await sleep(150); // ~6 req/sec — well within Deezer's limits
+  }
+  console.log(`Images: enriched ${enriched}/${artists.length} artists`);
+}
+
 // ─── Upsert to DynamoDB ──────────────────────────────────────────────────────
 
 async function upsertArtist(artist) {
-  await ddb.send(new PutCommand({
+  // Use UpdateCommand throughout so existing enrichment data (imageUrl, genres, bio) is never overwritten
+  await ddb.send(new UpdateCommand({
     TableName: ARTISTS_TABLE,
-    Item: {
-      artistId:         artist.artistId,
-      name:             artist.name,
-      monthlyListeners: artist.listeners,
-      lastfmRank:       artist.lastfmRank,
-      lastfmMbid:       artist.lastfmMbid,
-      country:          'UK',
-      genres:           [],
-      bio:              '',
-      color:            '#8b5cf6',
-      wikipedia:        null,
-      upcoming:         0,
-      lastUpdated:      new Date().toISOString(),
+    Key: { artistId: artist.artistId },
+    UpdateExpression: `SET #n = :n, monthlyListeners = :l, lastfmRank = :r, lastfmMbid = :m,
+      country = if_not_exists(country, :c),
+      genres   = if_not_exists(genres,   :g),
+      bio      = if_not_exists(bio,      :b),
+      color    = if_not_exists(color,    :col),
+      upcoming = if_not_exists(upcoming, :u),
+      lastUpdated = :t`,
+    ExpressionAttributeNames: { '#n': 'name' },
+    ExpressionAttributeValues: {
+      ':n':   artist.name,
+      ':l':   artist.listeners,
+      ':r':   artist.lastfmRank,
+      ':m':   artist.lastfmMbid,
+      ':c':   'UK',
+      ':g':   [],
+      ':b':   '',
+      ':col': '#8b5cf6',
+      ':u':   0,
+      ':t':   new Date().toISOString(),
     },
-    ConditionExpression: 'attribute_not_exists(artistId) OR lastfmRank > :rank OR attribute_not_exists(lastfmRank)',
-    ExpressionAttributeValues: { ':rank': artist.lastfmRank },
-  })).catch(() =>
-    ddb.send(new UpdateCommand({
-      TableName: ARTISTS_TABLE,
-      Key: { artistId: artist.artistId },
-      UpdateExpression: 'SET monthlyListeners = :l, lastfmRank = :r, lastUpdated = :t',
-      ExpressionAttributeValues: {
-        ':l': artist.listeners,
-        ':r': artist.lastfmRank,
-        ':t': new Date().toISOString(),
-      },
-    }))
-  );
+  })).catch(e => console.error(`upsertArtist ${artist.artistId}:`, e.message));
 }
 
 async function upsertGig(gig) {
@@ -774,6 +804,9 @@ exports.handler = async () => {
   // Upsert artists
   for (const a of artists) await upsertArtist(a);
   console.log(`Upserted ${artists.length} artists`);
+
+  // Enrich with artist photos from Deezer (skips artists that already have an image)
+  await enrichArtistImages(artists);
 
   const nameMap = buildNameMap(artists);
 
