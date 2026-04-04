@@ -55,6 +55,12 @@ function isTributeAct(name) {
   return TRIBUTE_RE.test(name || '');
 }
 
+const GENERIC_ACT_RE = /^(live music|open mic|various artists?|dj night|club night|karaoke|quiz night|comedy night|open stage|acoustic night|local bands?|tribute night|unsigned night|battle of the bands|bands? night|gig night|music night|headline act tba|tba|tbc|doors? open)$/i;
+
+function isGenericName(name) {
+  return !name || name.trim().length < 2 || GENERIC_ACT_RE.test(name.trim());
+}
+
 // ─── Venue ID / slug helpers ─────────────────────────────────────────────────
 
 function toVenueId(name, city) {
@@ -109,8 +115,57 @@ async function fetchLastfmArtists() {
 
 function buildNameMap(artists) {
   const map = {};
-  artists.forEach(a => { map[a.normName] = { id: a.artistId, name: a.name }; });
+  artists.forEach(a => { map[a.normName || normaliseName(a.name)] = { id: a.artistId, name: a.name }; });
   return map;
+}
+
+// ─── Load all artists already in DynamoDB ───────────────────────────────────
+
+async function loadAllArtistsFromDb() {
+  const artists = [];
+  let lastKey;
+  do {
+    const params = { TableName: ARTISTS_TABLE, ProjectionExpression: 'artistId, #n', ExpressionAttributeNames: { '#n': 'name' } };
+    if (lastKey) params.ExclusiveStartKey = lastKey;
+    const result = await ddb.send(new ScanCommand(params)).catch(() => ({ Items: [] }));
+    for (const item of (result.Items || [])) {
+      if (!item.name || item.artistId.startsWith('_')) continue;
+      artists.push({ artistId: item.artistId, name: item.name });
+    }
+    lastKey = result.LastEvaluatedKey;
+  } while (lastKey);
+  console.log(`DB artists loaded: ${artists.length}`);
+  return artists;
+}
+
+// ─── Auto-seed a new grassroots artist ──────────────────────────────────────
+
+async function autoSeedArtist(name, nameMap) {
+  if (!name || isGenericName(name) || isTributeAct(name)) return null;
+  const norm = normaliseName(name);
+  if (nameMap[norm]) return nameMap[norm];
+  const artistId = toArtistId(name);
+  if (!artistId || artistId.length < 2) return null;
+
+  await ddb.send(new UpdateCommand({
+    TableName: ARTISTS_TABLE,
+    Key: { artistId },
+    UpdateExpression: `SET #n = if_not_exists(#n, :n),
+      isGrassroots = if_not_exists(isGrassroots, :gr),
+      country      = if_not_exists(country,      :c),
+      genres       = if_not_exists(genres,        :g),
+      upcoming     = if_not_exists(upcoming,      :u),
+      lastUpdated  = :t`,
+    ExpressionAttributeNames: { '#n': 'name' },
+    ExpressionAttributeValues: {
+      ':n': name, ':gr': true, ':c': 'UK',
+      ':g': [], ':u': 0, ':t': new Date().toISOString(),
+    },
+  })).catch(() => {});
+
+  const entry = { id: artistId, name };
+  nameMap[norm] = entry;
+  return entry;
 }
 
 // ─── Gig deduplication key ───────────────────────────────────────────────────
@@ -172,6 +227,69 @@ async function fetchTicketmaster(artists) {
   return gigs;
 }
 
+// ─── 1b. Ticketmaster bulk UK scan (discovers acts not in Last.fm top 1000) ──
+
+async function fetchTicketmasterBulk(nameMap) {
+  if (!TM_KEY) return [];
+  const gigs  = [];
+  const today = new Date().toISOString().split('T')[0];
+  const end   = new Date(Date.now() + 365 * 864e5).toISOString().split('.')[0] + 'Z';
+
+  for (let page = 0; page < 50; page++) {
+    try {
+      const url  = `https://app.ticketmaster.com/discovery/v2/events.json?classificationName=music&countryCode=GB&startDateTime=${today}T00:00:00Z&endDateTime=${end}&size=200&page=${page}&apikey=${TM_KEY}`;
+      const res  = await fetch(url);
+      if (res.status === 429) { await sleep(5000); continue; }
+      if (!res.ok) break;
+      const data   = await res.json();
+      const events = data?._embedded?.events || [];
+      if (!events.length) break;
+
+      for (const ev of events) {
+        const venue   = ev._embedded?.venues?.[0];
+        const date    = ev.dates?.start?.localDate;
+        if (!date || !venue) continue;
+        const attract = ev._embedded?.attractions || [];
+        const mainAct = attract[0];
+        if (!mainAct?.name) continue;
+
+        const norm = normaliseName(mainAct.name);
+        let artist = nameMap[norm];
+        if (!artist) {
+          artist = await autoSeedArtist(mainAct.name, nameMap);
+          if (!artist) continue;
+        }
+
+        const pr  = ev.priceRanges?.[0];
+        const sym = currSym(pr?.currency);
+        gigs.push({
+          gigId:        `tm-${ev.id}`,
+          dedupKey:     dedupKey(artist.id, date, venue.name),
+          artistId:     artist.id,
+          artistName:   artist.name,
+          date,
+          doorsTime:    ev.dates?.start?.localTime || null,
+          venueName:    venue.name,
+          venueId:      `venue-tm-${venue.id}`,
+          venueCity:    venue.city?.name || '',
+          venueCountry: 'GB',
+          isSoldOut:    ev.dates?.status?.code === 'offsale',
+          supportActs:  attract.slice(1).map(a => a.name).filter(Boolean),
+          tickets: [{ seller: 'Ticketmaster', url: ev.url || '#', available: ev.dates?.status?.code !== 'offsale', price: pr ? `${sym}${Math.round(pr.min)}` : 'See site' }],
+          sources:      ['ticketmaster'],
+          lastUpdated:  new Date().toISOString(),
+        });
+      }
+
+      const totalPages = data?.page?.totalPages || 0;
+      if (page >= totalPages - 1) break;
+    } catch (e) { console.error(`TM bulk page ${page}:`, e.message); }
+    await sleep(250);
+  }
+  console.log(`Ticketmaster bulk: ${gigs.length} gigs`);
+  return gigs;
+}
+
 // ─── 2. Bandsintown — removed (API now returns 403 for all requests) ─────────
 
 async function fetchBandsintown() {
@@ -197,9 +315,14 @@ async function fetchSkiddle(nameMap) {
       total      = data?.totalcount || 1;
       const events = data?.results || [];
       for (const ev of events) {
-        const norm = normaliseName(ev.artists?.[0]?.name || ev.eventname || '');
-        if (!nameMap[norm]) continue;
-        const artist = nameMap[norm];
+        const rawName = ev.artists?.[0]?.name || ev.eventname || '';
+        if (isGenericName(rawName)) continue;
+        const norm = normaliseName(rawName);
+        let artist = nameMap[norm];
+        if (!artist) {
+          artist = await autoSeedArtist(rawName, nameMap);
+          if (!artist) continue;
+        }
         const date   = ev.date;
         gigs.push({
           gigId:        `ski-${ev.id}`,
@@ -311,9 +434,13 @@ async function fetchDice(nameMap) {
         const date = (ev.date || ev.event_date || '').split('T')[0];
         if (!date || date < today) continue;
         const artistName = ev.artists?.[0]?.name || ev.name || '';
-        const norm       = normaliseName(artistName);
-        if (!nameMap[norm]) continue;
-        const artist = nameMap[norm];
+        if (isGenericName(artistName)) continue;
+        const norm = normaliseName(artistName);
+        let artist = nameMap[norm];
+        if (!artist) {
+          artist = await autoSeedArtist(artistName, nameMap);
+          if (!artist) continue;
+        }
         const venue  = ev.venue || {};
         gigs.push({
           gigId:        `dice-${ev.id || ev.slug}`,
@@ -380,9 +507,13 @@ async function fetchResidentAdvisor(nameMap) {
         const date = (ev.date || '').split('T')[0];
         if (!date || date < today) continue;
         for (const art of (ev.artists || [])) {
+          if (isGenericName(art.name)) continue;
           const norm = normaliseName(art.name);
-          if (!nameMap[norm]) continue;
-          const artist  = nameMap[norm];
+          let artist = nameMap[norm];
+          if (!artist) {
+            artist = await autoSeedArtist(art.name, nameMap);
+            if (!artist) continue;
+          }
           const pr      = ev.priceRange;
           const sym     = currSym(pr?.currency);
           gigs.push({
@@ -443,9 +574,14 @@ async function fetchSeeTickets(nameMap) {
         if (!titleMatch || !dateMatch) continue;
         const date = dateMatch[1];
         if (date < today) continue;
-        const norm = normaliseName(titleMatch[1]);
-        if (!nameMap[norm]) continue;
-        const artist = nameMap[norm];
+        const rawTitle = titleMatch[1].trim();
+        if (isGenericName(rawTitle)) continue;
+        const norm = normaliseName(rawTitle);
+        let artist = nameMap[norm];
+        if (!artist) {
+          artist = await autoSeedArtist(rawTitle, nameMap);
+          if (!artist) continue;
+        }
         const venue  = (venueMatch?.[1] || '').trim();
 
         gigs.push({
@@ -501,9 +637,14 @@ async function fetchGigantic(nameMap) {
         if (!titleMatch || !dateMatch) continue;
         const date = dateMatch[1];
         if (date < today) continue;
-        const norm = normaliseName(titleMatch[1]);
-        if (!nameMap[norm]) continue;
-        const artist = nameMap[norm];
+        const rawTitle = titleMatch[1].trim();
+        if (isGenericName(rawTitle)) continue;
+        const norm = normaliseName(rawTitle);
+        let artist = nameMap[norm];
+        if (!artist) {
+          artist = await autoSeedArtist(rawTitle, nameMap);
+          if (!artist) continue;
+        }
         const venue  = (venueMatch?.[1] || '').trim();
 
         gigs.push({
@@ -557,9 +698,14 @@ async function fetchWeGotTickets(nameMap) {
         const urlMatch   = block.match(/href="(https?:\/\/[^"]*wegottickets[^"]+)"/);
 
         if (!titleMatch) continue;
-        const norm = normaliseName(titleMatch[1]);
-        if (!nameMap[norm]) continue;
-        const artist = nameMap[norm];
+        const rawTitle = titleMatch[1].trim();
+        if (isGenericName(rawTitle)) continue;
+        const norm = normaliseName(rawTitle);
+        let artist = nameMap[norm];
+        if (!artist) {
+          artist = await autoSeedArtist(rawTitle, nameMap);
+          if (!artist) continue;
+        }
 
         // Parse UK date like "15th April 2025"
         let date = '';
@@ -624,9 +770,14 @@ async function fetchEventbrite(nameMap) {
       for (const ev of events) {
         const date = (ev.start?.local || ev.start_date || '').split('T')[0];
         if (!date || date < today) continue;
-        const norm = normaliseName(ev.name?.text || ev.name || '');
-        if (!nameMap[norm]) continue;
-        const artist = nameMap[norm];
+        const rawName = ev.name?.text || ev.name || '';
+        if (isGenericName(rawName)) continue;
+        const norm = normaliseName(rawName);
+        let artist = nameMap[norm];
+        if (!artist) {
+          artist = await autoSeedArtist(rawName, nameMap);
+          if (!artist) continue;
+        }
         const venue  = ev.venue?.name || '';
 
         gigs.push({
@@ -862,6 +1013,67 @@ async function enrichArtistImages(artists) {
   console.log(`Images: enriched ${enriched}/${toEnrich.length}`);
 }
 
+// ─── Enrich newly discovered grassroots artists ──────────────────────────────
+
+async function enrichGrassrootsArtists() {
+  if (!LASTFM_KEY) return;
+  // Find grassroots artists that haven't been enriched with Last.fm data yet
+  const result = await ddb.send(new ScanCommand({
+    TableName: ARTISTS_TABLE,
+    FilterExpression: 'isGrassroots = :gr AND attribute_not_exists(monthlyListeners)',
+    ExpressionAttributeValues: { ':gr': true },
+    Limit: 300,
+  })).catch(() => ({ Items: [] }));
+
+  const toEnrich = (result.Items || []).slice(0, 100);
+  if (!toEnrich.length) { console.log('Grassroots enrichment: none needed'); return; }
+  console.log(`Grassroots enrichment: ${toEnrich.length} artists`);
+
+  let enriched = 0;
+  for (const artist of toEnrich) {
+    try {
+      const url  = `https://ws.audioscrobbler.com/2.0/?method=artist.getInfo&artist=${encodeURIComponent(artist.name)}&api_key=${LASTFM_KEY}&format=json`;
+      const res  = await fetch(url);
+      const data = await res.json();
+      const info = data?.artist;
+
+      const listeners = parseInt(info?.stats?.listeners || 0, 10);
+      const mbid      = info?.mbid || null;
+      const rawBio    = info?.bio?.summary || '';
+      const bio       = rawBio.replace(/<[^>]+>/g, '').split('Read more on Last.fm')[0].trim();
+
+      let expr   = 'SET monthlyListeners = :l, lastUpdated = :t';
+      const vals = { ':l': listeners, ':t': new Date().toISOString() };
+      if (mbid) { expr += ', lastfmMbid = if_not_exists(lastfmMbid, :m)'; vals[':m'] = mbid; }
+      if (bio)  { expr += ', bio = if_not_exists(bio, :b)'; vals[':b'] = bio; }
+
+      await ddb.send(new UpdateCommand({
+        TableName: ARTISTS_TABLE,
+        Key: { artistId: artist.artistId },
+        UpdateExpression: expr,
+        ExpressionAttributeValues: vals,
+      })).catch(() => {});
+
+      // Try Deezer for image if missing
+      if (!artist.imageUrl) {
+        const img = await fetchDeezerImage(artist.name);
+        if (img) {
+          await ddb.send(new UpdateCommand({
+            TableName: ARTISTS_TABLE,
+            Key: { artistId: artist.artistId },
+            UpdateExpression: 'SET imageUrl = :url',
+            ExpressionAttributeValues: { ':url': img },
+          })).catch(() => {});
+          await sleep(150);
+        }
+      }
+      enriched++;
+    } catch { /* skip this artist */ }
+    await sleep(100);
+  }
+  console.log(`Grassroots enrichment: ${enriched}/${toEnrich.length} done`);
+}
+
 // ─── Upsert to DynamoDB ──────────────────────────────────────────────────────
 
 async function upsertArtist(artist) {
@@ -934,34 +1146,37 @@ exports.handler = async () => {
   console.log('GigRadar scraper v2 starting…');
   const start = Date.now();
 
-  // 1. Fetch artists
+  // 1. Fetch Last.fm top 1000 UK artists
   const artists = await fetchLastfmArtists();
   if (!artists.length) return { error: 'No artists fetched' };
 
-  // Upsert artists
   for (const a of artists) await upsertArtist(a);
-  console.log(`Upserted ${artists.length} artists`);
+  console.log(`Upserted ${artists.length} Last.fm artists`);
+
+  // Load all previously discovered artists from DB (grassroots + Last.fm)
+  const dbArtists = await loadAllArtistsFromDb();
+  const nameMap   = buildNameMap([...artists, ...dbArtists]);
+  console.log(`Name map: ${Object.keys(nameMap).length} total artists`);
 
   // Enrich with artist photos from Deezer (skips artists that already have an image)
   await enrichArtistImages(artists);
 
-  const nameMap = buildNameMap(artists);
-
   // 2. Fetch all gig sources in sequence (Lambda has one thread, respect rate limits)
-  const tmGigs   = await fetchTicketmaster(artists);  // per-artist worldwide queries
-  const bitGigs  = await fetchBandsintown();           // removed — API blocked
-  const skiGigs  = await fetchSkiddle(nameMap);
-  const skGigs   = await fetchSongkick(artists);       // past + upcoming
-  const diceGigs = await fetchDice(nameMap);
-  const raGigs   = await fetchResidentAdvisor(nameMap);
-  const seeGigs  = await fetchSeeTickets(nameMap);
-  const gigGigs  = await fetchGigantic(nameMap);
-  const wgtGigs  = await fetchWeGotTickets(nameMap);
-  const ebGigs   = await fetchEventbrite(nameMap);
-  const slmGigs  = await fetchSetlistFm(artists);      // past gigs with setlists
+  const tmGigs     = await fetchTicketmaster(artists);      // per-artist for Last.fm top 1000
+  const tmBulkGigs = await fetchTicketmasterBulk(nameMap); // bulk UK scan — discovers new acts
+  const bitGigs    = await fetchBandsintown();              // removed — API blocked
+  const skiGigs    = await fetchSkiddle(nameMap);           // now discovers new acts too
+  const skGigs     = await fetchSongkick(artists);          // per-artist for top 1000
+  const diceGigs   = await fetchDice(nameMap);
+  const raGigs     = await fetchResidentAdvisor(nameMap);
+  const seeGigs    = await fetchSeeTickets(nameMap);
+  const gigGigs    = await fetchGigantic(nameMap);
+  const wgtGigs    = await fetchWeGotTickets(nameMap);
+  const ebGigs     = await fetchEventbrite(nameMap);
+  const slmGigs    = await fetchSetlistFm(artists);         // past gigs with setlists
 
   // 3. Merge & deduplicate
-  const merged = mergeGigs([tmGigs, bitGigs, skiGigs, skGigs, diceGigs, raGigs, seeGigs, gigGigs, wgtGigs, ebGigs, slmGigs]);
+  const merged = mergeGigs([tmGigs, tmBulkGigs, bitGigs, skiGigs, skGigs, diceGigs, raGigs, seeGigs, gigGigs, wgtGigs, ebGigs, slmGigs]);
   console.log(`Merged: ${merged.length} unique gigs`);
 
   // 4. Upsert gigs (stamping canonicalVenueId for venue pages)
@@ -993,7 +1208,11 @@ exports.handler = async () => {
     })).catch(() => {});
   }
 
+  // 6. Enrich newly discovered grassroots artists with Last.fm + Deezer (up to 100/run)
+  await enrichGrassrootsArtists();
+
   const elapsed = Math.round((Date.now() - start) / 1000);
-  console.log(`Done in ${elapsed}s. Saved ${saved} gigs across ${Object.keys(countMap).length} artists.`);
-  return { artists: artists.length, gigs: saved, elapsed };
+  const totalArtists = Object.keys(nameMap).length;
+  console.log(`Done in ${elapsed}s. Saved ${saved} gigs across ${totalArtists} artists (${artists.length} charting + ${totalArtists - artists.length} grassroots).`);
+  return { artists: totalArtists, gigs: saved, elapsed };
 };
