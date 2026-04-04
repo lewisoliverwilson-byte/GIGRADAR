@@ -707,10 +707,20 @@ async function fetchSetlistFm(artists) {
 
   const withMbid = artists.filter(a => a.lastfmMbid); // all artists with MBID, no cap
   console.log(`Setlist.fm: querying all ${withMbid.length} artists with MBID`);
+  // Top 480 artists (by lastfmRank) get 2 pages — catches artists with lots of international
+  // dates pushing UK gigs off page 1. 480×2 + 466×1 = 1,426 req/day (≤ 1,440 limit).
+  const twoPageIds = new Set(
+    withMbid
+      .slice()
+      .sort((a, b) => (a.lastfmRank || 9999) - (b.lastfmRank || 9999))
+      .slice(0, 480)
+      .map(a => a.artistId)
+  );
 
   for (const artist of withMbid) {
+    const maxPages = twoPageIds.has(artist.artistId) ? 2 : 1;
     try {
-      for (let page = 1; page <= 1; page++) { // 1 page = 20 most recent setlists, enough for 12 months
+      for (let page = 1; page <= maxPages; page++) {
         const url = `https://api.setlist.fm/rest/1.0/artist/${artist.lastfmMbid}/setlists?p=${page}`;
         const res = await fetch(url, {
           headers: {

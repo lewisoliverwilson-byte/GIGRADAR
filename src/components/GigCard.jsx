@@ -21,8 +21,16 @@ export default function GigCard({ gig, showArtist = false }) {
   const today     = new Date().toISOString().split('T')[0];
   const isPast    = gig.date && gig.date < today;
   const isSoldOut = !isPast && (gig.isSoldOut || (tickets.length > 0 && tickets.every(t => !t.available)));
-  // Only show ticket links for available, real URLs (exclude Setlist.fm — past event info only)
-  const buyLinks  = tickets.filter(t => t.available && t.url && t.url !== '#' && t.seller !== 'Setlist.fm');
+  // Deduplicate by seller — keep the one with a real price over "See site"
+  const _sellerMap = new Map();
+  for (const t of tickets) {
+    if (!t.available || !t.url || t.url === '#' || t.seller === 'Setlist.fm') continue;
+    const existing = _sellerMap.get(t.seller);
+    if (!existing || (t.price && t.price !== 'See site' && (!existing.price || existing.price === 'See site'))) {
+      _sellerMap.set(t.seller, t);
+    }
+  }
+  const buyLinks = [..._sellerMap.values()];
 
   const d = gig.date ? new Date(gig.date + 'T12:00:00') : null;
 
