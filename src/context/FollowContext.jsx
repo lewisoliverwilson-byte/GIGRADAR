@@ -52,9 +52,18 @@ export function FollowProvider({ children }) {
   const isFollowing      = useCallback((id) => following.has(id),       [following]);
   const isFollowingVenue = useCallback((id) => followingVenues.has(id), [followingVenues]);
 
+  const bulkFollow = useCallback((artistIds) => {
+    setFollowing(prev => {
+      const next = new Set(prev);
+      artistIds.forEach(id => next.add(id));
+      saveArtists(next);
+      return next;
+    });
+  }, [saveArtists]);
+
   return (
     <FollowContext.Provider value={{
-      following, follow, unfollow, isFollowing,
+      following, follow, unfollow, isFollowing, bulkFollow,
       followingVenues, followVenue, unfollowVenue, isFollowingVenue,
     }}>
       {children}

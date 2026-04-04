@@ -1,12 +1,16 @@
 const { DynamoDBClient } = require('@aws-sdk/client-dynamodb');
-const { DynamoDBDocumentClient, ScanCommand, QueryCommand, GetCommand, UpdateCommand } = require('@aws-sdk/lib-dynamodb');
+const { DynamoDBDocumentClient, ScanCommand, QueryCommand, GetCommand, UpdateCommand, PutCommand, DeleteCommand } = require('@aws-sdk/lib-dynamodb');
 
 const ddb = DynamoDBDocumentClient.from(new DynamoDBClient({ region: process.env.AWS_REGION || 'us-east-1' }));
 
-const ARTISTS_TABLE = 'gigradar-artists';
-const GIGS_TABLE    = 'gigradar-gigs';
-const VENUES_TABLE  = 'gigradar-venues';
-const ADMIN_KEY     = process.env.ADMIN_API_KEY || '';
+const ARTISTS_TABLE        = 'gigradar-artists';
+const GIGS_TABLE           = 'gigradar-gigs';
+const VENUES_TABLE         = 'gigradar-venues';
+const SPOTIFY_TOKENS_TABLE = 'gigradar-spotify-tokens';
+const ADMIN_KEY            = process.env.ADMIN_API_KEY || '';
+
+const SPOTIFY_CLIENT_ID     = process.env.SPOTIFY_CLIENT_ID     || '';
+const SPOTIFY_CLIENT_SECRET = process.env.SPOTIFY_CLIENT_SECRET || '';
 
 const CORS = {
   'Access-Control-Allow-Origin':  '*',
@@ -259,6 +263,179 @@ async function getGigs(params) {
   return ok(gigs);
 }
 
+/* ---- Spotify helpers ---- */
+
+function normaliseArtistName(name) {
+  return name.toLowerCase().trim()
+    .replace(/[^a-z0-9\s]/g, '')
+    .replace(/\s+/g, ' ');
+}
+
+async function getValidSpotifyToken(userId) {
+  const result = await ddb.send(new GetCommand({
+    TableName: SPOTIFY_TOKENS_TABLE,
+    Key: { userId },
+  }));
+  const item = result.Item;
+  if (!item) return null;
+
+  const bufferMs = 5 * 60 * 1000;
+  if (Date.now() < item.tokenExpiry - bufferMs) {
+    return item.accessToken;
+  }
+
+  // Refresh the token
+  const res = await fetch('https://accounts.spotify.com/api/token', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+    body: new URLSearchParams({
+      grant_type: 'refresh_token',
+      refresh_token: item.refreshToken,
+      client_id: SPOTIFY_CLIENT_ID,
+      client_secret: SPOTIFY_CLIENT_SECRET,
+    }),
+  });
+
+  if (!res.ok) return null;
+  const data = await res.json();
+
+  const updates = {
+    accessToken: data.access_token,
+    tokenExpiry: Date.now() + data.expires_in * 1000,
+  };
+  if (data.refresh_token) updates.refreshToken = data.refresh_token;
+
+  await ddb.send(new UpdateCommand({
+    TableName: SPOTIFY_TOKENS_TABLE,
+    Key: { userId },
+    UpdateExpression: 'SET accessToken = :at, tokenExpiry = :te' + (data.refresh_token ? ', refreshToken = :rt' : ''),
+    ExpressionAttributeValues: {
+      ':at': updates.accessToken,
+      ':te': updates.tokenExpiry,
+      ...(data.refresh_token ? { ':rt': data.refresh_token } : {}),
+    },
+  }));
+
+  return updates.accessToken;
+}
+
+async function fetchSpotifyTopArtists(accessToken) {
+  const artists = [];
+  for (const offset of [0, 50]) {
+    const res = await fetch(
+      `https://api.spotify.com/v1/me/top/artists?time_range=long_term&limit=50&offset=${offset}`,
+      { headers: { Authorization: `Bearer ${accessToken}` } }
+    );
+    if (!res.ok) break;
+    const data = await res.json();
+    if (data.items) artists.push(...data.items);
+  }
+  return artists;
+}
+
+async function matchSpotifyArtistsToDb(spotifyArtists) {
+  // Fetch all artists from DB (we already have a scan-based approach)
+  const result = await ddb.send(new ScanCommand({ TableName: ARTISTS_TABLE }));
+  const dbArtists = (result.Items || []).filter(a => a.name && !a.artistId.startsWith('_'));
+
+  // Build lookup maps
+  const bySpotifyId   = new Map(dbArtists.filter(a => a.spotify).map(a => [a.spotify.split('/').pop(), a]));
+  const byNormName    = new Map(dbArtists.map(a => [normaliseArtistName(a.name), a]));
+
+  const matched = [];
+  const seen = new Set();
+
+  for (const sa of spotifyArtists) {
+    let match = bySpotifyId.get(sa.id) || byNormName.get(normaliseArtistName(sa.name));
+    if (match && !seen.has(match.artistId)) {
+      seen.add(match.artistId);
+      matched.push({
+        artistId: match.artistId,
+        name:     match.name,
+        imageUrl: match.imageUrl || null,
+        genres:   match.genres   || [],
+      });
+    }
+  }
+  return matched;
+}
+
+/* ---- POST /api/auth/spotify/exchange ---- */
+async function spotifyExchange(event) {
+  const sub = getJwtSub(event);
+  if (!sub) return unauthorized();
+
+  const { code, codeVerifier, redirectUri } = parseBody(event);
+  if (!code || !codeVerifier || !redirectUri) return badRequest('code, codeVerifier, redirectUri required');
+
+  const res = await fetch('https://accounts.spotify.com/api/token', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+    body: new URLSearchParams({
+      grant_type:    'authorization_code',
+      code,
+      redirect_uri:  redirectUri,
+      client_id:     SPOTIFY_CLIENT_ID,
+      client_secret: SPOTIFY_CLIENT_SECRET,
+      code_verifier: codeVerifier,
+    }),
+  });
+
+  if (!res.ok) {
+    const err = await res.text();
+    console.error('Spotify token exchange error:', err);
+    return { statusCode: 502, headers: CORS, body: JSON.stringify({ error: 'Spotify token exchange failed' }) };
+  }
+
+  const data = await res.json();
+
+  await ddb.send(new PutCommand({
+    TableName: SPOTIFY_TOKENS_TABLE,
+    Item: {
+      userId:       sub,
+      accessToken:  data.access_token,
+      refreshToken: data.refresh_token,
+      tokenExpiry:  Date.now() + data.expires_in * 1000,
+      connected:    true,
+      connectedAt:  new Date().toISOString(),
+    },
+  }));
+
+  return ok({ ok: true });
+}
+
+/* ---- GET /api/auth/spotify/artists ---- */
+async function spotifyArtists(event) {
+  const sub = getJwtSub(event);
+  if (!sub) return unauthorized();
+
+  const accessToken = await getValidSpotifyToken(sub);
+  if (!accessToken) {
+    return { statusCode: 401, headers: CORS, body: JSON.stringify({ error: 'Spotify not connected or token expired' }) };
+  }
+
+  const spotifyArtists = await fetchSpotifyTopArtists(accessToken);
+  if (spotifyArtists.length === 0) {
+    return ok({ artists: [] });
+  }
+
+  const matched = await matchSpotifyArtistsToDb(spotifyArtists);
+  return ok({ artists: matched });
+}
+
+/* ---- POST /api/auth/spotify/disconnect ---- */
+async function spotifyDisconnect(event) {
+  const sub = getJwtSub(event);
+  if (!sub) return unauthorized();
+
+  await ddb.send(new DeleteCommand({
+    TableName: SPOTIFY_TOKENS_TABLE,
+    Key: { userId: sub },
+  }));
+
+  return ok({ ok: true });
+}
+
 /* ---- Router ---- */
 exports.handler = async (event) => {
   if (event.requestContext?.http?.method === 'OPTIONS') {
@@ -271,6 +448,8 @@ exports.handler = async (event) => {
 
   // ---- GET routes ----
   if (method === 'GET') {
+    if (rawPath === '/api/auth/spotify/artists') return spotifyArtists(event);
+
     if (rawPath === '/artists') return getArtists();
 
     const artistMatch = rawPath.match(/^\/artists\/([^/]+)$/);
@@ -297,6 +476,9 @@ exports.handler = async (event) => {
 
   // ---- POST routes ----
   if (method === 'POST') {
+    if (rawPath === '/api/auth/spotify/exchange')   return spotifyExchange(event);
+    if (rawPath === '/api/auth/spotify/disconnect') return spotifyDisconnect(event);
+
     const claimMatch = rawPath.match(/^\/artists\/([^/]+)\/claim$/);
     if (claimMatch) return submitClaim(decodeURIComponent(claimMatch[1]), event);
 
