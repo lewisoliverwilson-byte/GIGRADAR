@@ -16,7 +16,7 @@
  */
 
 const { DynamoDBClient }                             = require('@aws-sdk/client-dynamodb');
-const { DynamoDBDocumentClient, PutCommand, UpdateCommand, ScanCommand } = require('@aws-sdk/lib-dynamodb');
+const { DynamoDBDocumentClient, PutCommand, UpdateCommand, ScanCommand, GetCommand } = require('@aws-sdk/lib-dynamodb');
 
 const ddb = DynamoDBDocumentClient.from(new DynamoDBClient({ region: process.env.AWS_REGION || 'us-east-1' }));
 
@@ -693,10 +693,20 @@ async function fetchSetlistFm(artists) {
   const yearAgo = new Date(Date.now() - 365 * 864e5).toISOString().split('T')[0];
   const today   = new Date().toISOString().split('T')[0];
 
-  // Rate limit: 1,440 req/day, scraper runs 4×/day → max 350 per run, 1 page each
-  // Artists are ranked by popularity so top 350 gives best coverage
-  const withMbid = artists.filter(a => a.lastfmMbid).slice(0, 350);
-  console.log(`Setlist.fm: querying ${withMbid.length} artists with MBID`);
+  // Rate limit: 1,440 req/day — only run once per day so the full allowance
+  // covers all ~946 artists with MBIDs in a single pass.
+  const meta = await ddb.send(new GetCommand({
+    TableName: ARTISTS_TABLE,
+    Key: { artistId: '_gigradar_meta' },
+  })).catch(() => ({ Item: null }));
+  const lastRun = meta.Item?.setlistfmLastRun;
+  if (lastRun && (Date.now() - new Date(lastRun).getTime()) < 20 * 3600 * 1000) {
+    console.log(`Setlist.fm: skipping — last run was ${Math.round((Date.now() - new Date(lastRun).getTime()) / 3600000)}h ago`);
+    return [];
+  }
+
+  const withMbid = artists.filter(a => a.lastfmMbid); // all artists with MBID, no cap
+  console.log(`Setlist.fm: querying all ${withMbid.length} artists with MBID`);
 
   for (const artist of withMbid) {
     try {
@@ -762,6 +772,14 @@ async function fetchSetlistFm(artists) {
     } catch (e) { console.error(`Setlist.fm ${artist.name}:`, e.message); }
     await sleep(500); // 2 req/sec rate limit
   }
+  // Record successful run time so subsequent runs within 20h are skipped
+  await ddb.send(new UpdateCommand({
+    TableName: ARTISTS_TABLE,
+    Key: { artistId: '_gigradar_meta' },
+    UpdateExpression: 'SET setlistfmLastRun = :t',
+    ExpressionAttributeValues: { ':t': new Date().toISOString() },
+  })).catch(() => {});
+
   console.log(`Setlist.fm: ${gigs.length} past gigs`);
   return gigs;
 }
