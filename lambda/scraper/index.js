@@ -1162,18 +1162,22 @@ exports.handler = async () => {
   await enrichArtistImages(artists);
 
   // 2. Fetch all gig sources in sequence (Lambda has one thread, respect rate limits)
-  const tmGigs     = await fetchTicketmaster(artists);      // per-artist for Last.fm top 1000
-  const tmBulkGigs = await fetchTicketmasterBulk(nameMap); // bulk UK scan — discovers new acts
+  // NOTE: fetchTicketmaster (per-artist) removed — fetchTicketmasterBulk is a superset
+  //       and 999 × 250ms sleep alone consumed 4+ minutes of the 15-minute Lambda limit.
+  const t = () => `[+${Math.round((Date.now() - start) / 1000)}s]`;
+  const tmGigs     = [];
+  const tmBulkGigs = await fetchTicketmasterBulk(nameMap); console.log(t(), 'TM bulk done');
   const bitGigs    = await fetchBandsintown();              // removed — API blocked
-  const skiGigs    = await fetchSkiddle(nameMap);           // now discovers new acts too
-  const skGigs     = await fetchSongkick(artists);          // per-artist for top 1000
-  const diceGigs   = await fetchDice(nameMap);
-  const raGigs     = await fetchResidentAdvisor(nameMap);
-  const seeGigs    = await fetchSeeTickets(nameMap);
-  const gigGigs    = await fetchGigantic(nameMap);
-  const wgtGigs    = await fetchWeGotTickets(nameMap);
-  const ebGigs     = await fetchEventbrite(nameMap);
-  const slmGigs    = await fetchSetlistFm(artists);         // past gigs with setlists
+  const skiGigs    = await fetchSkiddle(nameMap);           console.log(t(), 'Skiddle done');
+  // Songkick capped to top 100 artists (was 999 × 150ms = 2.5min sleep; now ~15s)
+  const skGigs     = await fetchSongkick(artists.slice(0, 100)); console.log(t(), 'Songkick done');
+  const diceGigs   = await fetchDice(nameMap);              console.log(t(), 'Dice done');
+  const raGigs     = await fetchResidentAdvisor(nameMap);   console.log(t(), 'RA done');
+  const seeGigs    = await fetchSeeTickets(nameMap);        console.log(t(), 'SeeTickets done');
+  const gigGigs    = await fetchGigantic(nameMap);          console.log(t(), 'Gigantic done');
+  const wgtGigs    = await fetchWeGotTickets(nameMap);      console.log(t(), 'WGT done');
+  const ebGigs     = await fetchEventbrite(nameMap);        console.log(t(), 'Eventbrite done');
+  const slmGigs    = await fetchSetlistFm(artists);         console.log(t(), 'Setlist.fm done');
 
   // 3. Merge & deduplicate
   const merged = mergeGigs([tmGigs, tmBulkGigs, bitGigs, skiGigs, skGigs, diceGigs, raGigs, seeGigs, gigGigs, wgtGigs, ebGigs, slmGigs]);
