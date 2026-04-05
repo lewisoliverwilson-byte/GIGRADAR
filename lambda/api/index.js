@@ -376,7 +376,6 @@ async function spotifyExchange(event) {
       code,
       redirect_uri:  redirectUri,
       client_id:     SPOTIFY_CLIENT_ID,
-      client_secret: SPOTIFY_CLIENT_SECRET,
       code_verifier: codeVerifier,
     }),
   });
@@ -384,7 +383,7 @@ async function spotifyExchange(event) {
   if (!res.ok) {
     const err = await res.text();
     console.error('Spotify token exchange error:', err);
-    return { statusCode: 502, headers: CORS, body: JSON.stringify({ error: 'Spotify token exchange failed' }) };
+    return { statusCode: 502, headers: CORS, body: JSON.stringify({ error: 'Spotify token exchange failed', detail: err }) };
   }
 
   const data = await res.json();

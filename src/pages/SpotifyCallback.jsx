@@ -53,7 +53,8 @@ export default function SpotifyCallback() {
       });
 
       if (!exchangeRes.ok) {
-        throw new Error('Token exchange failed');
+        const body = await exchangeRes.json().catch(() => ({}));
+        throw new Error(`Token exchange failed: ${body.detail || body.error || exchangeRes.status}`);
       }
 
       // Fetch matched UK artists
