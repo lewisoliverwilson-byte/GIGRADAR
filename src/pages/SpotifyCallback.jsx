@@ -6,6 +6,7 @@ import { CONFIG } from '../utils/config.js';
 export default function SpotifyCallback() {
   const navigate = useNavigate();
   const [error, setError] = useState('');
+  const [status, setStatus] = useState('Connecting your Spotify…');
 
   useEffect(() => {
     handleCallback();
@@ -33,60 +34,75 @@ export default function SpotifyCallback() {
     }
 
     try {
-      const token = await getToken();
-      if (!token) {
-        navigate('/');
-        return;
-      }
-
       const codeVerifier = sessionStorage.getItem('spotify_code_verifier');
       const redirectUri = `${window.location.origin}/auth/spotify/callback`;
 
-      // Exchange code for tokens (server-side)
-      const exchangeRes = await fetch(`${CONFIG.apiBaseUrl}/api/auth/spotify/exchange`, {
+      // Exchange code for tokens directly in the browser (PKCE — no secret needed)
+      setStatus('Exchanging tokens…');
+      const tokenRes = await fetch('https://accounts.spotify.com/api/token', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+        body: new URLSearchParams({
+          grant_type:    'authorization_code',
+          code,
+          redirect_uri:  redirectUri,
+          client_id:     import.meta.env.VITE_SPOTIFY_CLIENT_ID,
+          code_verifier: codeVerifier,
+        }),
+      });
+
+      if (!tokenRes.ok) {
+        const err = await tokenRes.json().catch(() => ({}));
+        throw new Error(`Spotify error: ${err.error_description || err.error || tokenRes.status}`);
+      }
+
+      const { access_token } = await tokenRes.json();
+
+      // Fetch top artists directly from Spotify (2 pages = up to 100)
+      setStatus('Fetching your top artists…');
+      const spotifyArtists = [];
+      for (const offset of [0, 50]) {
+        const res = await fetch(
+          `https://api.spotify.com/v1/me/top/artists?time_range=long_term&limit=50&offset=${offset}`,
+          { headers: { Authorization: `Bearer ${access_token}` } }
+        );
+        if (!res.ok) break;
+        const data = await res.json();
+        if (data.items) spotifyArtists.push(...data.items);
+      }
+
+      // Send artist names to Lambda for matching against GigRadar DB
+      setStatus('Finding your UK artists…');
+      const gigRadarToken = await getToken();
+      const matchRes = await fetch(`${CONFIG.apiBaseUrl}/api/artists/match`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}`,
+          ...(gigRadarToken ? { Authorization: `Bearer ${gigRadarToken}` } : {}),
         },
-        body: JSON.stringify({ code, codeVerifier, redirectUri }),
+        body: JSON.stringify({
+          artists: spotifyArtists.map(a => ({ id: a.id, name: a.name })),
+        }),
       });
 
-      if (!exchangeRes.ok) {
-        const body = await exchangeRes.json().catch(() => ({}));
-        throw new Error(`Token exchange failed: ${body.detail || body.error || exchangeRes.status}`);
-      }
+      const { artists: matched } = matchRes.ok ? await matchRes.json() : { artists: [] };
 
-      // Fetch matched UK artists
-      const artistsRes = await fetch(`${CONFIG.apiBaseUrl}/api/auth/spotify/artists`, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-
-      if (!artistsRes.ok) {
-        throw new Error('Could not fetch artists');
-      }
-
-      const { artists } = await artistsRes.json();
-
+      // Clean up
       sessionStorage.removeItem('spotify_code_verifier');
       sessionStorage.removeItem('spotify_auth_state');
+      sessionStorage.setItem('spotify_matched_artists', JSON.stringify(matched || []));
 
-      // Store matched artists for the confirm screen
-      sessionStorage.setItem('spotify_matched_artists', JSON.stringify(artists || []));
-
-      // Track connection in localStorage keyed by user (resolved server-side)
-      const payload = token.split('.')[1];
-      const { sub } = JSON.parse(atob(payload));
-      localStorage.setItem(`gigradar_spotify_${sub}`, JSON.stringify({
-        connected: true,
-        connectedAt: new Date().toISOString(),
-      }));
-
-      if (!artists || artists.length === 0) {
-        navigate('/onboarding/artists'); // shows empty state
-      } else {
-        navigate('/onboarding/artists');
+      // Mark connected in localStorage
+      if (gigRadarToken) {
+        const payload = gigRadarToken.split('.')[1];
+        const { sub } = JSON.parse(atob(payload));
+        localStorage.setItem(`gigradar_spotify_${sub}`, JSON.stringify({
+          connected: true,
+          connectedAt: new Date().toISOString(),
+        }));
       }
+
+      navigate('/onboarding/artists');
     } catch (err) {
       setError(err.message || 'Something went wrong connecting Spotify.');
     }

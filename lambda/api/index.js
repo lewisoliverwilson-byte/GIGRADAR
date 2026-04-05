@@ -360,6 +360,38 @@ async function matchSpotifyArtistsToDb(spotifyArtists) {
   return matched;
 }
 
+/* ---- POST /api/artists/match ---- */
+async function matchArtists(event) {
+  const { artists: spotifyArtists } = parseBody(event);
+  if (!Array.isArray(spotifyArtists) || spotifyArtists.length === 0) {
+    return ok({ artists: [] });
+  }
+
+  const result = await ddb.send(new ScanCommand({ TableName: ARTISTS_TABLE }));
+  const dbArtists = (result.Items || []).filter(a => a.name && !a.artistId.startsWith('_'));
+
+  const bySpotifyId = new Map(dbArtists.filter(a => a.spotify).map(a => [a.spotify.split('/').pop(), a]));
+  const byNormName  = new Map(dbArtists.map(a => [normaliseArtistName(a.name), a]));
+
+  const matched = [];
+  const seen = new Set();
+
+  for (const sa of spotifyArtists) {
+    const match = bySpotifyId.get(sa.id) || byNormName.get(normaliseArtistName(sa.name));
+    if (match && !seen.has(match.artistId)) {
+      seen.add(match.artistId);
+      matched.push({
+        artistId: match.artistId,
+        name:     match.name,
+        imageUrl: match.imageUrl || null,
+        genres:   match.genres   || [],
+      });
+    }
+  }
+
+  return ok({ artists: matched });
+}
+
 /* ---- POST /api/auth/spotify/exchange ---- */
 async function spotifyExchange(event) {
   const sub = getJwtSub(event);
@@ -368,14 +400,17 @@ async function spotifyExchange(event) {
   const { code, codeVerifier, redirectUri } = parseBody(event);
   if (!code || !codeVerifier || !redirectUri) return badRequest('code, codeVerifier, redirectUri required');
 
+  const credentials = Buffer.from(`${SPOTIFY_CLIENT_ID}:${SPOTIFY_CLIENT_SECRET}`).toString('base64');
   const res = await fetch('https://accounts.spotify.com/api/token', {
     method: 'POST',
-    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+    headers: {
+      'Content-Type': 'application/x-www-form-urlencoded',
+      'Authorization': `Basic ${credentials}`,
+    },
     body: new URLSearchParams({
       grant_type:    'authorization_code',
       code,
       redirect_uri:  redirectUri,
-      client_id:     SPOTIFY_CLIENT_ID,
       code_verifier: codeVerifier,
     }),
   });
@@ -477,6 +512,7 @@ exports.handler = async (event) => {
   if (method === 'POST') {
     if (rawPath === '/api/auth/spotify/exchange')   return spotifyExchange(event);
     if (rawPath === '/api/auth/spotify/disconnect') return spotifyDisconnect(event);
+    if (rawPath === '/api/artists/match')           return matchArtists(event);
 
     const claimMatch = rawPath.match(/^\/artists\/([^/]+)\/claim$/);
     if (claimMatch) return submitClaim(decodeURIComponent(claimMatch[1]), event);
