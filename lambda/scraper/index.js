@@ -231,6 +231,16 @@ async function fetchTicketmaster(artists) {
 
 async function fetchTicketmasterBulk(nameMap) {
   if (!TM_KEY) return [];
+
+  // Only run once per 22 hours — TM quota resets daily; no point burning it on every 4h scrape
+  const meta = await ddb.send(new GetCommand({ TableName: ARTISTS_TABLE, Key: { artistId: '_gigradar_meta' } })).catch(() => ({ Item: null }));
+  const lastTmRun = meta.Item?.tmBulkLastRun;
+  if (lastTmRun && (Date.now() - new Date(lastTmRun).getTime()) < 22 * 3600 * 1000) {
+    console.log(`Ticketmaster bulk: skipping — last ran ${Math.round((Date.now() - new Date(lastTmRun).getTime()) / 3600000)}h ago`);
+    return [];
+  }
+  await ddb.send(new UpdateCommand({ TableName: ARTISTS_TABLE, Key: { artistId: '_gigradar_meta' }, UpdateExpression: 'SET tmBulkLastRun = :t', ExpressionAttributeValues: { ':t': new Date().toISOString() } })).catch(() => {});
+
   const gigs  = [];
   const today = new Date().toISOString().split('T')[0];
   const end   = new Date(Date.now() + 365 * 864e5).toISOString().split('.')[0] + 'Z';
@@ -239,7 +249,7 @@ async function fetchTicketmasterBulk(nameMap) {
     try {
       const url  = `https://app.ticketmaster.com/discovery/v2/events.json?classificationName=music&countryCode=GB&startDateTime=${today}T00:00:00Z&endDateTime=${end}&size=200&page=${page}&apikey=${TM_KEY}`;
       const res  = await fetch(url);
-      if (res.status === 429) { await sleep(5000); continue; }
+      if (res.status === 429) { console.log('TM bulk: quota hit, stopping early'); break; } // stop immediately, don't waste time
       if (!res.ok) break;
       const data   = await res.json();
       const events = data?._embedded?.events || [];
@@ -306,6 +316,7 @@ async function fetchSkiddle(nameMap) {
   const today   = new Date().toISOString().split('T')[0];
   let page      = 1;
   let total     = 1;
+  let lastPageFirstId = null; // detect rate-limit returning same page repeatedly
 
   while (page <= Math.ceil(total / 100) && page <= 30) {
     try {
@@ -314,6 +325,14 @@ async function fetchSkiddle(nameMap) {
       const data = await res.json();
       total      = data?.totalcount || 1;
       const events = data?.results || [];
+      if (!events.length) break;
+      // Rate-limit detection: if first event ID matches previous page, we're stuck on page 1
+      const thisFirstId = events[0]?.id;
+      if (page > 1 && thisFirstId === lastPageFirstId) {
+        console.log(`Skiddle: rate-limited at page ${page} — stopping`);
+        break;
+      }
+      lastPageFirstId = thisFirstId;
       for (const ev of events) {
         const rawName = ev.artists?.[0]?.name || ev.eventname || '';
         if (isGenericName(rawName)) continue;
@@ -474,338 +493,283 @@ async function fetchDice(nameMap) {
 }
 
 // ─── 6. Resident Advisor (GraphQL) ──────────────────────────────────────────
+// UK area IDs: 13=London, 14=Birmingham, 15=Brighton, 16=Newcastle,
+//              24=Bristol, 30=Edinburgh, 35=Belfast
+const RA_UK_AREAS = [13, 14, 15, 16, 24, 30, 35];
 
 async function fetchResidentAdvisor(nameMap) {
   const gigs  = [];
   const today = new Date().toISOString().split('T')[0];
+  const seen  = new Set(); // deduplicate across areas
 
-  const query = `query GetEventListings($filters: FilterInputDtoInput, $page: Int) {
+  const query = `query($filters: FilterInputDtoInput, $page: Int) {
     eventListings(filters: $filters, pageSize: 100, page: $page) {
-      data { id title artists { name } date venue { name area { name country { name isoCode } } }
-        ticketLink priceRange { min max currency }
+      data {
+        id
+        event {
+          id title date cost
+          venue { name area { name } }
+          artists { name }
+          ticketLink
+        }
       }
     }
   }`;
 
-  for (let page = 1; page <= 10; page++) {
-    try {
-      const res = await fetch('https://ra.co/graphql', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'User-Agent': 'Mozilla/5.0' },
-        body: JSON.stringify({
-          query,
-          variables: { filters: { areas: { id: 'GB' }, listingDate: { gte: today } }, page },
-        }),
-      });
-      const data   = await res.json();
-      const events = data?.data?.eventListings?.data || [];
-      if (!events.length) break;
+  for (const areaId of RA_UK_AREAS) {
+    for (let page = 1; page <= 5; page++) {
+      try {
+        const res = await fetch('https://ra.co/graphql', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'User-Agent': 'Mozilla/5.0', 'Referer': 'https://ra.co/events/uk' },
+          body: JSON.stringify({ query, variables: { filters: { areas: { eq: areaId }, listingDate: { gte: today } }, page } }),
+        });
+        const data     = await res.json();
+        const listings = data?.data?.eventListings?.data || [];
+        if (!listings.length) break;
 
-      for (const ev of events) {
-        const country = ev.venue?.area?.country?.isoCode || '';
-        if (country && country !== 'GB') continue;
-        const date = (ev.date || '').split('T')[0];
-        if (!date || date < today) continue;
-        for (const art of (ev.artists || [])) {
-          if (isGenericName(art.name)) continue;
-          const norm = normaliseName(art.name);
-          let artist = nameMap[norm];
-          if (!artist) {
-            artist = await autoSeedArtist(art.name, nameMap);
-            if (!artist) continue;
+        for (const listing of listings) {
+          const ev = listing.event;
+          if (!ev || seen.has(ev.id)) continue;
+          seen.add(ev.id);
+          const date = (ev.date || '').split('T')[0];
+          if (!date || date < today) continue;
+
+          for (const art of (ev.artists || [])) {
+            if (isGenericName(art.name)) continue;
+            const norm = normaliseName(art.name);
+            let artist = nameMap[norm];
+            if (!artist) {
+              artist = await autoSeedArtist(art.name, nameMap);
+              if (!artist) continue;
+            }
+            gigs.push({
+              gigId:        `ra-${ev.id}`,
+              dedupKey:     dedupKey(artist.id, date, ev.venue?.name || ''),
+              artistId:     artist.id,
+              artistName:   artist.name,
+              date,
+              doorsTime:    null,
+              venueName:    ev.venue?.name || '',
+              venueId:      `venue-ra-${normaliseName(ev.venue?.name || '')}`,
+              venueCity:    ev.venue?.area?.name || '',
+              venueCountry: 'GB',
+              isSoldOut:    false,
+              supportActs:  (ev.artists || []).filter(a => normaliseName(a.name) !== norm).map(a => a.name),
+              tickets: [{
+                seller:    'Resident Advisor',
+                url:       ev.ticketLink || `https://ra.co/events/${ev.id}`,
+                available: true,
+                price:     ev.cost || 'See site',
+              }],
+              sources:     ['residentadvisor'],
+              lastUpdated: new Date().toISOString(),
+            });
+            break; // one gig per event
           }
-          const pr      = ev.priceRange;
-          const sym     = currSym(pr?.currency);
-          gigs.push({
-            gigId:        `ra-${ev.id}`,
-            dedupKey:     dedupKey(artist.id, date, ev.venue?.name || ''),
-            artistId:     artist.id,
-            artistName:   artist.name,
-            date,
-            doorsTime:    null,
-            venueName:    ev.venue?.name || '',
-            venueId:      `venue-ra-${normaliseName(ev.venue?.name || '')}`,
-            venueCity:    ev.venue?.area?.name || '',
-            venueCountry: 'GB',
-            isSoldOut:    false,
-            supportActs:  (ev.artists || []).filter(a => normaliseName(a.name) !== norm).map(a => a.name),
-            tickets: [{
-              seller:    'Resident Advisor',
-              url:       ev.ticketLink || `https://ra.co/events/${ev.id}`,
-              available: true,
-              price:     pr ? `${sym}${pr.min}${pr.max && pr.max !== pr.min ? `–${sym}${pr.max}` : ''}` : 'See site',
-            }],
-            sources:     ['residentadvisor'],
-            lastUpdated: new Date().toISOString(),
-          });
-          break;
         }
-      }
-    } catch (e) { console.error(`RA page ${page}:`, e.message); break; }
-    await sleep(500);
+      } catch (e) { console.error(`RA area ${areaId} page ${page}:`, e.message); break; }
+      await sleep(400);
+    }
   }
   console.log(`Resident Advisor: ${gigs.length} gigs`);
   return gigs;
 }
 
-// ─── 7. See Tickets (scrape search) ─────────────────────────────────────────
+// ─── 7. Ticketweb (JSON-LD) — replaces See Tickets (403) ────────────────────
 
 async function fetchSeeTickets(nameMap) {
+  // See Tickets returns 403 from Lambda IPs — replaced with Ticketweb (JSON-LD)
   const gigs  = [];
   const today = new Date().toISOString().split('T')[0];
-
   try {
     for (let pg = 1; pg <= 15; pg++) {
-      const url = `https://www.seetickets.com/tour/search?q=&genre=&country=GB&page=${pg}`;
-      const res = await fetch(url, { headers: { 'User-Agent': 'Mozilla/5.0 (compatible)' } });
+      const url = `https://www.ticketweb.uk/search?q=music&page=${pg}`;
+      const res = await fetch(url, { headers: { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/120' } });
       if (!res.ok) break;
-      const html = await res.text();
-
-      // Extract event blocks
-      const blocks = html.matchAll(/<article[^>]*class="[^"]*event-listing[^"]*"[^>]*>([\s\S]*?)<\/article>/g);
-      for (const [, block] of blocks) {
-        const titleMatch  = block.match(/class="[^"]*event-name[^"]*"[^>]*>([^<]+)</);
-        const dateMatch   = block.match(/datetime="([0-9]{4}-[0-9]{2}-[0-9]{2})/);
-        const venueMatch  = block.match(/class="[^"]*venue-name[^"]*"[^>]*>([^<]+)</);
-        const urlMatch    = block.match(/href="(https?:\/\/[^"]*seetickets\.com\/event\/[^"]+)"/);
-        const cityMatch   = block.match(/class="[^"]*venue-location[^"]*"[^>]*>([^<]+)</);
-        const priceMatch  = block.match(/class="[^"]*event-price[^"]*"[^>]*>([^<]+)</);
-
-        if (!titleMatch || !dateMatch) continue;
-        const date = dateMatch[1];
-        if (date < today) continue;
-        const rawTitle = titleMatch[1].trim();
-        if (isGenericName(rawTitle)) continue;
-        const norm = normaliseName(rawTitle);
-        let artist = nameMap[norm];
-        if (!artist) {
-          artist = await autoSeedArtist(rawTitle, nameMap);
-          if (!artist) continue;
+      const html  = await res.text();
+      const blocks = [...html.matchAll(/<script type="application\/ld\+json">([\s\S]*?)<\/script>/g)];
+      let found = 0;
+      for (const [, json] of blocks) {
+        let items;
+        try { items = JSON.parse(json); } catch { continue; }
+        if (!Array.isArray(items)) items = [items];
+        for (const ev of items) {
+          if (ev['@type'] !== 'MusicEvent') continue;
+          const date = (ev.startDate || '').split('T')[0];
+          if (!date || date < today) continue;
+          const rawName = (ev.name || '').trim();
+          if (isGenericName(rawName) || isTributeAct(rawName)) continue;
+          const norm = normaliseName(rawName);
+          let artist = nameMap[norm];
+          if (!artist) { artist = await autoSeedArtist(rawName, nameMap); if (!artist) continue; }
+          const venue = ev.location?.name || '';
+          const city  = ev.location?.address?.addressLocality || '';
+          gigs.push({
+            gigId:        `tw-${(ev.url || '').match(/tickets\/(\d+)/)?.[1] || normaliseName(rawName + date)}`,
+            dedupKey:     dedupKey(artist.id, date, venue),
+            artistId:     artist.id, artistName: artist.name, date,
+            doorsTime: null, venueName: venue,
+            venueId:   `venue-tw-${normaliseName(venue)}`, venueCity: city, venueCountry: 'GB',
+            isSoldOut: ev.eventStatus?.includes('EventCancelled') || false,
+            supportActs: [],
+            tickets: [{ seller: 'Ticketweb', url: ev.url || 'https://ticketweb.uk', available: true, price: 'See site' }],
+            sources: ['ticketweb'], lastUpdated: new Date().toISOString(),
+          });
+          found++;
         }
-        const venue  = (venueMatch?.[1] || '').trim();
-
-        gigs.push({
-          gigId:        `see-${date}-${normaliseName(venue)}-${artist.id}`,
-          dedupKey:     dedupKey(artist.id, date, venue),
-          artistId:     artist.id,
-          artistName:   artist.name,
-          date,
-          doorsTime:    null,
-          venueName:    venue,
-          venueId:      `venue-see-${normaliseName(venue)}`,
-          venueCity:    (cityMatch?.[1] || '').trim(),
-          venueCountry: 'GB',
-          isSoldOut:    block.includes('sold-out') || block.includes('soldout'),
-          supportActs:  [],
-          tickets: [{
-            seller:    'See Tickets',
-            url:       urlMatch?.[1] || 'https://seetickets.com',
-            available: !block.includes('sold-out'),
-            price:     priceMatch ? priceMatch[1].trim() : 'See site',
-          }],
-          sources:     ['seetickets'],
-          lastUpdated: new Date().toISOString(),
-        });
       }
-      await sleep(500);
+      if (!found) break;
+      await sleep(400);
     }
-  } catch (e) { console.error('See Tickets:', e.message); }
-  console.log(`See Tickets: ${gigs.length} gigs`);
+  } catch (e) { console.error('Ticketweb:', e.message); }
+  console.log(`Ticketweb: ${gigs.length} gigs`);
   return gigs;
 }
 
-// ─── 8. Gigantic (scrape) ────────────────────────────────────────────────────
+// ─── 8. Songkick metro areas (replaces Gigantic — 403 from Lambda IPs) ───────
+// Queries UK city calendar pages and extracts JSON-LD MusicEvent data.
+// London (24426) confirmed working; others added as discovered.
+const SK_UK_METROS = [
+  { id: 24426, name: 'London' },
+];
 
 async function fetchGigantic(nameMap) {
   const gigs  = [];
   const today = new Date().toISOString().split('T')[0];
 
-  try {
-    for (let pg = 1; pg <= 10; pg++) {
-      const url = `https://www.gigantic.com/gigs-and-concerts?page=${pg}`;
-      const res = await fetch(url, { headers: { 'User-Agent': 'Mozilla/5.0 (compatible)' } });
-      if (!res.ok) break;
-      const html = await res.text();
-
-      const blocks = html.matchAll(/<div[^>]*class="[^"]*event-item[^"]*"[^>]*>([\s\S]*?)<\/div>\s*<\/div>/g);
-      for (const [, block] of blocks) {
-        const titleMatch = block.match(/class="[^"]*event-name[^"]*"[^>]*>([^<]+)</);
-        const dateMatch  = block.match(/datetime="([0-9]{4}-[0-9]{2}-[0-9]{2})/);
-        const venueMatch = block.match(/class="[^"]*venue[^"]*"[^>]*>([^<]+)</);
-        const urlMatch   = block.match(/href="(\/[^"]+)"/);
-
-        if (!titleMatch || !dateMatch) continue;
-        const date = dateMatch[1];
-        if (date < today) continue;
-        const rawTitle = titleMatch[1].trim();
-        if (isGenericName(rawTitle)) continue;
-        const norm = normaliseName(rawTitle);
-        let artist = nameMap[norm];
-        if (!artist) {
-          artist = await autoSeedArtist(rawTitle, nameMap);
-          if (!artist) continue;
+  for (const metro of SK_UK_METROS) {
+    for (let pg = 1; pg <= 5; pg++) {
+      try {
+        const url = `https://www.songkick.com/metro-areas/${metro.id}/calendar${pg > 1 ? `?page=${pg}` : ''}`;
+        const res = await fetch(url, { headers: { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/120' } });
+        if (!res.ok) break;
+        const html   = await res.text();
+        const blocks = [...html.matchAll(/<script type="application\/ld\+json">([\s\S]*?)<\/script>/g)];
+        let found = 0;
+        for (const [, json] of blocks) {
+          let items;
+          try { items = JSON.parse(json); } catch { continue; }
+          if (!Array.isArray(items)) items = [items];
+          for (const ev of items) {
+            if (ev['@type'] !== 'MusicEvent') continue;
+            const date = (ev.startDate || '').split('T')[0];
+            if (!date || date < today) continue;
+            // Extract artist name — strip venue suffix from event title
+            const rawName = (ev.name || '').replace(/\s*[@–\-]\s*.+$/, '').trim();
+            if (!rawName || isGenericName(rawName) || isTributeAct(rawName)) continue;
+            const norm = normaliseName(rawName);
+            let artist = nameMap[norm];
+            if (!artist) { artist = await autoSeedArtist(rawName, nameMap); if (!artist) continue; }
+            const venue = ev.location?.name || '';
+            const city  = ev.location?.address?.addressLocality || metro.name;
+            const evId  = (ev.url || '').match(/\/(\d+)\b/)?.[1] || normaliseName(rawName + date);
+            gigs.push({
+              gigId:        `sk-${evId}`,
+              dedupKey:     dedupKey(artist.id, date, venue),
+              artistId:     artist.id, artistName: artist.name, date,
+              doorsTime:    null, venueName: venue,
+              venueId:      `venue-sk-${normaliseName(venue)}`, venueCity: city, venueCountry: 'GB',
+              isSoldOut:    false, supportActs: [],
+              tickets: [{ seller: 'Songkick', url: ev.url || 'https://songkick.com', available: true, price: 'See site' }],
+              sources: ['songkick'], lastUpdated: new Date().toISOString(),
+            });
+            found++;
+          }
         }
-        const venue  = (venueMatch?.[1] || '').trim();
-
-        gigs.push({
-          gigId:        `gig-${date}-${normaliseName(venue)}-${artist.id}`,
-          dedupKey:     dedupKey(artist.id, date, venue),
-          artistId:     artist.id,
-          artistName:   artist.name,
-          date,
-          doorsTime:    null,
-          venueName:    venue,
-          venueId:      `venue-gig-${normaliseName(venue)}`,
-          venueCity:    '',
-          venueCountry: 'GB',
-          isSoldOut:    block.toLowerCase().includes('sold out'),
-          supportActs:  [],
-          tickets: [{
-            seller:    'Gigantic',
-            url:       urlMatch ? `https://www.gigantic.com${urlMatch[1]}` : 'https://gigantic.com',
-            available: !block.toLowerCase().includes('sold out'),
-            price:     'See site',
-          }],
-          sources:     ['gigantic'],
-          lastUpdated: new Date().toISOString(),
-        });
-      }
-      await sleep(500);
+        if (!found || pg > 1) break; // Songkick metro pages don't truly paginate
+        await sleep(400);
+      } catch (e) { console.error(`Songkick metro ${metro.id}:`, e.message); break; }
     }
-  } catch (e) { console.error('Gigantic:', e.message); }
-  console.log(`Gigantic: ${gigs.length} gigs`);
+  }
+  console.log(`Songkick metro: ${gigs.length} gigs`);
   return gigs;
 }
 
-// ─── 9. WeGotTickets (scrape) ────────────────────────────────────────────────
+// ─── 9. WeGotTickets — disabled (site migrated, structure changed) ───────────
 
 async function fetchWeGotTickets(nameMap) {
-  const gigs  = [];
-  const today = new Date().toISOString().split('T')[0];
-
-  try {
-    for (let pg = 1; pg <= 10; pg++) {
-      const url = `https://www.wegottickets.com/searchresults/page/${pg}/all`;
-      const res = await fetch(url, { headers: { 'User-Agent': 'Mozilla/5.0 (compatible)' } });
-      if (!res.ok) break;
-      const html = await res.text();
-
-      const blocks = html.matchAll(/<div[^>]*class="[^"]*content[^"]*"[^>]*>([\s\S]*?)<\/div>/g);
-      for (const [, block] of blocks) {
-        const titleMatch = block.match(/class="[^"]*event_title[^"]*"[^>]*>([^<]+)</);
-        const dateMatch  = block.match(/([0-9]{1,2}[a-z]{2}\s+\w+\s+20[0-9]{2})/i);
-        const venueMatch = block.match(/class="[^"]*location[^"]*"[^>]*>([^<]+)</);
-        const urlMatch   = block.match(/href="(https?:\/\/[^"]*wegottickets[^"]+)"/);
-
-        if (!titleMatch) continue;
-        const rawTitle = titleMatch[1].trim();
-        if (isGenericName(rawTitle)) continue;
-        const norm = normaliseName(rawTitle);
-        let artist = nameMap[norm];
-        if (!artist) {
-          artist = await autoSeedArtist(rawTitle, nameMap);
-          if (!artist) continue;
-        }
-
-        // Parse UK date like "15th April 2025"
-        let date = '';
-        if (dateMatch) {
-          const d = new Date(dateMatch[1].replace(/(\d+)(st|nd|rd|th)/, '$1'));
-          if (!isNaN(d)) date = d.toISOString().split('T')[0];
-        }
-        if (!date || date < today) continue;
-        const venue = (venueMatch?.[1] || '').trim();
-
-        gigs.push({
-          gigId:        `wgt-${date}-${normaliseName(venue)}-${artist.id}`,
-          dedupKey:     dedupKey(artist.id, date, venue),
-          artistId:     artist.id,
-          artistName:   artist.name,
-          date,
-          doorsTime:    null,
-          venueName:    venue,
-          venueId:      `venue-wgt-${normaliseName(venue)}`,
-          venueCity:    '',
-          venueCountry: 'GB',
-          isSoldOut:    block.toLowerCase().includes('sold out'),
-          supportActs:  [],
-          tickets: [{
-            seller:    'WeGotTickets',
-            url:       urlMatch?.[1] || 'https://wegottickets.com',
-            available: !block.toLowerCase().includes('sold out'),
-            price:     'See site',
-          }],
-          sources:     ['wegottickets'],
-          lastUpdated: new Date().toISOString(),
-        });
-      }
-      await sleep(500);
-    }
-  } catch (e) { console.error('WeGotTickets:', e.message); }
-  console.log(`WeGotTickets: ${gigs.length} gigs`);
-  return gigs;
+  // WGT migrated to a new platform; the old scraper structure no longer matches.
+  // Placeholder until a new approach is found.
+  console.log(`WeGotTickets: skipped (site migrated)`);
+  return [];
 }
 
-// ─── 10. Eventbrite (scrape search) ─────────────────────────────────────────
+// ─── 10. Eventbrite (JSON-LD scrape) ─────────────────────────────────────────
 
 async function fetchEventbrite(nameMap) {
   const gigs  = [];
   const today = new Date().toISOString().split('T')[0];
 
+  // Eventbrite renders events in JSON-LD itemList on their search pages
+  // Artist name is extracted from the URL slug (e.g. /e/band-name-tickets-12345)
+  const CATEGORIES = [
+    'https://www.eventbrite.co.uk/d/united-kingdom/music/',
+    'https://www.eventbrite.co.uk/d/united-kingdom/concerts/',
+  ];
+
   try {
-    for (let pg = 1; pg <= 10; pg++) {
-      const url = `https://www.eventbrite.co.uk/d/united-kingdom/music/?page=${pg}`;
-      const res = await fetch(url, { headers: { 'User-Agent': 'Mozilla/5.0 (compatible)' } });
-      if (!res.ok) break;
-      const html = await res.text();
+    for (const baseUrl of CATEGORIES) {
+      for (let pg = 1; pg <= 10; pg++) {
+        const url = `${baseUrl}?page=${pg}`;
+        const res = await fetch(url, { headers: { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/120' } });
+        if (!res.ok) break;
+        const html = await res.text();
 
-      // Eventbrite embeds server data in a JSON blob
-      const dataMatch = html.match(/window\.__SERVER_DATA__\s*=\s*({[\s\S]*?});\s*<\/script>/);
-      if (!dataMatch) { await sleep(600); continue; }
+        const ldBlocks = [...html.matchAll(/<script type="application\/ld\+json">([\s\S]*?)<\/script>/g)];
+        let foundEvents = 0;
+        for (const [, json] of ldBlocks) {
+          let ld;
+          try { ld = JSON.parse(json); } catch { continue; }
+          if (!ld?.itemListElement) continue;
 
-      let serverData;
-      try { serverData = JSON.parse(dataMatch[1]); } catch { continue; }
+          for (const item of ld.itemListElement) {
+            const ev = item.item || item;
+            const date = (ev.startDate || '').split('T')[0];
+            if (!date || date < today) continue;
 
-      const events = serverData?.search_data?.events?.results || [];
-      for (const ev of events) {
-        const date = (ev.start?.local || ev.start_date || '').split('T')[0];
-        if (!date || date < today) continue;
-        const rawName = ev.name?.text || ev.name || '';
-        if (isGenericName(rawName)) continue;
-        const norm = normaliseName(rawName);
-        let artist = nameMap[norm];
-        if (!artist) {
-          artist = await autoSeedArtist(rawName, nameMap);
-          if (!artist) continue;
+            // Extract name from URL slug: /e/artist-name-tickets-12345
+            const urlSlug = (ev.url || '').match(/\/e\/([^/?]+)/)?.[1] || '';
+            const rawName = urlSlug
+              .replace(/-tickets-\d+$/, '')   // strip "-tickets-12345"
+              .replace(/-/g, ' ')
+              .replace(/\b\w/g, c => c.toUpperCase())
+              .trim();
+
+            if (!rawName || isGenericName(rawName) || isTributeAct(rawName)) continue;
+            const norm = normaliseName(rawName);
+            let artist = nameMap[norm];
+            if (!artist) {
+              artist = await autoSeedArtist(rawName, nameMap);
+              if (!artist) continue;
+            }
+
+            // Extract event ID from URL
+            const ebId = (ev.url || '').match(/tickets-(\d+)/)?.[1] || normaliseName(rawName + date);
+
+            gigs.push({
+              gigId:        `eb-${ebId}`,
+              dedupKey:     dedupKey(artist.id, date, ''),
+              artistId:     artist.id,
+              artistName:   artist.name,
+              date,
+              doorsTime:    null,
+              venueName:    '',
+              venueId:      `venue-eb-${ebId}`,
+              venueCity:    '',
+              venueCountry: 'GB',
+              isSoldOut:    false,
+              supportActs:  [],
+              tickets: [{ seller: 'Eventbrite', url: ev.url || 'https://eventbrite.co.uk', available: true, price: 'See site' }],
+              sources:     ['eventbrite'],
+              lastUpdated: new Date().toISOString(),
+            });
+            foundEvents++;
+          }
         }
-        const venue  = ev.venue?.name || '';
-
-        gigs.push({
-          gigId:        `eb-${ev.id}`,
-          dedupKey:     dedupKey(artist.id, date, venue),
-          artistId:     artist.id,
-          artistName:   artist.name,
-          date,
-          doorsTime:    null,
-          venueName:    venue,
-          venueId:      `venue-eb-${ev.venue?.id || normaliseName(venue)}`,
-          venueCity:    ev.venue?.address?.city || '',
-          venueCountry: 'GB',
-          isSoldOut:    ev.is_sold_out || false,
-          supportActs:  [],
-          tickets: [{
-            seller:    'Eventbrite',
-            url:       ev.url || `https://eventbrite.com/e/${ev.id}`,
-            available: !ev.is_sold_out,
-            price:     ev.ticket_availability?.minimum_ticket_price
-              ? `${currSym(ev.ticket_availability.minimum_ticket_price.currency)}${Math.round(ev.ticket_availability.minimum_ticket_price.major_value)}`
-              : 'See site',
-          }],
-          sources:     ['eventbrite'],
-          lastUpdated: new Date().toISOString(),
-        });
+        if (!foundEvents) break; // no events found on this page — stop
+        await sleep(500);
       }
-      await sleep(600);
     }
   } catch (e) { console.error('Eventbrite:', e.message); }
   console.log(`Eventbrite: ${gigs.length} gigs`);
@@ -832,17 +796,16 @@ async function fetchSetlistFm(artists) {
     return [];
   }
 
-  const withMbid = artists.filter(a => a.lastfmMbid); // all artists with MBID, no cap
-  console.log(`Setlist.fm: querying all ${withMbid.length} artists with MBID`);
-  // Top 480 artists (by lastfmRank) get 2 pages — catches artists with lots of international
-  // dates pushing UK gigs off page 1. 480×2 + 466×1 = 1,426 req/day (≤ 1,440 limit).
-  const twoPageIds = new Set(
-    withMbid
-      .slice()
-      .sort((a, b) => (a.lastfmRank || 9999) - (b.lastfmRank || 9999))
-      .slice(0, 480)
-      .map(a => a.artistId)
-  );
+  // Cap at top 200 artists by Last.fm rank — keeps runtime under 3 min vs 8.5 min for all 946.
+  // 20-hour cooldown already limits this to once/day so we don't lose coverage over time.
+  const withMbid = artists
+    .filter(a => a.lastfmMbid)
+    .slice()
+    .sort((a, b) => (a.lastfmRank || 9999) - (b.lastfmRank || 9999))
+    .slice(0, 200);
+  console.log(`Setlist.fm: querying top ${withMbid.length} artists with MBID`);
+  // Top 100 get 2 pages (lots of international dates pushing UK gigs off page 1)
+  const twoPageIds = new Set(withMbid.slice(0, 100).map(a => a.artistId));
 
   for (const artist of withMbid) {
     const maxPages = twoPageIds.has(artist.artistId) ? 2 : 1;
@@ -1173,8 +1136,8 @@ exports.handler = async () => {
   const skGigs     = await fetchSongkick(artists.slice(0, 100)); console.log(t(), 'Songkick done');
   const diceGigs   = await fetchDice(nameMap);              console.log(t(), 'Dice done');
   const raGigs     = await fetchResidentAdvisor(nameMap);   console.log(t(), 'RA done');
-  const seeGigs    = await fetchSeeTickets(nameMap);        console.log(t(), 'SeeTickets done');
-  const gigGigs    = await fetchGigantic(nameMap);          console.log(t(), 'Gigantic done');
+  const seeGigs    = await fetchSeeTickets(nameMap);        console.log(t(), 'Ticketweb done');
+  const gigGigs    = await fetchGigantic(nameMap);          console.log(t(), 'Songkick metro done');
   const wgtGigs    = await fetchWeGotTickets(nameMap);      console.log(t(), 'WGT done');
   const ebGigs     = await fetchEventbrite(nameMap);        console.log(t(), 'Eventbrite done');
   const slmGigs    = await fetchSetlistFm(artists);         console.log(t(), 'Setlist.fm done');
