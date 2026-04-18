@@ -1,9 +1,8 @@
 'use strict';
 const path = require('path');
 const fs   = require('fs');
-const SDK  = path.join(__dirname, '../lambda/scraper/node_modules');
-const { DynamoDBClient }           = require(path.join(SDK, '@aws-sdk/client-dynamodb'));
-const { DynamoDBDocumentClient, ScanCommand } = require(path.join(SDK, '@aws-sdk/lib-dynamodb'));
+const { DynamoDBClient }           = require('@aws-sdk/client-dynamodb');
+const { DynamoDBDocumentClient, ScanCommand } = require('@aws-sdk/lib-dynamodb');
 
 const ddb      = DynamoDBDocumentClient.from(new DynamoDBClient({ region: 'us-east-1' }));
 const SITE_URL = 'https://gigradar.co.uk';
