@@ -6,6 +6,7 @@ import { useAuth } from '../context/AuthContext.jsx';
 import { useFollow } from '../context/FollowContext.jsx';
 import GigCard from '../components/GigCard.jsx';
 import AlertButton from '../components/AlertButton.jsx';
+import Footer from '../components/Footer.jsx';
 
 function venueColor(venueId) {
   const palette = ['#8b5cf6','#06b6d4','#10b981','#f59e0b','#ec4899','#ef4444','#6366f1'];
@@ -18,9 +19,14 @@ function venueInitials(name) {
   return (name || '').split(/\s+/).slice(0, 2).map(w => w[0]).join('').toUpperCase() || 'V';
 }
 
+const TYPE_LABELS = {
+  pub: 'Pub', club: 'Club', theatre: 'Theatre', academy: 'Academy',
+  arena: 'Arena', 'arts-centre': 'Arts Centre', other: 'Venue',
+};
+
 export default function VenuePage() {
-  const { query: { slug } }     = useRouter();
-  const { user }                = useAuth();
+  const { query: { slug } }   = useRouter();
+  const { user }               = useAuth();
   const { isFollowingVenue, followVenue, unfollowVenue } = useFollow();
 
   const [venue,   setVenue]   = useState(null);
@@ -29,6 +35,7 @@ export default function VenuePage() {
   const [tab,     setTab]     = useState('upcoming');
 
   useEffect(() => {
+    if (!slug) return;
     setLoading(true);
     Promise.all([api.getVenue(slug), api.getVenueGigs(slug)])
       .then(([v, g]) => { setVenue(v); setGigs(g); })
@@ -36,17 +43,17 @@ export default function VenuePage() {
       .finally(() => setLoading(false));
   }, [slug]);
 
-  if (loading) return (
-    <div className="max-w-4xl mx-auto px-4 sm:px-6 py-10 animate-pulse space-y-4">
-      <div className="h-48 bg-surface-2 rounded-2xl" />
-      <div className="h-6 bg-surface-2 rounded w-1/3" />
-      <div className="h-4 bg-surface-2 rounded w-1/4" />
-    </div>
-  );
+  if (loading) return <Skeleton />;
 
   if (!venue) return (
-    <div className="max-w-4xl mx-auto px-4 sm:px-6 py-20 text-center text-gray-500">
-      Venue not found. <Link href="/discover" className="text-brand hover:underline">Browse gigs</Link>
+    <div className="min-h-screen bg-surface flex flex-col">
+      <div className="flex-1 flex items-center justify-center">
+        <div className="text-center">
+          <p className="text-zinc-400 mb-4 text-lg">Venue not found.</p>
+          <Link href="/venues" className="btn-secondary px-6 py-2.5 rounded-xl">← Browse venues</Link>
+        </div>
+      </div>
+      <Footer />
     </div>
   );
 
@@ -62,86 +69,163 @@ export default function VenuePage() {
   }
 
   return (
-    <div className="max-w-4xl mx-auto px-4 sm:px-6 pb-12">
+    <div className="min-h-screen bg-surface">
 
-      {/* Header */}
-      <div className="relative -mx-4 sm:-mx-6 overflow-hidden mb-8">
+      {/* Hero */}
+      <div className="relative h-56 sm:h-72 overflow-hidden" style={{ background: color + '22' }}>
         {(venue.photoUrl || venue.imageUrl) ? (
-          <img src={venue.photoUrl || venue.imageUrl} alt={venue.name} className="w-full h-56 object-cover" />
+          <img
+            src={venue.photoUrl || venue.imageUrl}
+            alt={venue.name}
+            className="w-full h-full object-cover opacity-60"
+          />
         ) : (
-          <div className="w-full h-56 flex items-center justify-center" style={{ background: color + '22' }}>
-            <span className="text-7xl font-bold" style={{ color }}>{venueInitials(venue.name)}</span>
+          <div className="w-full h-full flex items-center justify-center">
+            <span className="text-8xl font-black opacity-20" style={{ color }}>{venueInitials(venue.name)}</span>
           </div>
         )}
-        <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
-        <div className="absolute bottom-0 left-0 right-0 px-4 sm:px-6 pb-5">
-          <h1 className="text-2xl sm:text-3xl font-extrabold text-white leading-tight">{venue.name}</h1>
-          <div className="flex items-center gap-3 mt-1 text-sm text-gray-300">
-            {venue.city && <span>{venue.city}</span>}
-            {venue.capacity && <span>· Cap. {venue.capacity.toLocaleString()}</span>}
-            {venue.venueType && <span className="capitalize">· {venue.venueType}</span>}
+        <div className="absolute inset-0 bg-gradient-to-t from-surface via-surface/50 to-transparent" />
+      </div>
+
+      <div className="section -mt-20 relative pb-10">
+
+        {/* Header */}
+        <div className="flex flex-col sm:flex-row gap-6 items-start mb-6">
+          {/* Venue avatar */}
+          <div
+            className="w-28 h-28 rounded-2xl border-4 border-surface overflow-hidden flex-shrink-0 shadow-2xl flex items-center justify-center"
+            style={{ background: color + '33' }}
+          >
+            {(venue.photoUrl || venue.imageUrl)
+              ? <img src={venue.photoUrl || venue.imageUrl} alt={venue.name} className="w-full h-full object-cover" />
+              : <span className="text-4xl font-black" style={{ color }}>{venueInitials(venue.name)}</span>
+            }
+          </div>
+
+          <div className="flex-1 min-w-0 pt-1">
+            <div className="flex items-start justify-between gap-4 flex-wrap">
+              <div className="min-w-0">
+                <div className="flex items-center gap-2 flex-wrap mb-1">
+                  {venue.venueType && venue.venueType !== 'other' && (
+                    <span className="badge-gray text-xs uppercase tracking-wider">
+                      {TYPE_LABELS[venue.venueType] || 'Venue'}
+                    </span>
+                  )}
+                </div>
+                <h1 className="text-3xl sm:text-4xl font-black text-white leading-tight mb-1">{venue.name}</h1>
+                <div className="flex items-center gap-3 text-sm text-zinc-400 flex-wrap">
+                  {venue.city && <span>{venue.city}</span>}
+                  {venue.capacity && (
+                    <span className="text-zinc-600">· Cap. {venue.capacity.toLocaleString()}</span>
+                  )}
+                  {upcoming.length > 0 && (
+                    <span className="badge-brand text-xs">
+                      {upcoming.length} upcoming {upcoming.length === 1 ? 'gig' : 'gigs'}
+                    </span>
+                  )}
+                </div>
+              </div>
+
+              <div className="flex items-center gap-2 flex-shrink-0">
+                <button
+                  onClick={toggleFollow}
+                  className={`text-sm px-4 py-2 rounded-xl font-semibold transition-all duration-150 ${
+                    followed
+                      ? 'bg-brand/15 text-brand-light border border-brand/30 hover:bg-red-500/15 hover:text-red-400 hover:border-red-500/30'
+                      : 'btn-primary py-2 px-4 rounded-xl'
+                  }`}
+                >
+                  {followed ? 'Following' : 'Follow'}
+                </button>
+                <AlertButton targetId={venue.venueId} targetType="venue" targetName={venue.name} />
+              </div>
+            </div>
+
+            {/* Bio */}
+            {venue.bio && (
+              <p className="text-zinc-400 text-sm leading-relaxed max-w-2xl mt-3">{venue.bio}</p>
+            )}
+
+            {/* Links */}
+            <div className="flex items-center gap-4 mt-3 flex-wrap">
+              {venue.website && (
+                <a href={venue.website} target="_blank" rel="noopener noreferrer"
+                  className="text-xs text-zinc-500 hover:text-white transition-colors flex items-center gap-1">
+                  Website <span className="opacity-60">↗</span>
+                </a>
+              )}
+              {venue.instagram && (
+                <a href={`https://instagram.com/${venue.instagram.replace('@', '')}`} target="_blank" rel="noopener noreferrer"
+                  className="text-xs text-zinc-500 hover:text-white transition-colors flex items-center gap-1">
+                  Instagram <span className="opacity-60">↗</span>
+                </a>
+              )}
+            </div>
           </div>
         </div>
-      </div>
 
-      {/* Action bar */}
-      <div className="flex items-center gap-3 mb-6">
-        <button
-          onClick={toggleFollow}
-          className={`text-sm px-4 py-2 rounded-lg font-semibold transition-all duration-150 ${
-            followed
-              ? 'bg-brand/20 text-brand border border-brand/40 hover:bg-red-900/30 hover:text-red-400 hover:border-red-500/40'
-              : 'bg-brand hover:bg-brand-dark text-white'
-          }`}
-        >
-          {followed ? 'Following' : 'Follow venue'}
-        </button>
-        <AlertButton
-          targetId={venue.venueId}
-          targetType="venue"
-          targetName={venue.name}
-        />
-        {venue.website && (
-          <a href={venue.website} target="_blank" rel="noopener noreferrer"
-            className="text-sm text-gray-400 hover:text-white transition-colors">
-            Website →
-          </a>
-        )}
-        {venue.instagram && (
-          <a href={`https://instagram.com/${venue.instagram.replace('@', '')}`} target="_blank" rel="noopener noreferrer"
-            className="text-sm text-gray-400 hover:text-white transition-colors">
-            Instagram
-          </a>
-        )}
-      </div>
+        {/* Divider */}
+        <div className="divider mb-6" />
 
-      {/* Bio */}
-      {venue.bio && <p className="text-gray-400 text-sm mb-6 max-w-2xl">{venue.bio}</p>}
-
-      {/* Tabs */}
-      <div className="flex gap-1 mb-5 border-b border-white/5">
-        {[['upcoming', `Upcoming (${upcoming.length})`], ['past', `Past (${past.length})`]].map(([key, label]) => (
-          <button key={key} onClick={() => setTab(key)}
-            className={`px-4 py-2 text-sm font-medium transition-colors border-b-2 -mb-px ${
-              tab === key ? 'border-brand text-white' : 'border-transparent text-gray-500 hover:text-gray-300'
-            }`}>
-            {label}
-          </button>
-        ))}
-      </div>
-
-      {/* Gig list */}
-      {(tab === 'upcoming' ? upcoming : past).length === 0 ? (
-        <div className="card p-10 text-center text-gray-500 text-sm">
-          {tab === 'upcoming' ? 'No upcoming gigs found yet.' : 'No past gigs on record yet.'}
-        </div>
-      ) : (
-        <div className="space-y-2">
-          {(tab === 'upcoming' ? upcoming : past).map(g => (
-            <GigCard key={g.gigId} gig={g} showArtist />
+        {/* Tabs */}
+        <div className="flex gap-1 bg-surface-2 rounded-xl p-1 w-fit mb-6">
+          {[['upcoming', `Upcoming (${upcoming.length})`], ['past', `Past (${past.length})`]].map(([key, label]) => (
+            <button
+              key={key}
+              onClick={() => setTab(key)}
+              className={`px-5 py-2 rounded-lg text-sm font-medium transition-all duration-150 ${
+                tab === key ? 'bg-surface-1 text-white shadow' : 'text-zinc-400 hover:text-white'
+              }`}
+            >
+              {label}
+            </button>
           ))}
         </div>
-      )}
+
+        {/* Gig list */}
+        {(tab === 'upcoming' ? upcoming : past).length === 0 ? (
+          <div className="bg-surface-2 border border-white/5 rounded-2xl p-12 text-center">
+            <span className="text-4xl block mb-3">{tab === 'upcoming' ? '🎸' : '📅'}</span>
+            <p className="text-white font-semibold">
+              {tab === 'upcoming' ? 'No upcoming gigs' : 'No past gigs on record'}
+            </p>
+            <p className="text-sm text-zinc-500 mt-1">
+              {tab === 'upcoming'
+                ? 'Follow this venue to get alerted when new gigs are added.'
+                : 'We only have data going back a short while.'}
+            </p>
+          </div>
+        ) : (
+          <div className="space-y-2.5">
+            {(tab === 'upcoming' ? upcoming : past).map(g => (
+              <GigCard key={g.gigId} gig={g} showArtist />
+            ))}
+          </div>
+        )}
+      </div>
+
+      <Footer />
+    </div>
+  );
+}
+
+function Skeleton() {
+  return (
+    <div className="min-h-screen bg-surface">
+      <div className="h-56 sm:h-72 skeleton" />
+      <div className="section -mt-20 relative pb-10">
+        <div className="flex gap-6 items-start">
+          <div className="w-28 h-28 skeleton rounded-2xl flex-shrink-0" />
+          <div className="flex-1 pt-4 space-y-3">
+            <div className="h-9 skeleton rounded-xl w-64" />
+            <div className="h-4 skeleton rounded w-32" />
+          </div>
+        </div>
+        <div className="divider mt-6 mb-6" />
+        <div className="space-y-2.5">
+          {[1,2,3,4].map(i => <div key={i} className="h-20 skeleton rounded-2xl" />)}
+        </div>
+      </div>
     </div>
   );
 }

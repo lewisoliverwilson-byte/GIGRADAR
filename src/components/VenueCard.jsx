@@ -5,13 +5,13 @@ import { useFollow } from '../context/FollowContext.jsx';
 import AccountPrompt from './AccountPrompt.jsx';
 
 const VENUE_TYPE_LABELS = {
-  pub:         'Pub',
-  club:        'Club',
-  theatre:     'Theatre',
-  academy:     'Academy',
-  arena:       'Arena',
+  pub:           'Pub',
+  club:          'Club',
+  theatre:       'Theatre',
+  academy:       'Academy',
+  arena:         'Arena',
   'arts-centre': 'Arts Centre',
-  other:       'Venue',
+  other:         'Venue',
 };
 
 function venueInitials(name) {
@@ -19,16 +19,16 @@ function venueInitials(name) {
 }
 
 function venueColor(venueId) {
-  const palette = ['#8b5cf6','#06b6d4','#10b981','#f59e0b','#ec4899','#ef4444','#6366f1'];
+  const palette = ['#8b5cf6', '#06b6d4', '#10b981', '#f59e0b', '#ec4899', '#ef4444', '#6366f1'];
   let h = 0;
   for (let i = 0; i < (venueId || '').length; i++) h = (h * 31 + venueId.charCodeAt(i)) >>> 0;
   return palette[h % palette.length];
 }
 
 export default function VenueCard({ venue }) {
-  const { user }                       = useAuth();
-  const { isFollowingVenue, followVenue, unfollowVenue } = useFollow();
-  const [prompt, setPrompt]            = React.useState(false);
+  const { user }                                               = useAuth();
+  const { isFollowingVenue, followVenue, unfollowVenue }       = useFollow();
+  const [prompt, setPrompt]                                    = React.useState(false);
   const followed = isFollowingVenue(venue.venueId);
   const color    = venueColor(venue.venueId);
 
@@ -39,47 +39,65 @@ export default function VenueCard({ venue }) {
   }
 
   return (
-    <div className="card group hover:border-white/10 transition-all hover:-translate-y-0.5 duration-200">
+    <div className="card-hover group">
+      {/* Image */}
       <Link href={`/venues/${venue.slug}`} className="block">
         <div className="relative aspect-square overflow-hidden" style={{ background: color + '22' }}>
           {(venue.photoUrl || venue.imageUrl) ? (
-            <img src={venue.photoUrl || venue.imageUrl} alt={venue.name} className="w-full h-full object-cover" />
+            <img
+              src={venue.photoUrl || venue.imageUrl}
+              alt={venue.name}
+              className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+            />
           ) : (
             <div className="absolute inset-0 flex items-center justify-center">
-              <span className="text-3xl font-bold" style={{ color }}>{venueInitials(venue.name)}</span>
+              <span className="text-5xl font-black" style={{ color }}>{venueInitials(venue.name)}</span>
             </div>
           )}
-          <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
-          {venue.venueType && (
-            <span className="absolute top-2 left-2 text-[9px] font-semibold uppercase tracking-wide bg-black/50 text-gray-300 rounded px-1.5 py-0.5">
+          <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/10 to-transparent" />
+
+          {/* Type badge */}
+          {venue.venueType && venue.venueType !== 'other' && (
+            <span className="absolute top-2.5 left-2.5 badge-gray text-[10px] uppercase tracking-widest">
               {VENUE_TYPE_LABELS[venue.venueType] || 'Venue'}
             </span>
+          )}
+
+          {/* Gig count */}
+          {venue.upcoming > 0 && (
+            <div className="absolute bottom-2.5 left-2.5">
+              <span className="badge-brand text-xs">
+                <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                </svg>
+                {venue.upcoming} {venue.upcoming === 1 ? 'gig' : 'gigs'}
+              </span>
+            </div>
           )}
         </div>
       </Link>
 
-      <div className="p-3">
-        <div className="flex items-start justify-between gap-2 mb-1">
-          <Link href={`/venues/${venue.slug}`} className="font-semibold text-sm text-white hover:text-brand-light truncate transition-colors">
+      {/* Info */}
+      <div className="p-3.5">
+        <div className="flex items-start justify-between gap-2">
+          <Link href={`/venues/${venue.slug}`}
+            className="font-semibold text-sm text-white hover:text-brand-light truncate transition-colors">
             {venue.name}
           </Link>
           <button
             onClick={toggle}
-            className={`flex-shrink-0 text-xs px-2.5 py-1 rounded-md font-medium transition-all duration-150 ${
+            className={`flex-shrink-0 text-xs px-2.5 py-1.5 rounded-lg font-medium transition-all duration-150 ${
               followed
-                ? 'bg-brand/20 text-brand border border-brand/40 hover:bg-red-900/30 hover:text-red-400 hover:border-red-500/40'
+                ? 'bg-brand/15 text-brand-light border border-brand/30 hover:bg-red-500/15 hover:text-red-400 hover:border-red-500/30'
                 : 'bg-brand hover:bg-brand-dark text-white'
             }`}
           >
             {followed ? 'Following' : 'Follow'}
           </button>
         </div>
-        <div className="flex items-center gap-2 text-xs text-gray-500">
-          {venue.city && <span className="truncate">{venue.city}</span>}
-          {venue.upcoming > 0 && (
-            <span className="text-brand-light font-medium">{venue.upcoming} upcoming</span>
-          )}
-        </div>
+        {venue.city && (
+          <p className="text-xs text-zinc-500 mt-0.5">{venue.city}</p>
+        )}
       </div>
 
       {prompt && <AccountPrompt onClose={() => setPrompt(false)} />}

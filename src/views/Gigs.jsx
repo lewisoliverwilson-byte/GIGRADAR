@@ -3,6 +3,7 @@ import { useRouter } from 'next/router';
 import { api } from '../utils/api.js';
 import { useFollow } from '../context/FollowContext.jsx';
 import GigCard from '../components/GigCard.jsx';
+import Footer from '../components/Footer.jsx';
 
 const CITIES = [
   'All', 'London', 'Manchester', 'Birmingham', 'Glasgow', 'Liverpool',
@@ -22,14 +23,12 @@ export default function Gigs() {
   const [page, setPage]       = useState(1);
   const PER_PAGE = 24;
 
-  // Filter state — initialise from URL params
   const [city,   setCity]   = useState('All');
   const [from,   setFrom]   = useState('');
   const [to,     setTo]     = useState('');
   const [filter, setFilter] = useState('all');
   const [ready,  setReady]  = useState(false);
 
-  // Hydrate from URL once router is ready
   useEffect(() => {
     if (!router.isReady) return;
     setCity(router.query.city || 'All');
@@ -55,14 +54,13 @@ export default function Gigs() {
 
   useEffect(() => { fetchGigs(); }, [fetchGigs]);
 
-  // Sync filters to URL
   useEffect(() => {
     if (!ready) return;
     const p = {};
-    if (city !== 'All') p.city = city;
-    if (from)           p.from = from;
-    if (to)             p.to   = to;
-    if (filter !== 'all') p.filter = filter;
+    if (city !== 'All')    p.city   = city;
+    if (from)              p.from   = from;
+    if (to)                p.to     = to;
+    if (filter !== 'all')  p.filter = filter;
     router.replace({ pathname: '/gigs', query: p }, undefined, { shallow: true });
   }, [city, from, to, filter, ready]);
 
@@ -91,93 +89,129 @@ export default function Gigs() {
 
   const clearDates = () => { setFrom(''); setTo(''); };
 
+  const hasActiveFilters = city !== 'All' || from || to || filter !== 'all';
+
   return (
-    <div className="max-w-4xl mx-auto px-4 sm:px-6 py-8">
-      <h1 className="text-2xl font-bold mb-5">Upcoming Gigs</h1>
-
-      {/* Filters */}
-      <div className="flex flex-col gap-3 mb-6">
-        {/* Row 1: view toggle + city */}
-        <div className="flex flex-wrap gap-2 items-center">
-          {[['all', 'All gigs'], ['following', 'Artists I follow']].map(([val, label]) => (
-            <button key={val} onClick={() => { setFilter(val); setPage(1); }}
-              className={`text-sm px-3 py-1.5 rounded-lg font-medium transition-colors ${
-                filter === val ? 'bg-brand text-white' : 'bg-surface-2 text-gray-400 hover:text-white border border-white/5'
-              }`}>
-              {label}
-            </button>
-          ))}
-          <select
-            value={city}
-            onChange={e => setCity(e.target.value)}
-            className="input max-w-[180px] py-1.5 text-sm ml-auto"
-          >
-            {CITIES.map(c => <option key={c} value={c}>{c === 'All' ? 'All cities' : c}</option>)}
-          </select>
-        </div>
-
-        {/* Row 2: date range */}
-        <div className="flex flex-wrap gap-2 items-center text-sm text-gray-400">
-          <span className="text-xs uppercase tracking-wide text-gray-500">Dates:</span>
-          <input
-            type="date"
-            value={from}
-            min={todayStr()}
-            onChange={e => setFrom(e.target.value)}
-            className="input py-1.5 text-sm w-36"
-            placeholder="From"
-          />
-          <span className="text-gray-600">→</span>
-          <input
-            type="date"
-            value={to}
-            min={from || todayStr()}
-            onChange={e => setTo(e.target.value)}
-            className="input py-1.5 text-sm w-36"
-            placeholder="To"
-          />
-          {(from || to) && (
-            <button onClick={clearDates} className="text-xs text-gray-500 hover:text-white underline">
-              Clear
-            </button>
-          )}
+    <div className="min-h-screen bg-surface">
+      {/* Page header */}
+      <div className="bg-surface-1 border-b border-white/5">
+        <div className="section py-12">
+          <p className="text-sm text-brand-light font-medium mb-2 uppercase tracking-widest">Browse</p>
+          <h1 className="text-4xl font-black text-white mb-3">Upcoming Gigs</h1>
+          <p className="text-zinc-400 max-w-lg">
+            Every UK gig across 10+ ticket platforms, updated every 6 hours.
+          </p>
         </div>
       </div>
 
-      {loading ? (
-        <div className="space-y-2">
-          {Array.from({ length: 10 }).map((_, i) => (
-            <div key={i} className="animate-pulse h-20 bg-surface-2 rounded-xl" />
-          ))}
-        </div>
-      ) : filtered.length === 0 ? (
-        <div className="card p-12 text-center text-gray-500 text-sm">
-          {filter === 'following'
-            ? 'No upcoming gigs for artists you follow.'
-            : city !== 'All'
-              ? `No gigs found in ${city}${from ? ` from ${from}` : ''}.`
-              : 'No gigs found.'}
-        </div>
-      ) : (
-        <>
-          <p className="text-xs text-gray-500 mb-3">
-            {filtered.length} gig{filtered.length !== 1 ? 's' : ''}
-            {city !== 'All' ? ` in ${city}` : ''}
-            {from ? ` from ${from}` : ''}
-            {to   ? ` to ${to}`     : ''}
-          </p>
-          <div className="space-y-2">
-            {paged.map(g => <GigCard key={g.gigId} gig={g} showArtist />)}
-          </div>
-          {hasMore && (
-            <div className="text-center mt-6">
-              <button onClick={() => setPage(p => p + 1)} className="btn-secondary px-8">
-                Load more ({filtered.length - paged.length} remaining)
-              </button>
+      {/* Filters */}
+      <div className="bg-surface-1/50 border-b border-white/5">
+        <div className="section py-4">
+          <div className="flex flex-col sm:flex-row gap-3 items-start sm:items-center flex-wrap">
+
+            {/* View toggle */}
+            <div className="flex gap-1 bg-surface-2 rounded-xl p-1">
+              {[['all', 'All gigs'], ['following', 'Following']].map(([val, label]) => (
+                <button
+                  key={val}
+                  onClick={() => { setFilter(val); setPage(1); }}
+                  className={`text-sm px-4 py-1.5 rounded-lg font-medium transition-all duration-150 ${
+                    filter === val
+                      ? 'bg-brand text-white shadow'
+                      : 'text-zinc-400 hover:text-white'
+                  }`}
+                >
+                  {label}
+                </button>
+              ))}
             </div>
-          )}
-        </>
-      )}
+
+            {/* City select */}
+            <select
+              value={city}
+              onChange={e => { setCity(e.target.value); setPage(1); }}
+              className="input py-2 text-sm"
+            >
+              {CITIES.map(c => <option key={c} value={c}>{c === 'All' ? 'All cities' : c}</option>)}
+            </select>
+
+            {/* Date range */}
+            <div className="flex items-center gap-2">
+              <input
+                type="date"
+                value={from}
+                min={todayStr()}
+                onChange={e => { setFrom(e.target.value); setPage(1); }}
+                className="input py-2 text-sm w-36"
+              />
+              <span className="text-zinc-600 text-sm">→</span>
+              <input
+                type="date"
+                value={to}
+                min={from || todayStr()}
+                onChange={e => { setTo(e.target.value); setPage(1); }}
+                className="input py-2 text-sm w-36"
+              />
+            </div>
+
+            {hasActiveFilters && (
+              <button
+                onClick={() => { setCity('All'); clearDates(); setFilter('all'); setPage(1); }}
+                className="text-sm text-zinc-500 hover:text-white transition-colors"
+              >
+                Clear filters ×
+              </button>
+            )}
+          </div>
+        </div>
+      </div>
+
+      {/* Results */}
+      <div className="section py-8 pb-16">
+        {loading ? (
+          <div className="space-y-2.5">
+            {Array.from({ length: 10 }).map((_, i) => (
+              <div key={i} className="skeleton h-20 rounded-2xl" />
+            ))}
+          </div>
+        ) : filtered.length === 0 ? (
+          <div className="text-center py-20">
+            <span className="text-4xl block mb-3">🎵</span>
+            <p className="text-white font-semibold">No gigs found</p>
+            <p className="text-sm text-zinc-500 mt-1">
+              {filter === 'following'
+                ? 'None of your followed artists have upcoming shows.'
+                : city !== 'All'
+                  ? `No gigs found in ${city}. Try a different city.`
+                  : 'Try adjusting your filters.'}
+            </p>
+          </div>
+        ) : (
+          <>
+            <p className="text-sm text-zinc-500 mb-5">
+              {filtered.length.toLocaleString()} gig{filtered.length !== 1 ? 's' : ''}
+              {city !== 'All' ? ` in ${city}` : ''}
+              {from ? ` from ${from}` : ''}
+              {to ? ` to ${to}` : ''}
+            </p>
+            <div className="space-y-2.5">
+              {paged.map(g => <GigCard key={g.gigId} gig={g} showArtist />)}
+            </div>
+            {hasMore && (
+              <div className="text-center mt-10">
+                <button
+                  onClick={() => setPage(p => p + 1)}
+                  className="btn-secondary px-10 py-3 rounded-xl"
+                >
+                  Load more ({filtered.length - paged.length} remaining)
+                </button>
+              </div>
+            )}
+          </>
+        )}
+      </div>
+
+      <Footer />
     </div>
   );
 }
