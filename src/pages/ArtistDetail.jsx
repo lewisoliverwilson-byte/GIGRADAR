@@ -5,6 +5,7 @@ import { getToken } from '../utils/cognito.js';
 import { artistInitials, artistColor, formatDate } from '../utils/format.js';
 import { useAuth } from '../context/AuthContext.jsx';
 import FollowButton from '../components/FollowButton.jsx';
+import AlertButton from '../components/AlertButton.jsx';
 import GigCard from '../components/GigCard.jsx';
 import ClaimModal from '../components/ClaimModal.jsx';
 
@@ -257,7 +258,14 @@ export default function ArtistDetail() {
               )}
             </div>
 
-            <FollowButton artistId={artist.artistId} />
+            <div className="flex flex-col items-end gap-2">
+              <FollowButton artistId={artist.artistId} />
+              <AlertButton
+                targetId={artist.artistId}
+                targetType="artist"
+                targetName={artist.name}
+              />
+            </div>
           </div>
         </div>
       </div>

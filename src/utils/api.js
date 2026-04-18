@@ -24,6 +24,12 @@ async function patch(path, body, token) {
   return res.json();
 }
 
+async function del(path, body) {
+  const res = await fetch(`${base}${path}`, { method: 'DELETE', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
+  if (!res.ok) throw new Error(`API error ${res.status}`);
+  return res.json();
+}
+
 async function adminGet(path, adminKey) {
   const res = await fetch(`${base}${path}`, { headers: { 'x-admin-key': adminKey } });
   if (!res.ok) throw new Error(`API error ${res.status}`);
@@ -52,6 +58,14 @@ export const api = {
   // Artist claiming & editing (requires Cognito JWT)
   claimArtist:   (id, body, token) => post(`/artists/${id}/claim`, body, token),
   updateArtist:  (id, body, token) => patch(`/artists/${id}`, body, token),
+
+  // Follows / email alerts
+  followTarget:  (email, targetId, targetType, targetName) =>
+    post('/follows', { email, targetId, targetType, targetName }),
+  unfollowTarget: (email, targetId) =>
+    del('/follows', { email, targetId }),
+  checkFollow:   (email, targetId) =>
+    get(`/follows/check?${new URLSearchParams({ email, targetId })}`),
 
   // Admin endpoints (requires admin key)
   adminGetArtists:   (key)       => adminGet('/admin/artists', key),

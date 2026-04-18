@@ -6,6 +6,7 @@ const ddb = DynamoDBDocumentClient.from(new DynamoDBClient({ region: process.env
 const ARTISTS_TABLE        = 'gigradar-artists';
 const GIGS_TABLE           = 'gigradar-gigs';
 const VENUES_TABLE         = 'gigradar-venues';
+const FOLLOWS_TABLE        = 'gigradar-follows';
 const SPOTIFY_TOKENS_TABLE = 'gigradar-spotify-tokens';
 const ADMIN_KEY            = process.env.ADMIN_API_KEY || '';
 
@@ -14,7 +15,7 @@ const SPOTIFY_CLIENT_SECRET = process.env.SPOTIFY_CLIENT_SECRET || '';
 
 const CORS = {
   'Access-Control-Allow-Origin':  '*',
-  'Access-Control-Allow-Methods': 'GET,POST,PATCH,OPTIONS',
+  'Access-Control-Allow-Methods': 'GET,POST,PATCH,DELETE,OPTIONS',
   'Access-Control-Allow-Headers': 'Content-Type,Authorization,x-admin-key'
 };
 
@@ -247,20 +248,41 @@ async function getVenueGigs(slug) {
 async function getGigs(params) {
   const today = new Date().toISOString().split('T')[0];
   const limit = Math.min(parseInt(params?.limit || '200', 10), 500);
+  const city  = (params?.city  || '').trim().toLowerCase();
+  const genre = (params?.genre || '').trim().toLowerCase();
+  const from  = params?.from  || today;
+  const to    = params?.to    || '';
 
-  const result = await ddb.send(new ScanCommand({
-    TableName:                 GIGS_TABLE,
-    FilterExpression:          '#d >= :today',
-    ExpressionAttributeNames:  { '#d': 'date' },
-    ExpressionAttributeValues: { ':today': today },
-    Limit:                     1000
-  }));
+  const filterParts = ['#d >= :from'];
+  const names  = { '#d': 'date' };
+  const values = { ':from': from };
 
-  const gigs = (result.Items || [])
-    .sort((a, b) => a.date.localeCompare(b.date))
-    .slice(0, limit);
+  if (to)    { filterParts.push('#d <= :to');                      values[':to']    = to; }
+  if (city)  { filterParts.push('contains(#city, :city)');         names['#city']   = 'city';   values[':city']  = city; }
+  if (genre) { filterParts.push('contains(#genre, :genre)');       names['#genre']  = 'genre';  values[':genre'] = genre; }
 
-  return ok(gigs);
+  // Paginate fully so filters apply across all pages
+  const gigs = [];
+  let lastKey;
+  do {
+    const p = {
+      TableName:                 GIGS_TABLE,
+      FilterExpression:          filterParts.join(' AND '),
+      ExpressionAttributeNames:  names,
+      ExpressionAttributeValues: values,
+    };
+    if (lastKey) p.ExclusiveStartKey = lastKey;
+    const r = await ddb.send(new ScanCommand(p)).catch(() => ({ Items: [] }));
+    gigs.push(...(r.Items || []));
+    lastKey = r.LastEvaluatedKey;
+    if (gigs.length >= 2000) break; // safety cap
+  } while (lastKey);
+
+  return ok(
+    gigs
+      .sort((a, b) => a.date.localeCompare(b.date))
+      .slice(0, limit)
+  );
 }
 
 /* ---- Spotify helpers ---- */
@@ -470,6 +492,58 @@ async function spotifyDisconnect(event) {
   return ok({ ok: true });
 }
 
+/* ---- POST /follows ---- */
+async function followTarget(event) {
+  const { email, targetId, targetType, targetName } = parseBody(event);
+  if (!email || !targetId || !targetType) return badRequest('email, targetId, targetType required');
+  const emailRe = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  if (!emailRe.test(email)) return badRequest('Invalid email');
+
+  const followId   = `${email}#${targetId}`;
+  const unsubToken = Buffer.from(`${followId}:${Date.now()}`).toString('base64url').slice(0, 32);
+
+  await ddb.send(new PutCommand({
+    TableName: FOLLOWS_TABLE,
+    Item: { followId, email, targetId, targetType, targetName: targetName || '', confirmed: true, createdAt: new Date().toISOString(), unsubToken },
+    ConditionExpression: 'attribute_not_exists(followId)',
+  })).catch(() => {}); // ignore duplicate
+
+  return ok({ ok: true });
+}
+
+/* ---- DELETE /follows ---- */
+async function unfollowTarget(event) {
+  const { email, targetId } = parseBody(event);
+  if (!email || !targetId) return badRequest('email and targetId required');
+  await ddb.send(new DeleteCommand({ TableName: FOLLOWS_TABLE, Key: { followId: `${email}#${targetId}` } })).catch(() => {});
+  return ok({ ok: true });
+}
+
+/* ---- GET /follows/check?email=&targetId= ---- */
+async function checkFollow(params) {
+  const { email, targetId } = params || {};
+  if (!email || !targetId) return badRequest('email and targetId required');
+  const r = await ddb.send(new GetCommand({ TableName: FOLLOWS_TABLE, Key: { followId: `${email}#${targetId}` } })).catch(() => ({}));
+  return ok({ following: !!r.Item });
+}
+
+/* ---- GET /unsubscribe?token= ---- */
+async function unsubscribeByToken(params) {
+  const token = params?.token || '';
+  if (!token) return badRequest('token required');
+  // Scan for the token (low frequency, acceptable)
+  const r = await ddb.send(new ScanCommand({
+    TableName: FOLLOWS_TABLE,
+    FilterExpression: 'unsubToken = :t',
+    ExpressionAttributeValues: { ':t': token },
+    Limit: 1,
+  })).catch(() => ({ Items: [] }));
+  const item = r.Items?.[0];
+  if (!item) return ok({ ok: true, message: 'Already removed or not found' });
+  await ddb.send(new DeleteCommand({ TableName: FOLLOWS_TABLE, Key: { followId: item.followId } })).catch(() => {});
+  return ok({ ok: true, message: 'Unsubscribed successfully' });
+}
+
 /* ---- Router ---- */
 exports.handler = async (event) => {
   if (event.requestContext?.http?.method === 'OPTIONS') {
@@ -504,6 +578,8 @@ exports.handler = async (event) => {
 
     if (rawPath === '/admin/artists') return adminGetArtists(event);
     if (rawPath === '/admin/claims')  return adminGetClaims(event);
+    if (rawPath === '/follows/check') return checkFollow(params);
+    if (rawPath === '/unsubscribe')   return unsubscribeByToken(params);
 
     return notFound();
   }
@@ -526,6 +602,14 @@ exports.handler = async (event) => {
     const rejectMatch = rawPath.match(/^\/admin\/claims\/([^/]+)\/reject$/);
     if (rejectMatch) return adminRejectClaim(decodeURIComponent(rejectMatch[1]), event);
 
+    if (rawPath === '/follows')     return followTarget(event);
+
+    return notFound();
+  }
+
+  // ---- DELETE routes ----
+  if (method === 'DELETE') {
+    if (rawPath === '/follows')     return unfollowTarget(event);
     return notFound();
   }
 

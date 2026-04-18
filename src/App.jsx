@@ -11,12 +11,14 @@ import Gigs from './pages/Gigs.jsx';
 import Discover from './pages/Discover.jsx';
 import Search from './pages/Search.jsx';
 import VenuePage from './pages/VenuePage.jsx';
+import Venues from './pages/Venues.jsx';
 import Profile from './pages/Profile.jsx';
 import Admin from './pages/Admin.jsx';
 import NotFound from './pages/NotFound.jsx';
 import OnboardingConnect from './pages/OnboardingConnect.jsx';
 import OnboardingArtists from './pages/OnboardingArtists.jsx';
 import SpotifyCallback from './pages/SpotifyCallback.jsx';
+import Unsubscribe from './pages/Unsubscribe.jsx';
 
 const FULLSCREEN_ROUTES = ['/onboarding/connect', '/onboarding/artists', '/auth/spotify/callback'];
 
@@ -35,12 +37,14 @@ function Layout() {
           <Route path="/gigs"                  element={<Gigs />} />
           <Route path="/discover"              element={<Discover />} />
           <Route path="/search"               element={<Search />} />
+          <Route path="/venues"                element={<Venues />} />
           <Route path="/venues/:slug"          element={<VenuePage />} />
           <Route path="/profile"               element={<Profile />} />
           <Route path="/admin"                 element={<Admin />} />
           <Route path="/onboarding/connect"    element={<OnboardingConnect />} />
           <Route path="/onboarding/artists"    element={<OnboardingArtists />} />
           <Route path="/auth/spotify/callback" element={<SpotifyCallback />} />
+          <Route path="/unsubscribe"           element={<Unsubscribe />} />
           <Route path="*"                      element={<NotFound />} />
         </Routes>
       </main>

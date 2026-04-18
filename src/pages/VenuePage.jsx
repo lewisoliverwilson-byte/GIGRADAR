@@ -4,6 +4,7 @@ import { api } from '../utils/api.js';
 import { useAuth } from '../context/AuthContext.jsx';
 import { useFollow } from '../context/FollowContext.jsx';
 import GigCard from '../components/GigCard.jsx';
+import AlertButton from '../components/AlertButton.jsx';
 
 function venueColor(venueId) {
   const palette = ['#8b5cf6','#06b6d4','#10b981','#f59e0b','#ec4899','#ef4444','#6366f1'];
@@ -64,8 +65,8 @@ export default function VenuePage() {
 
       {/* Header */}
       <div className="relative -mx-4 sm:-mx-6 overflow-hidden mb-8">
-        {venue.photoUrl ? (
-          <img src={venue.photoUrl} alt={venue.name} className="w-full h-56 object-cover" />
+        {(venue.photoUrl || venue.imageUrl) ? (
+          <img src={venue.photoUrl || venue.imageUrl} alt={venue.name} className="w-full h-56 object-cover" />
         ) : (
           <div className="w-full h-56 flex items-center justify-center" style={{ background: color + '22' }}>
             <span className="text-7xl font-bold" style={{ color }}>{venueInitials(venue.name)}</span>
@@ -94,6 +95,11 @@ export default function VenuePage() {
         >
           {followed ? 'Following' : 'Follow venue'}
         </button>
+        <AlertButton
+          targetId={venue.venueId}
+          targetType="venue"
+          targetName={venue.name}
+        />
         {venue.website && (
           <a href={venue.website} target="_blank" rel="noopener noreferrer"
             className="text-sm text-gray-400 hover:text-white transition-colors">
