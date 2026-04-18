@@ -57,8 +57,22 @@ function isTributeAct(name) {
 
 const GENERIC_ACT_RE = /^(live music|open mic|various artists?|dj night|club night|karaoke|quiz night|comedy night|open stage|acoustic night|local bands?|tribute night|unsigned night|battle of the bands|bands? night|gig night|music night|headline act tba|tba|tbc|doors? open)$/i;
 
+// Patterns that indicate an event title rather than an artist name
+const EVENT_TITLE_RE = /\bpresents[:\-\s]/i | / @ /;
+const isEventTitle = name => {
+  if (!name) return false;
+  const n = name.trim();
+  if (n.length > 60) return true;           // event descriptions are long
+  if (/\bpresents[:\-]/i.test(n)) return true; // "X Presents: Y"
+  if (/ @ /.test(n)) return true;           // "Artist @ Venue"
+  if (/\bfestival\b/i.test(n)) return true; // "X Festival"
+  // Multiple acts separated by + (e.g. "Artist A + Artist B + Artist C")
+  if ((n.match(/ \+ /g) || []).length >= 2) return true;
+  return false;
+};
+
 function isGenericName(name) {
-  return !name || name.trim().length < 2 || GENERIC_ACT_RE.test(name.trim());
+  return !name || name.trim().length < 2 || GENERIC_ACT_RE.test(name.trim()) || isEventTitle(name);
 }
 
 // ─── Venue ID / slug helpers ─────────────────────────────────────────────────
@@ -327,7 +341,7 @@ async function fetchSkiddle(nameMap) {
       const events = data?.results || [];
       if (!events.length) break;
       for (const ev of events) {
-        const rawName = ev.artists?.[0]?.name || ev.eventname || '';
+        const rawName = ev.artists?.[0]?.name || '';
         if (isGenericName(rawName)) continue;
         const norm = normaliseName(rawName);
         let artist = nameMap[norm];
