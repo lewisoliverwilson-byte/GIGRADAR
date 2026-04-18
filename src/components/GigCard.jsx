@@ -1,5 +1,5 @@
 import React from 'react';
-import { Link } from 'react-router-dom';
+import Link from 'next/link';
 
 // Full seller names for ticket buttons
 const SELLER_LABELS = {
@@ -63,7 +63,7 @@ export default function GigCard({ gig, showArtist = false }) {
           {/* Artist name — primary text when showArtist */}
           {showArtist && gig.artistName && (
             <Link
-              to={`/artists/${gig.artistId}`}
+              href={`/artists/${gig.artistId}`}
               className="font-bold text-sm text-white hover:text-brand-light transition-colors truncate leading-tight"
             >
               {gig.artistName}

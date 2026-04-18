@@ -1,10 +1,10 @@
 import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useRouter } from 'next/router';
 import { useAuth } from '../context/AuthContext.jsx';
 import { signUp, confirmSignUp, resendCode, signIn } from '../utils/cognito.js';
 
 export default function AuthModal() {
-  const navigate = useNavigate();
+  const router = useRouter();
   const { showAuth, setShowAuth, authTab, setAuthTab, refresh } = useAuth();
   const [step, setStep]         = useState('form'); // 'form' | 'verify'
   const [pendingEmail, setPending] = useState('');
@@ -54,7 +54,7 @@ export default function AuthModal() {
       await signIn(pendingEmail, password);
       await refresh();
       close();
-      navigate('/onboarding/connect');
+      router.push('/onboarding/connect');
     } catch (err) {
       setError(err.message);
     } finally {

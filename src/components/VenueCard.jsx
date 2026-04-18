@@ -1,5 +1,5 @@
 import React from 'react';
-import { Link } from 'react-router-dom';
+import Link from 'next/link';
 import { useAuth } from '../context/AuthContext.jsx';
 import { useFollow } from '../context/FollowContext.jsx';
 import AccountPrompt from './AccountPrompt.jsx';
@@ -40,10 +40,10 @@ export default function VenueCard({ venue }) {
 
   return (
     <div className="card group hover:border-white/10 transition-all hover:-translate-y-0.5 duration-200">
-      <Link to={`/venues/${venue.slug}`} className="block">
+      <Link href={`/venues/${venue.slug}`} className="block">
         <div className="relative aspect-square overflow-hidden" style={{ background: color + '22' }}>
-          {venue.photoUrl ? (
-            <img src={venue.photoUrl} alt={venue.name} className="w-full h-full object-cover" />
+          {(venue.photoUrl || venue.imageUrl) ? (
+            <img src={venue.photoUrl || venue.imageUrl} alt={venue.name} className="w-full h-full object-cover" />
           ) : (
             <div className="absolute inset-0 flex items-center justify-center">
               <span className="text-3xl font-bold" style={{ color }}>{venueInitials(venue.name)}</span>
@@ -60,7 +60,7 @@ export default function VenueCard({ venue }) {
 
       <div className="p-3">
         <div className="flex items-start justify-between gap-2 mb-1">
-          <Link to={`/venues/${venue.slug}`} className="font-semibold text-sm text-white hover:text-brand-light truncate transition-colors">
+          <Link href={`/venues/${venue.slug}`} className="font-semibold text-sm text-white hover:text-brand-light truncate transition-colors">
             {venue.name}
           </Link>
           <button

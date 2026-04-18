@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
+import Link from 'next/link';
 import FollowButton from './FollowButton.jsx';
 import { artistInitials, artistColor } from '../utils/format.js';
 
@@ -34,7 +34,7 @@ export default function ArtistCard({ artist }) {
   return (
     <div className="card group hover:border-white/10 transition-all hover:-translate-y-0.5 duration-200">
       {/* Avatar */}
-      <Link to={`/artists/${artist.artistId}`} className="block">
+      <Link href={`/artists/${artist.artistId}`} className="block">
         <div className="relative aspect-square overflow-hidden" style={{ background: color + '33' }}>
           {imgUrl ? (
             <img src={imgUrl} alt={artist.name} className="w-full h-full object-cover object-top" />
@@ -50,7 +50,7 @@ export default function ArtistCard({ artist }) {
       {/* Info */}
       <div className="p-3">
         <div className="flex items-start justify-between gap-2 mb-1">
-          <Link to={`/artists/${artist.artistId}`} className="font-semibold text-sm text-white hover:text-brand-light truncate transition-colors flex items-center gap-1">
+          <Link href={`/artists/${artist.artistId}`} className="font-semibold text-sm text-white hover:text-brand-light truncate transition-colors flex items-center gap-1">
             {artist.name}
             {artist.verified && (
               <svg className="w-3.5 h-3.5 text-brand flex-shrink-0" viewBox="0 0 20 20" fill="currentColor">
