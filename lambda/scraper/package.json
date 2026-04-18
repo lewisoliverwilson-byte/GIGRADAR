@@ -8,6 +8,7 @@
     "@aws-sdk/lib-dynamodb": "^3.0.0"
   },
   "devDependencies": {
+    "adm-zip": "^0.5.17",
     "archiver": "^7.0.1"
   }
 }

@@ -1289,7 +1289,7 @@ async function fetchVenueBatch(nameMap) {
       ExpressionAttributeNames: { '#n': 'name' },
     };
     if (lastKey) params.ExclusiveStartKey = lastKey;
-    const r = await ddb.send(new ScanCommand(params)).catch(() => ({ Items: [] }));
+    const r = await ddb.send(new ScanCommand(params)).catch(e => { console.error('Venue scan error:', e.message); return { Items: [] }; });
     venues.push(...(r.Items || []));
     lastKey = r.LastEvaluatedKey;
   } while (lastKey);
