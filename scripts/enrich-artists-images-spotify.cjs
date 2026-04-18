@@ -7,6 +7,7 @@
  *
  * Usage:
  *   SPOTIFY_CLIENT_SECRET=xxx node scripts/enrich-artists-images-spotify.cjs
+ *   SPOTIFY_CLIENT_SECRET=xxx node scripts/enrich-artists-images-spotify.cjs --resume   (skip already-processed)
  *   SPOTIFY_CLIENT_SECRET=xxx node scripts/enrich-artists-images-spotify.cjs --dry-run
  *   SPOTIFY_CLIENT_SECRET=xxx node scripts/enrich-artists-images-spotify.cjs --limit 500
  *
@@ -24,11 +25,13 @@ const { DynamoDBDocumentClient, UpdateCommand, ScanCommand }     = require(path.
 const ddb    = DynamoDBDocumentClient.from(new DynamoDBClient({ region: 'us-east-1' }));
 const sleep  = ms => new Promise(r => setTimeout(r, ms));
 const DRY    = process.argv.includes('--dry-run');
+const RESUME = process.argv.includes('--resume');
 const LIMIT  = parseInt(process.argv[process.argv.indexOf('--limit') + 1] || '0') || 0;
 
 const CLIENT_ID     = '9f4abb0eac5a45019b8d9a492daa41fc';
 const CLIENT_SECRET = process.env.SPOTIFY_CLIENT_SECRET || '';
 const ARTISTS_TABLE = 'gigradar-artists';
+const PROGRESS_FILE = path.join(__dirname, 'spotify-images-progress.json');
 
 if (!CLIENT_SECRET) {
   console.error('Error: SPOTIFY_CLIENT_SECRET environment variable is required.');
@@ -113,13 +116,24 @@ async function loadArtists() {
 // ─── Main ─────────────────────────────────────────────────────────────────────
 
 async function main() {
-  console.log(`=== GigRadar Spotify Image Enrichment${DRY ? ' [DRY RUN]' : ''} ===\n`);
+  console.log(`=== GigRadar Spotify Image Enrichment${DRY ? ' [DRY RUN]' : ''}${RESUME ? ' [RESUME]' : ''} ===\n`);
+
+  // Load progress for resume mode
+  let done = new Set();
+  if (RESUME && require('fs').existsSync(PROGRESS_FILE)) {
+    try { done = new Set(JSON.parse(require('fs').readFileSync(PROGRESS_FILE, 'utf8'))); } catch {}
+    console.log(`  Resuming — ${done.size} already processed\n`);
+  }
+
   const artists = await loadArtists();
+  const remaining = RESUME ? artists.filter(a => !done.has(a.artistId)) : artists;
+  console.log(`  ${remaining.length} remaining to process\n`);
+
   let found = 0, notFound = 0;
 
-  for (let i = 0; i < artists.length; i++) {
-    const { artistId, name, upcoming } = artists[i];
-    if (!name) { notFound++; continue; }
+  for (let i = 0; i < remaining.length; i++) {
+    const { artistId, name } = remaining[i];
+    if (!name) { notFound++; done.add(artistId); continue; }
 
     const img = await fetchSpotifyImage(name);
     if (img) {
@@ -136,13 +150,20 @@ async function main() {
       notFound++;
     }
 
-    if ((i + 1) % 50 === 0 || i === artists.length - 1) {
-      process.stdout.write(`\r  [${i+1}/${artists.length}] Found: ${found} | Not found: ${notFound}`);
+    done.add(artistId);
+    // Save progress every 50 artists
+    if (!DRY && (i + 1) % 50 === 0) {
+      require('fs').writeFileSync(PROGRESS_FILE, JSON.stringify([...done]));
     }
-    await sleep(100); // ~10 req/sec, well within Spotify's limits
+
+    if ((i + 1) % 50 === 0 || i === remaining.length - 1) {
+      process.stdout.write(`\r  [${i+1}/${remaining.length}] Found: ${found} | Not found: ${notFound}`);
+    }
+    await sleep(100);
   }
 
-  console.log(`\n\nDone. Found images for ${found}/${artists.length} artists.`);
+  if (!DRY) require('fs').writeFileSync(PROGRESS_FILE, JSON.stringify([...done]));
+  console.log(`\n\nDone. Found images for ${found}/${remaining.length} artists.`);
 }
 
 main().catch(console.error);
