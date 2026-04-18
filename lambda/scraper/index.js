@@ -1127,6 +1127,217 @@ async function upsertVenues(gigsArr, today) {
   console.log(`Venues: upserted ${saved} venues`);
 }
 
+// ─── Venue batch crawler ─────────────────────────────────────────────────────
+// Runs every Lambda invocation: picks the 50 venues crawled longest ago (or never),
+// scrapes their Skiddle per-venue feed + own website JSON-LD, saves new gigs.
+// Full cycle across all ~4,700 venues takes ~16 days at 6 runs/day.
+
+const VENUE_BATCH_SIZE = 50;
+
+const VENUE_WEBSITE_HEADERS = {
+  'User-Agent':      'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
+  'Accept':          'text/html,application/xhtml+xml',
+  'Accept-Language': 'en-GB,en;q=0.9',
+};
+
+const EVENT_TITLE_VENUE_RE = /\bpresents[:\-]/i;
+function isValidVenueArtist(name) {
+  if (!name || name.trim().length < 2 || name.trim().length > 80) return false;
+  if (GENERIC_ACT_RE.test(name.trim())) return false;
+  if (TRIBUTE_RE.test(name)) return false;
+  if (EVENT_TITLE_VENUE_RE.test(name)) return false;
+  if (/ @ /.test(name)) return false;
+  return true;
+}
+
+function extractVenueJsonLdEvents(html) {
+  const events = [];
+  for (const [, json] of html.matchAll(/<script type="application\/ld\+json">([\s\S]*?)<\/script>/g)) {
+    try {
+      const data  = JSON.parse(json);
+      const items = Array.isArray(data) ? data : data['@graph'] ? data['@graph'] : [data];
+      for (const item of items) {
+        if (item['@type'] === 'MusicEvent' || item['@type'] === 'Event') events.push(item);
+      }
+    } catch {}
+  }
+  return events;
+}
+
+async function fetchVenueWebsiteGigs(venue, nameMap) {
+  if (!venue.website) return [];
+  let base = venue.website.startsWith('http') ? venue.website : `https://${venue.website}`;
+  base = base.replace(/\/$/, '');
+
+  const today = new Date().toISOString().split('T')[0];
+  const gigs  = [];
+
+  // Try homepage first, then common events paths
+  const paths = ['', '/events', '/whats-on', '/gigs', '/whatson', '/listings', '/calendar', '/shows'];
+  for (const p of paths) {
+    try {
+      const res  = await fetch(`${base}${p}`, { headers: VENUE_WEBSITE_HEADERS, redirect: 'follow', signal: AbortSignal.timeout(8000) });
+      if (!res.ok) continue;
+      const html   = await res.text();
+      const events = extractVenueJsonLdEvents(html);
+      if (!events.length) { await sleep(300); continue; }
+
+      for (const ev of events) {
+        const date = (ev.startDate || '').split('T')[0];
+        if (!date || date < today) continue;
+        const performers = Array.isArray(ev.performer) ? ev.performer : ev.performer ? [ev.performer] : [];
+        const rawName    = performers[0]?.name || (ev.name || '').replace(/\s*@\s*.+$/, '').trim();
+        if (!isValidVenueArtist(rawName)) continue;
+        const norm   = normaliseName(rawName);
+        let   artist = nameMap[norm];
+        if (!artist) { artist = await autoSeedArtist(rawName, nameMap); if (!artist) continue; }
+
+        const support    = performers.slice(1).map(p => p.name).filter(n => isValidVenueArtist(n));
+        const ticketUrl  = Array.isArray(ev.offers) ? ev.offers[0]?.url : ev.offers?.url;
+        const price      = Array.isArray(ev.offers) ? ev.offers[0]?.price : ev.offers?.price;
+
+        gigs.push({
+          gigId:            `web-${normaliseName(venue.name)}-${artist.id}-${date}`,
+          dedupKey:         dedupKey(artist.id, date, venue.name),
+          artistId:         artist.id,
+          artistName:       artist.name,
+          date,
+          doorsTime:        ev.startDate?.includes('T') ? ev.startDate.split('T')[1]?.slice(0, 5) : null,
+          venueName:        venue.name,
+          venueId:          venue.venueId,
+          venueCity:        venue.city || '',
+          venueCountry:     'GB',
+          canonicalVenueId: venue.venueId,
+          isSoldOut:        false,
+          supportActs:      support,
+          tickets: [{
+            seller:    venue.name,
+            url:       ticketUrl || `${base}${p}`,
+            available: true,
+            price:     price ? `£${price}` : 'See site',
+          }],
+          sources:     ['venue-website'],
+          lastUpdated: new Date().toISOString(),
+        });
+      }
+      if (gigs.length > 0) break; // found events, no need to try more paths
+      await sleep(300);
+    } catch { break; }
+  }
+  return gigs;
+}
+
+async function fetchVenueSkiddleGigs(venue, nameMap) {
+  if (!venue.skiddleId) return [];
+  const today     = new Date().toISOString().split('T')[0];
+  const yearAhead = new Date(Date.now() + 365 * 864e5).toISOString().split('T')[0];
+  const gigs      = [];
+  try {
+    const url  = `https://www.skiddle.com/api/v1/events/search/?api_key=${SKIDDLE_KEY}&venueid=${venue.skiddleId}&startdate=${today}&enddate=${yearAhead}&limit=100&order=date`;
+    const res  = await fetch(url);
+    if (!res.ok) return [];
+    const data = await res.json();
+    if (data.error) return [];
+    for (const ev of (data.results || [])) {
+      if (ev.cancelled === '1') continue;
+      // Strip venue suffix from event name: "Artist @ Venue, City"
+      let rawName = (ev.artists?.[0]?.name || ev.eventname || '').replace(/\s*@\s*.+$/, '').trim();
+      if (!isValidVenueArtist(rawName)) continue;
+      const norm   = normaliseName(rawName);
+      let   artist = nameMap[norm];
+      if (!artist) { artist = await autoSeedArtist(rawName, nameMap); if (!artist) continue; }
+      const date = (ev.date || '').split('T')[0];
+      if (!date) continue;
+      gigs.push({
+        gigId:            `ski-v-${venue.skiddleId}-${ev.id}`,
+        dedupKey:         dedupKey(artist.id, date, venue.name),
+        artistId:         artist.id,
+        artistName:       artist.name,
+        date,
+        doorsTime:        ev.openingtimes?.doorsopen || null,
+        venueName:        venue.name,
+        venueId:          venue.venueId,
+        venueCity:        venue.city || '',
+        venueCountry:     'GB',
+        canonicalVenueId: venue.venueId,
+        isSoldOut:        !ev.tickets,
+        supportActs:      [],
+        tickets: [{
+          seller:    'Skiddle',
+          url:       ev.link || 'https://www.skiddle.com',
+          available: !!ev.tickets,
+          price:     ev.mineticketprice ? `£${ev.mineticketprice}` : 'See site',
+        }],
+        sources:     ['skiddle-venue'],
+        lastUpdated: new Date().toISOString(),
+      });
+    }
+  } catch {}
+  return gigs;
+}
+
+async function fetchVenueBatch(nameMap) {
+  // Load all active venues, sort by lastVenueScraped ascending (null = never = highest priority)
+  const venues = [];
+  let lastKey;
+  do {
+    const params = {
+      TableName: VENUES_TABLE,
+      FilterExpression: 'isActive = :a',
+      ExpressionAttributeValues: { ':a': true },
+      ProjectionExpression: 'venueId, #n, city, website, skiddleId, lastVenueScraped',
+      ExpressionAttributeNames: { '#n': 'name' },
+    };
+    if (lastKey) params.ExclusiveStartKey = lastKey;
+    const r = await ddb.send(new ScanCommand(params)).catch(() => ({ Items: [] }));
+    venues.push(...(r.Items || []));
+    lastKey = r.LastEvaluatedKey;
+  } while (lastKey);
+
+  // Sort: never-scraped first, then oldest scraped
+  venues.sort((a, b) => {
+    if (!a.lastVenueScraped && !b.lastVenueScraped) return 0;
+    if (!a.lastVenueScraped) return -1;
+    if (!b.lastVenueScraped) return 1;
+    return a.lastVenueScraped < b.lastVenueScraped ? -1 : 1;
+  });
+
+  const batch = venues.slice(0, VENUE_BATCH_SIZE);
+  if (!batch.length) return;
+
+  const oldestDate = batch[0].lastVenueScraped || 'never';
+  console.log(`Venue crawl: ${batch.length} venues (oldest: ${oldestDate}, ${venues.length} total)`);
+
+  let gigsFound = 0;
+  const today = new Date().toISOString().split('T')[0];
+  const seen  = new Set();
+
+  for (const venue of batch) {
+    const skiddleGigs = await fetchVenueSkiddleGigs(venue, nameMap);
+    await sleep(300);
+    const websiteGigs = await fetchVenueWebsiteGigs(venue, nameMap);
+
+    const venueGigs = [...skiddleGigs, ...websiteGigs];
+    for (const gig of venueGigs) {
+      if (seen.has(gig.dedupKey)) continue;
+      seen.add(gig.dedupKey);
+      if (isTributeAct(gig.artistName)) continue;
+      await upsertGig(gig);
+      gigsFound++;
+    }
+
+    // Mark venue as scraped
+    await ddb.send(new UpdateCommand({
+      TableName: VENUES_TABLE,
+      Key: { venueId: venue.venueId },
+      UpdateExpression: 'SET lastVenueScraped = :t',
+      ExpressionAttributeValues: { ':t': new Date().toISOString() },
+    })).catch(() => {});
+  }
+
+  console.log(`Venue crawl: ${gigsFound} gigs from ${batch.length} venues`);
+}
+
 // ─── Main handler ────────────────────────────────────────────────────────────
 
 exports.handler = async () => {
@@ -1201,6 +1412,9 @@ exports.handler = async () => {
 
   // 6. Enrich newly discovered grassroots artists with Last.fm + Deezer (up to 100/run)
   await enrichGrassrootsArtists();
+
+  // 7. Venue website crawl — 50 stalest venues per run, cycles all ~4,700 in ~16 days
+  await fetchVenueBatch(nameMap);  console.log(t(), 'Venue crawl done');
 
   const elapsed = Math.round((Date.now() - start) / 1000);
   const totalArtists = Object.keys(nameMap).length;
