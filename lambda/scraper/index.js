@@ -312,27 +312,20 @@ async function fetchBandsintown() {
 
 async function fetchSkiddle(nameMap) {
   if (!SKIDDLE_KEY) { console.log('No Skiddle key — skipping'); return []; }
-  const gigs    = [];
-  const today   = new Date().toISOString().split('T')[0];
-  let page      = 1;
-  let total     = 1;
-  let lastPageFirstId = null; // detect rate-limit returning same page repeatedly
+  const gigs   = [];
+  const today  = new Date().toISOString().split('T')[0];
+  let offset   = 0;
+  let total    = 1;
+  const MAX    = 1000; // cap at 1,000 events per run
 
-  while (page <= Math.ceil(total / 100) && page <= 30) {
+  while (offset < total && offset < MAX) {
     try {
-      const url  = `https://www.skiddle.com/api/v1/events/search/?api_key=${SKIDDLE_KEY}&country=GB&eventcode=LIVE&startdate=${today}&limit=100&page=${page}&order=date`;
+      const url  = `https://www.skiddle.com/api/v1/events/search/?api_key=${SKIDDLE_KEY}&country=GB&eventcode=LIVE&startdate=${today}&limit=100&order=date&offset=${offset}`;
       const res  = await fetch(url);
       const data = await res.json();
-      total      = data?.totalcount || 1;
+      total      = Math.min(data?.totalcount || 1, MAX);
       const events = data?.results || [];
       if (!events.length) break;
-      // Rate-limit detection: if first event ID matches previous page, we're stuck on page 1
-      const thisFirstId = events[0]?.id;
-      if (page > 1 && thisFirstId === lastPageFirstId) {
-        console.log(`Skiddle: rate-limited at page ${page} — stopping`);
-        break;
-      }
-      lastPageFirstId = thisFirstId;
       for (const ev of events) {
         const rawName = ev.artists?.[0]?.name || ev.eventname || '';
         if (isGenericName(rawName)) continue;
@@ -366,8 +359,8 @@ async function fetchSkiddle(nameMap) {
           lastUpdated: new Date().toISOString(),
         });
       }
-    } catch (e) { console.error(`Skiddle page ${page}:`, e.message); }
-    page++;
+    } catch (e) { console.error(`Skiddle offset ${offset}:`, e.message); break; }
+    offset += 100;
     await sleep(300);
   }
   console.log(`Skiddle: ${gigs.length} gigs`);
@@ -436,57 +429,72 @@ async function fetchSongkick(artists) {
 async function fetchDice(nameMap) {
   const gigs  = [];
   const today = new Date().toISOString().split('T')[0];
-  let page    = 1;
+  const seen  = new Set();
 
-  while (page <= 20) {
+  // Dice public REST API is blocked (403); scrape Next.js SSR data from browse pages instead
+  const browsePages = [
+    'https://dice.fm/browse',
+    'https://dice.fm/browse?page=2',
+    'https://dice.fm/browse?page=3',
+  ];
+
+  for (const url of browsePages) {
     try {
-      const url  = `https://api.dice.fm/events?types=linkout,event&country_codes[]=GB&page=${page}&per_page=100`;
-      const res  = await fetch(url, {
-        headers: { 'x-api-key': 'dice', Accept: 'application/json', 'User-Agent': 'Mozilla/5.0' },
-      });
-      if (!res.ok) break;
-      const data   = await res.json();
-      const events = data?.data || data?.events || [];
-      if (!events.length) break;
+      const res  = await fetch(url, { headers: { 'User-Agent': 'Mozilla/5.0', Accept: 'text/html' } });
+      if (!res.ok) continue;
+      const html = await res.text();
+      const m    = html.match(/<script id="__NEXT_DATA__"[^>]*>([\s\S]*?)<\/script>/);
+      if (!m) continue;
+      const data   = JSON.parse(m[1]);
+      const events = data?.props?.pageProps?.events || [];
 
       for (const ev of events) {
-        const date = (ev.date || ev.event_date || '').split('T')[0];
+        if (seen.has(ev.id)) continue;
+        seen.add(ev.id);
+        const dateUnix = ev.dates?.[0]?.date || ev.date_unix;
+        const date = dateUnix ? new Date(typeof dateUnix === 'number' ? dateUnix * 1000 : dateUnix).toISOString().split('T')[0] : '';
         if (!date || date < today) continue;
-        const artistName = ev.artists?.[0]?.name || ev.name || '';
-        if (isGenericName(artistName)) continue;
-        const norm = normaliseName(artistName);
-        let artist = nameMap[norm];
-        if (!artist) {
-          artist = await autoSeedArtist(artistName, nameMap);
-          if (!artist) continue;
+        const artists = ev.summary_lineup?.top_artists || [];
+        if (!artists.length) continue;
+        const venue = ev.venues?.[0] || {};
+        const city  = venue.city?.name || venue.location?.name || '';
+
+        for (const art of artists) {
+          const artistName = art.name || '';
+          if (isGenericName(artistName)) continue;
+          const norm = normaliseName(artistName);
+          let artist = nameMap[norm];
+          if (!artist) {
+            artist = await autoSeedArtist(artistName, nameMap);
+            if (!artist) continue;
+          }
+          gigs.push({
+            gigId:        `dice-${ev.id}`,
+            dedupKey:     dedupKey(artist.id, date, venue.name || ''),
+            artistId:     artist.id,
+            artistName:   artist.name,
+            date,
+            doorsTime:    null,
+            venueName:    venue.name || '',
+            venueId:      `venue-dice-${normaliseName(venue.name || '')}`,
+            venueCity:    city,
+            venueCountry: 'GB',
+            isSoldOut:    ev.status === 'sold_out',
+            supportActs:  artists.slice(1).map(a => a.name).filter(Boolean),
+            tickets: [{
+              seller:    'Dice',
+              url:       `https://dice.fm/event/${ev.perm_name}`,
+              available: ev.status !== 'sold_out',
+              price:     ev.price?.amount ? `${currSym(ev.price.currency)}${(ev.price.amount / 100).toFixed(2)}` : 'See site',
+            }],
+            sources:     ['dice'],
+            lastUpdated: new Date().toISOString(),
+          });
+          break; // one gig entry per event (headliner)
         }
-        const venue  = ev.venue || {};
-        gigs.push({
-          gigId:        `dice-${ev.id || ev.slug}`,
-          dedupKey:     dedupKey(artist.id, date, venue.name || ''),
-          artistId:     artist.id,
-          artistName:   artist.name,
-          date,
-          doorsTime:    ev.doors || null,
-          venueName:    venue.name || '',
-          venueId:      `venue-dice-${venue.id || normaliseName(venue.name || '')}`,
-          venueCity:    venue.city || venue.location || '',
-          venueCountry: 'GB',
-          isSoldOut:    ev.sold_out || false,
-          supportActs:  (ev.artists || []).slice(1).map(a => a.name).filter(Boolean),
-          tickets: [{
-            seller:    'Dice',
-            url:       ev.url || `https://dice.fm/event/${ev.slug}`,
-            available: !ev.sold_out,
-            price:     ev.price ? `${currSym(ev.currency)}${ev.price}` : 'See site',
-          }],
-          sources:     ['dice'],
-          lastUpdated: new Date().toISOString(),
-        });
       }
-    } catch (e) { console.error(`Dice page ${page}:`, e.message); break; }
-    page++;
-    await sleep(300);
+    } catch (e) { console.error(`Dice browse:`, e.message); }
+    await sleep(500);
   }
   console.log(`Dice: ${gigs.length} gigs`);
   return gigs;
@@ -524,8 +532,10 @@ async function fetchResidentAdvisor(nameMap) {
           headers: { 'Content-Type': 'application/json', 'User-Agent': 'Mozilla/5.0', 'Referer': 'https://ra.co/events/uk' },
           body: JSON.stringify({ query, variables: { filters: { areas: { eq: areaId }, listingDate: { gte: today } }, page } }),
         });
+        if (!res.ok) { console.log(`RA area ${areaId} page ${page}: HTTP ${res.status}`); break; }
         const data     = await res.json();
         const listings = data?.data?.eventListings?.data || [];
+        if (areaId === 13 && page === 1) console.log(`RA London p1: ${listings.length} listings`);
         if (!listings.length) break;
 
         for (const listing of listings) {
