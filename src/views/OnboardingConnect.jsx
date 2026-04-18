@@ -1,10 +1,10 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useRouter } from 'next/router';
 import { useAuth } from '../context/AuthContext.jsx';
 import { initiateSpotifyAuth } from '../utils/spotify.js';
 
 export default function OnboardingConnect() {
-  const navigate = useNavigate();
+  const router = useRouter();
   const { user } = useAuth();
   const [spotifyLoading, setSpotifyLoading] = useState(false);
   const [infoMsg, setInfoMsg] = useState('');
@@ -98,7 +98,7 @@ export default function OnboardingConnect() {
 
         <div className="text-center mt-8">
           <button
-            onClick={() => navigate('/')}
+            onClick={() => router.push('/')}
             className="text-sm text-gray-500 hover:text-gray-300 transition-colors"
           >
             Skip for now →

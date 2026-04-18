@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Link } from 'react-router-dom';
+import Link from 'next/link';
 import { api } from '../utils/api.js';
 import { useAuth } from '../context/AuthContext.jsx';
 import { useFollow } from '../context/FollowContext.jsx';
@@ -136,7 +136,7 @@ function SectionHeader({ title, subtitle, linkTo, linkText }) {
         {subtitle && <p className="text-xs text-gray-500 mt-0.5">{subtitle}</p>}
       </div>
       {linkTo && linkText && (
-        <Link to={linkTo} className="text-sm text-brand hover:underline flex-shrink-0 ml-4">{linkText}</Link>
+        <Link href={linkTo} className="text-sm text-brand hover:underline flex-shrink-0 ml-4">{linkText}</Link>
       )}
     </div>
   );

@@ -1,9 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useRouter } from 'next/router';
 import { useFollow } from '../context/FollowContext.jsx';
 
 export default function OnboardingArtists() {
-  const navigate = useNavigate();
+  const router = useRouter();
   const { following, bulkFollow } = useFollow();
   const [artists, setArtists] = useState(null); // null = loading
   const [selected, setSelected] = useState(new Set());
@@ -12,7 +12,7 @@ export default function OnboardingArtists() {
   useEffect(() => {
     const raw = sessionStorage.getItem('spotify_matched_artists');
     if (raw === null) {
-      navigate('/onboarding/connect');
+      router.push('/onboarding/connect');
       return;
     }
     try {
@@ -22,7 +22,7 @@ export default function OnboardingArtists() {
       setArtists(unFollowed);
       setSelected(new Set(unFollowed.map(a => a.artistId)));
     } catch {
-      navigate('/onboarding/connect');
+      router.push('/onboarding/connect');
     }
   }, []);
 
@@ -41,7 +41,7 @@ export default function OnboardingArtists() {
     setSaving(true);
     bulkFollow([...selected]);
     sessionStorage.removeItem('spotify_matched_artists');
-    navigate('/');
+    router.push('/');
   }
 
   // Loading state
@@ -65,11 +65,11 @@ export default function OnboardingArtists() {
           <p className="text-gray-400 text-sm mb-6">
             GigRadar covers UK artists. If you mainly listen to international acts, try searching for UK artists you love.
           </p>
-          <button onClick={() => navigate('/discover')} className="btn-primary w-full mb-3">
+          <button onClick={() => router.push('/discover')} className="btn-primary w-full mb-3">
             Explore UK artists →
           </button>
           <button
-            onClick={() => navigate('/')}
+            onClick={() => router.push('/')}
             className="text-sm text-gray-500 hover:text-gray-300 transition-colors"
           >
             Go to homepage
@@ -182,7 +182,7 @@ export default function OnboardingArtists() {
             : `Follow ${selectedCount} artist${selectedCount !== 1 ? 's' : ''} →`}
         </button>
         <button
-          onClick={() => { sessionStorage.removeItem('spotify_matched_artists'); navigate('/'); }}
+          onClick={() => { sessionStorage.removeItem('spotify_matched_artists'); router.push('/'); }}
           className="w-full text-center text-sm text-gray-500 hover:text-gray-300 transition-colors mt-3"
         >
           Skip and explore manually

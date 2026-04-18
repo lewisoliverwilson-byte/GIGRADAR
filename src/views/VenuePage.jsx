@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
-import { useParams, Link } from 'react-router-dom';
+import { useRouter } from 'next/router';
+import Link from 'next/link';
 import { api } from '../utils/api.js';
 import { useAuth } from '../context/AuthContext.jsx';
 import { useFollow } from '../context/FollowContext.jsx';
@@ -18,7 +19,7 @@ function venueInitials(name) {
 }
 
 export default function VenuePage() {
-  const { slug }                = useParams();
+  const { query: { slug } }     = useRouter();
   const { user }                = useAuth();
   const { isFollowingVenue, followVenue, unfollowVenue } = useFollow();
 
@@ -45,7 +46,7 @@ export default function VenuePage() {
 
   if (!venue) return (
     <div className="max-w-4xl mx-auto px-4 sm:px-6 py-20 text-center text-gray-500">
-      Venue not found. <Link to="/discover" className="text-brand hover:underline">Browse gigs</Link>
+      Venue not found. <Link href="/discover" className="text-brand hover:underline">Browse gigs</Link>
     </div>
   );
 

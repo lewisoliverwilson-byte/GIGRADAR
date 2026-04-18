@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
-import { useParams, Link } from 'react-router-dom';
+import { useRouter } from 'next/router';
+import Link from 'next/link';
 import { api } from '../utils/api.js';
 import { getToken } from '../utils/cognito.js';
 import { artistInitials, artistColor, formatDate } from '../utils/format.js';
@@ -23,7 +24,7 @@ async function fetchWikiImage(wikipedia) {
 }
 
 export default function ArtistDetail() {
-  const { id }       = useParams();
+  const { query: { id } } = useRouter();
   const { user, openAuth } = useAuth();
 
   const [artist, setArtist]   = useState(null);
@@ -94,7 +95,7 @@ export default function ArtistDetail() {
   if (error || !artist) return (
     <div className="max-w-2xl mx-auto px-4 py-16 text-center">
       <p className="text-gray-400 mb-4">Artist not found.</p>
-      <Link to="/artists" className="text-brand hover:underline">← Back to artists</Link>
+      <Link href="/artists" className="text-brand hover:underline">← Back to artists</Link>
     </div>
   );
 

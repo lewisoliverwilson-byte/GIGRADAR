@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useMemo, useCallback } from 'react';
-import { useSearchParams } from 'react-router-dom';
+import { useRouter } from 'next/router';
 import { api } from '../utils/api.js';
 import { useFollow } from '../context/FollowContext.jsx';
 import GigCard from '../components/GigCard.jsx';
@@ -14,7 +14,7 @@ const CITIES = [
 function todayStr() { return new Date().toISOString().split('T')[0]; }
 
 export default function Gigs() {
-  const [searchParams, setSearchParams] = useSearchParams();
+  const router = useRouter();
   const { following } = useFollow();
 
   const [gigs, setGigs]       = useState([]);
@@ -23,12 +23,24 @@ export default function Gigs() {
   const PER_PAGE = 24;
 
   // Filter state — initialise from URL params
-  const [city,   setCity]   = useState(searchParams.get('city')  || 'All');
-  const [from,   setFrom]   = useState(searchParams.get('from')  || '');
-  const [to,     setTo]     = useState(searchParams.get('to')    || '');
-  const [filter, setFilter] = useState(searchParams.get('filter')|| 'all');
+  const [city,   setCity]   = useState('All');
+  const [from,   setFrom]   = useState('');
+  const [to,     setTo]     = useState('');
+  const [filter, setFilter] = useState('all');
+  const [ready,  setReady]  = useState(false);
+
+  // Hydrate from URL once router is ready
+  useEffect(() => {
+    if (!router.isReady) return;
+    setCity(router.query.city || 'All');
+    setFrom(router.query.from || '');
+    setTo(router.query.to || '');
+    setFilter(router.query.filter || 'all');
+    setReady(true);
+  }, [router.isReady]);
 
   const fetchGigs = useCallback(() => {
+    if (!ready) return;
     setLoading(true);
     setPage(1);
     const params = { limit: 500 };
@@ -39,19 +51,20 @@ export default function Gigs() {
       .then(setGigs)
       .catch(() => setGigs([]))
       .finally(() => setLoading(false));
-  }, [city, from, to]);
+  }, [city, from, to, ready]);
 
   useEffect(() => { fetchGigs(); }, [fetchGigs]);
 
   // Sync filters to URL
   useEffect(() => {
+    if (!ready) return;
     const p = {};
     if (city !== 'All') p.city = city;
     if (from)           p.from = from;
     if (to)             p.to   = to;
     if (filter !== 'all') p.filter = filter;
-    setSearchParams(p, { replace: true });
-  }, [city, from, to, filter]);
+    router.replace({ pathname: '/gigs', query: p }, undefined, { shallow: true });
+  }, [city, from, to, filter, ready]);
 
   const filtered = useMemo(() => {
     let list = gigs;

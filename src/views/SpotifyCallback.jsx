@@ -1,10 +1,10 @@
 import React, { useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useRouter } from 'next/router';
 import { getToken } from '../utils/cognito.js';
 import { CONFIG } from '../utils/config.js';
 
 export default function SpotifyCallback() {
-  const navigate = useNavigate();
+  const router = useRouter();
   const [error, setError] = useState('');
   const [status, setStatus] = useState('Connecting your Spotify…');
 
@@ -19,17 +19,17 @@ export default function SpotifyCallback() {
     const spotifyError = params.get('error');
 
     if (state !== sessionStorage.getItem('spotify_auth_state')) {
-      navigate('/onboarding/connect?error=state_mismatch');
+      router.push('/onboarding/connect?error=state_mismatch');
       return;
     }
 
     if (spotifyError) {
-      navigate(`/onboarding/connect?error=${spotifyError}`);
+      router.push(`/onboarding/connect?error=${spotifyError}`);
       return;
     }
 
     if (!code) {
-      navigate('/onboarding/connect?error=no_code');
+      router.push('/onboarding/connect?error=no_code');
       return;
     }
 
@@ -46,7 +46,7 @@ export default function SpotifyCallback() {
           grant_type:    'authorization_code',
           code,
           redirect_uri:  redirectUri,
-          client_id:     import.meta.env.VITE_SPOTIFY_CLIENT_ID,
+          client_id:     process.env.NEXT_PUBLIC_SPOTIFY_CLIENT_ID,
           code_verifier: codeVerifier,
         }),
       });
@@ -102,7 +102,7 @@ export default function SpotifyCallback() {
         }));
       }
 
-      navigate('/onboarding/artists');
+      router.push('/onboarding/artists');
     } catch (err) {
       setError(err.message || 'Something went wrong connecting Spotify.');
     }
@@ -113,7 +113,7 @@ export default function SpotifyCallback() {
       <div className="min-h-screen flex items-center justify-center px-4">
         <div className="text-center max-w-sm">
           <p className="text-red-400 mb-4">{error}</p>
-          <button onClick={() => navigate('/onboarding/connect')} className="btn-primary">
+          <button onClick={() => router.push('/onboarding/connect')} className="btn-primary">
             Try again
           </button>
         </div>

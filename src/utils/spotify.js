@@ -23,7 +23,7 @@ export async function initiateSpotifyAuth() {
   const redirectUri = `${window.location.origin}/auth/spotify/callback`;
 
   const params = new URLSearchParams({
-    client_id: import.meta.env.VITE_SPOTIFY_CLIENT_ID,
+    client_id: process.env.NEXT_PUBLIC_SPOTIFY_CLIENT_ID || '9f4abb0eac5a45019b8d9a492daa41fc',
     response_type: 'code',
     redirect_uri: redirectUri,
     scope: 'user-top-read',
