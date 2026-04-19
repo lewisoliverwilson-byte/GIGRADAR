@@ -5,13 +5,8 @@ import { useFollow } from '../context/FollowContext.jsx';
 import AccountPrompt from './AccountPrompt.jsx';
 
 const VENUE_TYPE_LABELS = {
-  pub:           'Pub',
-  club:          'Club',
-  theatre:       'Theatre',
-  academy:       'Academy',
-  arena:         'Arena',
-  'arts-centre': 'Arts Centre',
-  other:         'Venue',
+  pub: 'Pub', club: 'Club', theatre: 'Theatre', academy: 'Academy',
+  arena: 'Arena', 'arts-centre': 'Arts Centre', other: 'Venue',
 };
 
 function venueInitials(name) {
@@ -26,11 +21,11 @@ function venueColor(venueId) {
 }
 
 export default function VenueCard({ venue }) {
-  const { user }                                               = useAuth();
-  const { isFollowingVenue, followVenue, unfollowVenue }       = useFollow();
-  const [prompt, setPrompt]                                    = React.useState(false);
+  const { user } = useAuth();
+  const { isFollowingVenue, followVenue, unfollowVenue } = useFollow();
+  const [prompt, setPrompt] = React.useState(false);
   const followed = isFollowingVenue(venue.venueId);
-  const color    = venueColor(venue.venueId);
+  const color = venueColor(venue.venueId);
 
   function toggle(e) {
     e.preventDefault();
@@ -39,10 +34,9 @@ export default function VenueCard({ venue }) {
   }
 
   return (
-    <div className="card-hover group">
-      {/* Image */}
+    <div className="bg-zinc-900 border border-zinc-800 rounded-xl hover:border-zinc-600 transition-colors group">
       <Link href={`/venues/${venue.slug}`} className="block">
-        <div className="relative aspect-square overflow-hidden" style={{ background: color + '22' }}>
+        <div className="relative aspect-square overflow-hidden rounded-t-xl" style={{ background: color + '33' }}>
           {(venue.photoUrl || venue.imageUrl) ? (
             <img
               src={venue.photoUrl || venue.imageUrl}
@@ -56,17 +50,15 @@ export default function VenueCard({ venue }) {
           )}
           <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/10 to-transparent" />
 
-          {/* Type badge */}
           {venue.venueType && venue.venueType !== 'other' && (
-            <span className="absolute top-2.5 left-2.5 badge-gray text-[10px] uppercase tracking-widest">
+            <span className="absolute top-2.5 left-2.5 bg-zinc-800 text-zinc-300 text-[10px] font-semibold uppercase tracking-widest px-1.5 py-0.5 rounded">
               {VENUE_TYPE_LABELS[venue.venueType] || 'Venue'}
             </span>
           )}
 
-          {/* Gig count */}
           {venue.upcoming > 0 && (
             <div className="absolute bottom-2.5 left-2.5">
-              <span className="badge-brand text-xs">
+              <span className="inline-flex items-center gap-1 bg-violet-900 text-violet-300 text-xs font-semibold px-2 py-0.5 rounded-md border border-violet-700">
                 <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
                 </svg>
@@ -77,19 +69,18 @@ export default function VenueCard({ venue }) {
         </div>
       </Link>
 
-      {/* Info */}
       <div className="p-3.5">
         <div className="flex items-start justify-between gap-2">
           <Link href={`/venues/${venue.slug}`}
-            className="font-semibold text-sm text-white hover:text-brand-light truncate transition-colors">
+            className="font-semibold text-sm text-white hover:text-violet-400 truncate transition-colors">
             {venue.name}
           </Link>
           <button
             onClick={toggle}
-            className={`flex-shrink-0 text-xs px-2.5 py-1.5 rounded-lg font-medium transition-all duration-150 ${
+            className={`flex-shrink-0 text-xs px-2.5 py-1.5 rounded-lg font-medium transition-colors ${
               followed
-                ? 'bg-brand/15 text-brand-light border border-brand/30 hover:bg-red-500/15 hover:text-red-400 hover:border-red-500/30'
-                : 'bg-brand hover:bg-brand-dark text-white'
+                ? 'bg-violet-900 text-violet-300 border border-violet-700 hover:bg-red-900 hover:text-red-400 hover:border-red-700'
+                : 'bg-violet-600 hover:bg-violet-500 text-white'
             }`}
           >
             {followed ? 'Following' : 'Follow'}

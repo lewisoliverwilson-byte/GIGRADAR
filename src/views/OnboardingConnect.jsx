@@ -9,7 +9,6 @@ export default function OnboardingConnect() {
   const [spotifyLoading, setSpotifyLoading] = useState(false);
   const [infoMsg, setInfoMsg] = useState('');
 
-  // Decode connection state from localStorage
   const spotifyKey = user?.sub ? `gigradar_spotify_${user.sub}` : null;
   const spotifyConnected = spotifyKey
     ? JSON.parse(localStorage.getItem(spotifyKey) || 'null')?.connected === true
@@ -18,17 +17,14 @@ export default function OnboardingConnect() {
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     const err = params.get('error');
-    if (err === 'access_denied') {
-      setInfoMsg("No problem — you can connect Spotify anytime from your profile.");
-    } else if (err) {
-      setInfoMsg("Something went wrong. Please try again.");
-    }
+    if (err === 'access_denied') setInfoMsg("No problem — you can connect Spotify anytime from your profile.");
+    else if (err) setInfoMsg("Something went wrong. Please try again.");
   }, []);
 
   async function handleConnectSpotify() {
     setSpotifyLoading(true);
     try {
-      await initiateSpotifyAuth(); // redirects away
+      await initiateSpotifyAuth();
     } catch {
       setSpotifyLoading(false);
       setInfoMsg('Could not start Spotify connection. Please try again.');
@@ -36,27 +32,25 @@ export default function OnboardingConnect() {
   }
 
   return (
-    <div className="min-h-screen bg-surface flex flex-col items-center justify-center px-4">
-      {/* Progress dots */}
+    <div className="min-h-screen bg-zinc-950 flex flex-col items-center justify-center px-4">
       <div className="flex gap-2 mb-10">
-        <div className="w-2 h-2 rounded-full bg-brand" />
-        <div className="w-2 h-2 rounded-full bg-white/20" />
+        <div className="w-2 h-2 rounded-full bg-violet-600" />
+        <div className="w-2 h-2 rounded-full bg-zinc-700" />
       </div>
 
       <div className="w-full max-w-sm">
         <h1 className="text-3xl font-bold text-white text-center mb-2">Find your artists</h1>
-        <p className="text-gray-400 text-center mb-8 text-sm leading-relaxed">
+        <p className="text-zinc-400 text-center mb-8 text-sm leading-relaxed">
           Connect your music to instantly follow the artists you listen to
         </p>
 
         {infoMsg && (
-          <div className="bg-white/5 border border-white/10 rounded-xl p-3 mb-4 text-center text-sm text-gray-300">
+          <div className="bg-zinc-900 border border-zinc-700 rounded-xl p-3 mb-4 text-center text-sm text-zinc-300">
             {infoMsg}
           </div>
         )}
 
         <div className="space-y-3">
-          {/* Spotify */}
           <button
             onClick={handleConnectSpotify}
             disabled={spotifyLoading || spotifyConnected}
@@ -68,39 +62,25 @@ export default function OnboardingConnect() {
             }}
           >
             {spotifyConnected ? (
-              <>
-                <CheckIcon />
-                Spotify Connected
-              </>
+              <><CheckIcon />Spotify Connected</>
             ) : spotifyLoading ? (
-              <>
-                <div className="w-4 h-4 border-2 border-black/40 border-t-black rounded-full animate-spin" />
-                Connecting…
-              </>
+              <><div className="w-4 h-4 border-2 border-black/40 border-t-black rounded-full animate-spin" />Connecting…</>
             ) : (
-              <>
-                <SpotifyIcon />
-                Connect Spotify
-              </>
+              <><SpotifyIcon />Connect Spotify</>
             )}
           </button>
 
-          {/* Apple Music — coming soon */}
-          <button
-            disabled
-            className="w-full flex items-center justify-center gap-3 py-3.5 px-5 rounded-xl font-semibold bg-white/90 text-gray-900 opacity-40 cursor-not-allowed"
-          >
+          <button disabled
+            className="w-full flex items-center justify-center gap-3 py-3.5 px-5 rounded-xl font-semibold bg-white text-zinc-900 opacity-30 cursor-not-allowed">
             <AppleIcon />
             Connect Apple Music
-            <span className="text-xs font-normal text-gray-500 ml-1">(coming soon)</span>
+            <span className="text-xs font-normal text-zinc-500 ml-1">(coming soon)</span>
           </button>
         </div>
 
         <div className="text-center mt-8">
-          <button
-            onClick={() => router.push('/')}
-            className="text-sm text-gray-500 hover:text-gray-300 transition-colors"
-          >
+          <button onClick={() => router.push('/')}
+            className="text-sm text-zinc-500 hover:text-zinc-300 transition-colors">
             Skip for now →
           </button>
         </div>

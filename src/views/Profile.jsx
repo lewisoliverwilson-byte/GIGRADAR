@@ -31,14 +31,13 @@ export default function Profile() {
   return (
     <>
       <Head><title>Profile — GigRadar</title></Head>
-      <div className="min-h-screen bg-surface">
+      <div className="min-h-screen bg-zinc-950">
 
-        {/* Header */}
-        <div className="bg-surface-1 border-b border-white/5">
-          <div className="section py-12">
-            <p className="text-sm text-brand-light font-medium mb-2 uppercase tracking-widest">Account</p>
+        <div className="bg-zinc-950 border-b border-zinc-800">
+          <div className="max-w-2xl mx-auto px-6 py-10">
+            <p className="text-xs font-semibold text-violet-400 uppercase tracking-widest mb-2">Account</p>
             <div className="flex items-center gap-5">
-              <div className="w-16 h-16 rounded-2xl bg-brand/20 border border-brand/30 flex items-center justify-center text-brand text-2xl font-black flex-shrink-0">
+              <div className="w-16 h-16 rounded-2xl bg-violet-900 border border-violet-700 flex items-center justify-center text-violet-300 text-2xl font-black flex-shrink-0">
                 {initials}
               </div>
               <div>
@@ -49,36 +48,34 @@ export default function Profile() {
           </div>
         </div>
 
-        <div className="section py-8 pb-16 space-y-5 max-w-2xl">
+        <div className="max-w-2xl mx-auto px-6 py-8 pb-20 space-y-5">
 
           {/* Following */}
-          <div className="bg-surface-2 border border-white/5 rounded-2xl p-6">
+          <div className="bg-zinc-900 border border-zinc-800 rounded-2xl p-6">
             <div className="flex items-center justify-between mb-4">
               <h2 className="font-bold text-white text-lg">Following</h2>
-              <span className="badge-gray">{following.size} artists</span>
+              <span className="bg-zinc-800 text-zinc-400 text-xs px-2.5 py-1 rounded-md font-medium">
+                {following.size} artists
+              </span>
             </div>
             {following.size === 0 ? (
               <div className="text-center py-6">
                 <p className="text-zinc-500 text-sm mb-3">You're not following any artists yet.</p>
-                <Link href="/artists" className="btn-secondary px-5 py-2 rounded-xl text-sm">Browse artists →</Link>
+                <Link href="/artists"
+                  className="bg-zinc-800 hover:bg-zinc-700 border border-zinc-700 text-white font-semibold px-5 py-2 rounded-xl transition-colors text-sm">
+                  Browse artists →
+                </Link>
               </div>
             ) : (
               <div className="space-y-0.5">
                 {[...following].map(id => (
-                  <div
-                    key={id}
-                    className="flex items-center justify-between py-2.5 border-b border-white/5 last:border-0"
-                  >
-                    <Link
-                      href={`/artists/${id}`}
-                      className="text-sm text-zinc-300 hover:text-white transition-colors capitalize"
-                    >
+                  <div key={id} className="flex items-center justify-between py-2.5 border-b border-zinc-800 last:border-0">
+                    <Link href={`/artists/${id}`}
+                      className="text-sm text-zinc-300 hover:text-white transition-colors capitalize">
                       {id.replace(/-/g, ' ')}
                     </Link>
-                    <button
-                      onClick={() => unfollow(id)}
-                      className="text-xs text-zinc-600 hover:text-red-400 transition-colors"
-                    >
+                    <button onClick={() => unfollow(id)}
+                      className="text-xs text-zinc-600 hover:text-red-400 transition-colors">
                       Unfollow
                     </button>
                   </div>
@@ -88,7 +85,7 @@ export default function Profile() {
           </div>
 
           {/* Connected accounts */}
-          <div className="bg-surface-2 border border-white/5 rounded-2xl p-6">
+          <div className="bg-zinc-900 border border-zinc-800 rounded-2xl p-6">
             <h2 className="font-bold text-white text-lg mb-4">Connected accounts</h2>
 
             <div className="flex items-center justify-between gap-4">
@@ -113,24 +110,20 @@ export default function Profile() {
               </div>
 
               {spotifyConn?.connected ? (
-                <button
-                  onClick={() => setDisconnectPrompt(true)}
-                  className="text-xs text-zinc-500 hover:text-red-400 transition-colors"
-                >
+                <button onClick={() => setDisconnectPrompt(true)}
+                  className="text-xs text-zinc-500 hover:text-red-400 transition-colors">
                   Disconnect
                 </button>
               ) : (
-                <button
-                  onClick={() => router.push('/onboarding/connect')}
-                  className="btn-primary text-xs px-4 py-2 rounded-lg"
-                >
+                <button onClick={() => router.push('/onboarding/connect')}
+                  className="bg-violet-600 hover:bg-violet-500 text-white font-semibold text-xs px-4 py-2 rounded-lg transition-colors">
                   Connect
                 </button>
               )}
             </div>
 
             {disconnectPrompt && (
-              <div className="mt-4 p-4 bg-surface-3 rounded-xl border border-white/10">
+              <div className="mt-4 p-4 bg-zinc-800 rounded-xl border border-zinc-700">
                 <p className="text-sm text-zinc-300 mb-3">Disconnect Spotify? This won't unfollow any artists.</p>
                 <div className="flex gap-2">
                   <button
@@ -152,14 +145,11 @@ export default function Profile() {
                       }
                     }}
                     disabled={disconnecting}
-                    className="text-xs bg-red-500/20 hover:bg-red-500/30 text-red-400 px-4 py-2 rounded-lg transition-colors"
-                  >
+                    className="text-xs bg-red-900 hover:bg-red-800 text-red-300 border border-red-700 px-4 py-2 rounded-lg transition-colors disabled:opacity-50">
                     {disconnecting ? 'Disconnecting…' : 'Yes, disconnect'}
                   </button>
-                  <button
-                    onClick={() => setDisconnectPrompt(false)}
-                    className="btn-ghost text-xs px-4 py-2 rounded-lg"
-                  >
+                  <button onClick={() => setDisconnectPrompt(false)}
+                    className="text-xs text-zinc-400 hover:text-white px-4 py-2 rounded-lg transition-colors">
                     Cancel
                   </button>
                 </div>

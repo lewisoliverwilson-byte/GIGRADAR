@@ -9,7 +9,7 @@ import AlertButton from '../components/AlertButton.jsx';
 import Footer from '../components/Footer.jsx';
 
 function venueColor(venueId) {
-  const palette = ['#8b5cf6','#06b6d4','#10b981','#f59e0b','#ec4899','#ef4444','#6366f1'];
+  const palette = ['#8b5cf6', '#06b6d4', '#10b981', '#f59e0b', '#ec4899', '#ef4444', '#6366f1'];
   let h = 0;
   for (let i = 0; i < (venueId || '').length; i++) h = (h * 31 + venueId.charCodeAt(i)) >>> 0;
   return palette[h % palette.length];
@@ -25,14 +25,14 @@ const TYPE_LABELS = {
 };
 
 export default function VenuePage() {
-  const { query: { slug } }   = useRouter();
-  const { user }               = useAuth();
+  const { query: { slug } } = useRouter();
+  const { user } = useAuth();
   const { isFollowingVenue, followVenue, unfollowVenue } = useFollow();
 
-  const [venue,   setVenue]   = useState(null);
-  const [gigs,    setGigs]    = useState([]);
+  const [venue, setVenue] = useState(null);
+  const [gigs, setGigs] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [tab,     setTab]     = useState('upcoming');
+  const [tab, setTab] = useState('upcoming');
 
   useEffect(() => {
     if (!slug) return;
@@ -46,22 +46,24 @@ export default function VenuePage() {
   if (loading) return <Skeleton />;
 
   if (!venue) return (
-    <div className="min-h-screen bg-surface flex flex-col">
+    <div className="min-h-screen bg-zinc-950 flex flex-col">
       <div className="flex-1 flex items-center justify-center">
         <div className="text-center">
           <p className="text-zinc-400 mb-4 text-lg">Venue not found.</p>
-          <Link href="/venues" className="btn-secondary px-6 py-2.5 rounded-xl">← Browse venues</Link>
+          <Link href="/venues" className="bg-zinc-800 hover:bg-zinc-700 border border-zinc-700 text-white font-semibold px-6 py-2.5 rounded-xl transition-colors">
+            ← Browse venues
+          </Link>
         </div>
       </div>
       <Footer />
     </div>
   );
 
-  const today    = new Date().toISOString().split('T')[0];
+  const today = new Date().toISOString().split('T')[0];
   const upcoming = gigs.filter(g => g.date >= today).sort((a, b) => a.date.localeCompare(b.date));
-  const past     = gigs.filter(g => g.date <  today).sort((a, b) => b.date.localeCompare(a.date));
+  const past = gigs.filter(g => g.date < today).sort((a, b) => b.date.localeCompare(a.date));
   const followed = isFollowingVenue(venue.venueId);
-  const color    = venueColor(venue.venueId);
+  const color = venueColor(venue.venueId);
 
   function toggleFollow() {
     if (!user) return;
@@ -69,10 +71,10 @@ export default function VenuePage() {
   }
 
   return (
-    <div className="min-h-screen bg-surface">
+    <div className="min-h-screen bg-zinc-950">
 
       {/* Hero */}
-      <div className="relative h-56 sm:h-72 overflow-hidden" style={{ background: color + '22' }}>
+      <div className="relative h-56 sm:h-72 overflow-hidden" style={{ background: color + '33' }}>
         {(venue.photoUrl || venue.imageUrl) ? (
           <img
             src={venue.photoUrl || venue.imageUrl}
@@ -81,19 +83,18 @@ export default function VenuePage() {
           />
         ) : (
           <div className="w-full h-full flex items-center justify-center">
-            <span className="text-8xl font-black opacity-20" style={{ color }}>{venueInitials(venue.name)}</span>
+            <span className="text-8xl font-black opacity-10" style={{ color }}>{venueInitials(venue.name)}</span>
           </div>
         )}
-        <div className="absolute inset-0 bg-gradient-to-t from-surface via-surface/50 to-transparent" />
+        <div className="absolute inset-0 bg-gradient-to-t from-zinc-950 via-zinc-950/50 to-transparent" />
       </div>
 
-      <div className="section -mt-20 relative pb-10">
+      <div className="max-w-5xl mx-auto px-6 -mt-20 relative pb-10">
 
         {/* Header */}
         <div className="flex flex-col sm:flex-row gap-6 items-start mb-6">
-          {/* Venue avatar */}
           <div
-            className="w-28 h-28 rounded-2xl border-4 border-surface overflow-hidden flex-shrink-0 shadow-2xl flex items-center justify-center"
+            className="w-28 h-28 rounded-2xl border-4 border-zinc-950 overflow-hidden flex-shrink-0 shadow-2xl flex items-center justify-center"
             style={{ background: color + '33' }}
           >
             {(venue.photoUrl || venue.imageUrl)
@@ -105,13 +106,11 @@ export default function VenuePage() {
           <div className="flex-1 min-w-0 pt-1">
             <div className="flex items-start justify-between gap-4 flex-wrap">
               <div className="min-w-0">
-                <div className="flex items-center gap-2 flex-wrap mb-1">
-                  {venue.venueType && venue.venueType !== 'other' && (
-                    <span className="badge-gray text-xs uppercase tracking-wider">
-                      {TYPE_LABELS[venue.venueType] || 'Venue'}
-                    </span>
-                  )}
-                </div>
+                {venue.venueType && venue.venueType !== 'other' && (
+                  <span className="inline-block bg-zinc-800 text-zinc-300 text-xs font-semibold uppercase tracking-wider px-2 py-0.5 rounded mb-2">
+                    {TYPE_LABELS[venue.venueType] || 'Venue'}
+                  </span>
+                )}
                 <h1 className="text-3xl sm:text-4xl font-black text-white leading-tight mb-1">{venue.name}</h1>
                 <div className="flex items-center gap-3 text-sm text-zinc-400 flex-wrap">
                   {venue.city && <span>{venue.city}</span>}
@@ -119,7 +118,7 @@ export default function VenuePage() {
                     <span className="text-zinc-600">· Cap. {venue.capacity.toLocaleString()}</span>
                   )}
                   {upcoming.length > 0 && (
-                    <span className="badge-brand text-xs">
+                    <span className="inline-flex items-center bg-violet-900 text-violet-300 text-xs font-semibold px-2 py-0.5 rounded-md border border-violet-700">
                       {upcoming.length} upcoming {upcoming.length === 1 ? 'gig' : 'gigs'}
                     </span>
                   )}
@@ -129,10 +128,10 @@ export default function VenuePage() {
               <div className="flex items-center gap-2 flex-shrink-0">
                 <button
                   onClick={toggleFollow}
-                  className={`text-sm px-4 py-2 rounded-xl font-semibold transition-all duration-150 ${
+                  className={`text-sm px-4 py-2 rounded-xl font-semibold transition-colors ${
                     followed
-                      ? 'bg-brand/15 text-brand-light border border-brand/30 hover:bg-red-500/15 hover:text-red-400 hover:border-red-500/30'
-                      : 'btn-primary py-2 px-4 rounded-xl'
+                      ? 'bg-violet-900 text-violet-300 border border-violet-700 hover:bg-red-900 hover:text-red-400 hover:border-red-700'
+                      : 'bg-violet-600 hover:bg-violet-500 text-white'
                   }`}
                 >
                   {followed ? 'Following' : 'Follow'}
@@ -141,12 +140,10 @@ export default function VenuePage() {
               </div>
             </div>
 
-            {/* Bio */}
             {venue.bio && (
               <p className="text-zinc-400 text-sm leading-relaxed max-w-2xl mt-3">{venue.bio}</p>
             )}
 
-            {/* Links */}
             <div className="flex items-center gap-4 mt-3 flex-wrap">
               {venue.website && (
                 <a href={venue.website} target="_blank" rel="noopener noreferrer"
@@ -164,29 +161,24 @@ export default function VenuePage() {
           </div>
         </div>
 
-        {/* Divider */}
-        <div className="divider mb-6" />
+        <div className="border-t border-zinc-800 mb-6" />
 
         {/* Tabs */}
-        <div className="flex gap-1 bg-surface-2 rounded-xl p-1 w-fit mb-6">
+        <div className="flex gap-1 bg-zinc-900 border border-zinc-800 rounded-xl p-1 w-fit mb-6">
           {[['upcoming', `Upcoming (${upcoming.length})`], ['past', `Past (${past.length})`]].map(([key, label]) => (
-            <button
-              key={key}
-              onClick={() => setTab(key)}
-              className={`px-5 py-2 rounded-lg text-sm font-medium transition-all duration-150 ${
-                tab === key ? 'bg-surface-1 text-white shadow' : 'text-zinc-400 hover:text-white'
-              }`}
-            >
+            <button key={key} onClick={() => setTab(key)}
+              className={`px-5 py-2 rounded-lg text-sm font-medium transition-colors ${
+                tab === key ? 'bg-zinc-800 text-white' : 'text-zinc-400 hover:text-white'
+              }`}>
               {label}
             </button>
           ))}
         </div>
 
-        {/* Gig list */}
         {(tab === 'upcoming' ? upcoming : past).length === 0 ? (
-          <div className="bg-surface-2 border border-white/5 rounded-2xl p-12 text-center">
-            <span className="text-4xl block mb-3">{tab === 'upcoming' ? '🎸' : '📅'}</span>
-            <p className="text-white font-semibold">
+          <div className="bg-zinc-900 border border-zinc-800 rounded-2xl p-12 text-center">
+            <p className="text-5xl mb-4">{tab === 'upcoming' ? '🎸' : '📅'}</p>
+            <p className="text-white font-bold">
               {tab === 'upcoming' ? 'No upcoming gigs' : 'No past gigs on record'}
             </p>
             <p className="text-sm text-zinc-500 mt-1">
@@ -196,7 +188,7 @@ export default function VenuePage() {
             </p>
           </div>
         ) : (
-          <div className="space-y-2.5">
+          <div className="space-y-2">
             {(tab === 'upcoming' ? upcoming : past).map(g => (
               <GigCard key={g.gigId} gig={g} showArtist />
             ))}
@@ -211,19 +203,19 @@ export default function VenuePage() {
 
 function Skeleton() {
   return (
-    <div className="min-h-screen bg-surface">
-      <div className="h-56 sm:h-72 skeleton" />
-      <div className="section -mt-20 relative pb-10">
+    <div className="min-h-screen bg-zinc-950">
+      <div className="h-56 sm:h-72 bg-zinc-800 animate-pulse" />
+      <div className="max-w-5xl mx-auto px-6 -mt-20 relative pb-10">
         <div className="flex gap-6 items-start">
-          <div className="w-28 h-28 skeleton rounded-2xl flex-shrink-0" />
+          <div className="w-28 h-28 bg-zinc-800 animate-pulse rounded-2xl flex-shrink-0" />
           <div className="flex-1 pt-4 space-y-3">
-            <div className="h-9 skeleton rounded-xl w-64" />
-            <div className="h-4 skeleton rounded w-32" />
+            <div className="h-9 bg-zinc-800 animate-pulse rounded-xl w-64" />
+            <div className="h-4 bg-zinc-800 animate-pulse rounded w-32" />
           </div>
         </div>
-        <div className="divider mt-6 mb-6" />
-        <div className="space-y-2.5">
-          {[1,2,3,4].map(i => <div key={i} className="h-20 skeleton rounded-2xl" />)}
+        <div className="border-t border-zinc-800 mt-6 mb-6" />
+        <div className="space-y-2">
+          {[1, 2, 3, 4].map(i => <div key={i} className="h-20 bg-zinc-800 animate-pulse rounded-xl" />)}
         </div>
       </div>
     </div>

@@ -7,7 +7,6 @@ export default function FollowButton({ artistId, size = 'md' }) {
   const { user } = useAuth();
   const { isFollowing, follow, unfollow } = useFollow();
   const [prompt, setPrompt] = useState(false);
-
   const following = isFollowing(artistId);
 
   function toggle() {
@@ -16,18 +15,16 @@ export default function FollowButton({ artistId, size = 'md' }) {
   }
 
   const base = size === 'sm'
-    ? 'text-xs px-3 py-1 rounded-md font-medium transition-all duration-150'
-    : 'text-sm px-4 py-2 rounded-lg font-semibold transition-all duration-150';
+    ? 'text-xs px-3 py-1 rounded-md font-medium transition-colors'
+    : 'text-sm px-4 py-2 rounded-lg font-semibold transition-colors';
 
   return (
     <>
-      <button
-        onClick={toggle}
+      <button onClick={toggle}
         className={`${base} ${following
-          ? 'bg-brand/20 text-brand border border-brand/40 hover:bg-red-900/30 hover:text-red-400 hover:border-red-500/40'
-          : 'bg-brand hover:bg-brand-dark text-white'
-        }`}
-      >
+          ? 'bg-violet-900 text-violet-300 border border-violet-700 hover:bg-red-900 hover:text-red-400 hover:border-red-700'
+          : 'bg-violet-600 hover:bg-violet-500 text-white'
+        }`}>
         {following ? (
           <span className="flex items-center gap-1">
             <svg className="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 20 20">

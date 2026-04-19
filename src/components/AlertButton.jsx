@@ -4,17 +4,15 @@ import { api } from '../utils/api.js';
 const EMAIL_KEY = 'gr_alert_email';
 
 export default function AlertButton({ targetId, targetType, targetName, className = '' }) {
-  const [email, setEmail]         = useState(() => localStorage.getItem(EMAIL_KEY) || '');
+  const [email, setEmail] = useState(() => localStorage.getItem(EMAIL_KEY) || '');
   const [following, setFollowing] = useState(false);
   const [showInput, setShowInput] = useState(false);
-  const [input, setInput]         = useState('');
-  const [status, setStatus]       = useState('idle'); // idle | saving | done | error
+  const [input, setInput] = useState('');
+  const [status, setStatus] = useState('idle');
 
   useEffect(() => {
     if (email && targetId) {
-      api.checkFollow(email, targetId)
-        .then(r => setFollowing(r.following))
-        .catch(() => {});
+      api.checkFollow(email, targetId).then(r => setFollowing(r.following)).catch(() => {});
     }
   }, [email, targetId]);
 
@@ -44,10 +42,8 @@ export default function AlertButton({ targetId, targetType, targetName, classNam
 
   if (following) {
     return (
-      <button
-        onClick={handleUnfollow}
-        className={`text-xs px-3 py-1.5 rounded-lg border border-white/10 text-gray-400 hover:text-red-400 hover:border-red-400/30 transition-colors ${className}`}
-      >
+      <button onClick={handleUnfollow}
+        className={`text-xs px-3 py-1.5 rounded-lg border border-zinc-700 text-zinc-400 hover:text-red-400 hover:border-red-700 transition-colors ${className}`}>
         🔔 Alerts on · turn off
       </button>
     );
@@ -62,24 +58,22 @@ export default function AlertButton({ targetId, targetType, targetName, classNam
           value={input}
           onChange={e => setInput(e.target.value)}
           placeholder="your@email.com"
-          className="input text-sm py-1.5 w-48"
+          className="bg-zinc-800 border border-zinc-700 text-white rounded-xl px-3 py-1.5 text-sm focus:outline-none focus:border-violet-500 placeholder-zinc-500 w-48 transition-colors"
         />
         <button type="submit" disabled={status === 'saving'}
-          className="btn-primary text-xs px-3 py-1.5">
+          className="bg-violet-600 hover:bg-violet-500 text-white text-xs font-semibold px-3 py-1.5 rounded-lg transition-colors disabled:opacity-50">
           {status === 'saving' ? '…' : 'Alert me'}
         </button>
         <button type="button" onClick={() => setShowInput(false)}
-          className="text-xs text-gray-500 hover:text-white">✕</button>
+          className="text-xs text-zinc-500 hover:text-white transition-colors">✕</button>
         {status === 'error' && <span className="text-xs text-red-400">Try again</span>}
       </form>
     );
   }
 
   return (
-    <button
-      onClick={() => { setInput(email); setShowInput(true); }}
-      className={`text-xs px-3 py-1.5 rounded-lg border border-white/10 text-gray-400 hover:text-white hover:border-white/20 transition-colors ${className}`}
-    >
+    <button onClick={() => { setInput(email); setShowInput(true); }}
+      className={`text-xs px-3 py-1.5 rounded-lg border border-zinc-700 text-zinc-400 hover:text-white hover:border-zinc-500 transition-colors ${className}`}>
       🔔 Get gig alerts
     </button>
   );

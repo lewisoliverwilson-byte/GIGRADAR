@@ -14,10 +14,7 @@ export default function Artists() {
   const [page, setPage] = useState(1);
 
   useEffect(() => {
-    api.getArtists()
-      .then(setArtists)
-      .catch(() => {})
-      .finally(() => setLoading(false));
+    api.getArtists().then(setArtists).catch(() => {}).finally(() => setLoading(false));
   }, []);
 
   const filtered = useMemo(() => {
@@ -35,22 +32,17 @@ export default function Artists() {
   const paged = filtered.slice(0, page * PER_PAGE);
   const hasMore = paged.length < filtered.length;
 
-  function handleSearch(val) { setSearch(val); setPage(1); }
-  function handleGenre(val)  { setGenre(val);  setPage(1); }
-
   return (
-    <div className="min-h-screen bg-[#0a0a0f]">
-      {/* Header */}
-      <div className="border-b border-white/5 bg-white/2">
+    <div className="min-h-screen bg-zinc-950">
+      <div className="bg-zinc-950 border-b border-zinc-800">
         <div className="max-w-7xl mx-auto px-6 py-10">
           <p className="text-xs font-semibold text-violet-400 uppercase tracking-widest mb-2">Discover</p>
           <h1 className="text-4xl font-black text-white mb-2">UK Artists</h1>
-          <p className="text-zinc-400 text-sm">18,000+ UK artists tracked. Follow to get gig alerts.</p>
+          <p className="text-zinc-400 text-sm">18,000+ UK artists tracked across every major ticket platform. Follow artists to get gig alerts.</p>
         </div>
       </div>
 
-      {/* Filters */}
-      <div className="max-w-7xl mx-auto px-6 pt-6 pb-4">
+      <div className="max-w-7xl mx-auto px-6 py-6">
         <div className="flex gap-3 mb-5">
           <div className="relative flex-1 max-w-sm">
             <svg className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -60,49 +52,44 @@ export default function Artists() {
               type="text"
               placeholder="Search artists…"
               value={search}
-              onChange={e => handleSearch(e.target.value)}
+              onChange={e => { setSearch(e.target.value); setPage(1); }}
               autoFocus
-              className="w-full bg-white/5 border border-white/10 rounded-xl pl-10 pr-4 py-2.5 text-white placeholder-zinc-500 focus:outline-none focus:border-violet-500/50 text-sm"
+              className="w-full bg-zinc-900 border border-zinc-700 rounded-xl pl-10 pr-4 py-2.5 text-white placeholder-zinc-500 focus:outline-none focus:border-violet-500 text-sm transition-colors"
             />
           </div>
           {search && (
-            <button onClick={() => handleSearch('')} className="text-sm text-zinc-500 hover:text-white px-3 py-2 rounded-xl bg-white/5 transition-colors">
+            <button onClick={() => { setSearch(''); setPage(1); }} className="text-sm text-zinc-400 hover:text-white px-4 py-2 rounded-xl bg-zinc-800 hover:bg-zinc-700 border border-zinc-700 transition-colors">
               Clear
             </button>
           )}
         </div>
 
-        {/* Genre pills */}
         <div className="flex gap-2 flex-wrap">
           {GENRES.map(g => (
-            <button
-              key={g}
-              onClick={() => handleGenre(g)}
-              className={`px-4 py-1.5 rounded-full text-sm font-medium border transition-all duration-150 ${
+            <button key={g} onClick={() => { setGenre(g); setPage(1); }}
+              className={`px-4 py-1.5 rounded-full text-sm font-medium border transition-colors ${
                 genre === g
-                  ? 'bg-violet-600/20 border-violet-500/40 text-violet-300'
-                  : 'bg-transparent border-white/10 text-zinc-400 hover:text-white hover:border-white/20'
-              }`}
-            >
+                  ? 'bg-violet-600 border-violet-600 text-white'
+                  : 'bg-transparent border-zinc-700 text-zinc-400 hover:text-white hover:border-zinc-500'
+              }`}>
               {g}
             </button>
           ))}
         </div>
       </div>
 
-      {/* Grid */}
-      <div className="max-w-7xl mx-auto px-6 pb-16 pt-4">
+      <div className="max-w-7xl mx-auto px-6 pb-20">
         {loading ? (
           <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 gap-3">
             {Array.from({ length: 24 }).map((_, i) => (
-              <div key={i} className="aspect-square rounded-2xl bg-white/5 animate-pulse" />
+              <div key={i} className="aspect-square rounded-xl bg-zinc-800 animate-pulse" />
             ))}
           </div>
         ) : filtered.length === 0 ? (
-          <div className="text-center py-20 text-zinc-500">
-            <p className="text-4xl mb-3">🔍</p>
-            <p className="text-white font-semibold">No artists found</p>
-            <p className="text-sm mt-1">{search ? `No results for "${search}"` : 'Try a different filter.'}</p>
+          <div className="text-center py-20">
+            <p className="text-5xl mb-4">🔍</p>
+            <p className="text-white font-bold text-lg">No artists found</p>
+            <p className="text-zinc-400 text-sm mt-2">{search ? `No results for "${search}"` : 'Try a different genre.'}</p>
           </div>
         ) : (
           <>
@@ -112,10 +99,8 @@ export default function Artists() {
             </div>
             {hasMore && (
               <div className="text-center mt-10">
-                <button
-                  onClick={() => setPage(p => p + 1)}
-                  className="bg-white/5 hover:bg-white/10 border border-white/10 text-white font-semibold px-10 py-3 rounded-xl transition-colors text-sm"
-                >
+                <button onClick={() => setPage(p => p + 1)}
+                  className="bg-zinc-800 hover:bg-zinc-700 border border-zinc-700 text-white font-semibold px-10 py-3 rounded-xl transition-colors text-sm">
                   Load more artists
                 </button>
               </div>
@@ -123,7 +108,6 @@ export default function Artists() {
           </>
         )}
       </div>
-
       <Footer />
     </div>
   );

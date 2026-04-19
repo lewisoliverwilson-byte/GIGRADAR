@@ -10,9 +10,9 @@ import Footer from '../components/Footer.jsx';
 export default function Search() {
   const router = useRouter();
   const [artists, setArtists] = useState([]);
-  const [venues,  setVenues]  = useState([]);
+  const [venues, setVenues] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [query,   setQuery]   = useState(router.query?.q || '');
+  const [query, setQuery] = useState(router.query?.q || '');
 
   useEffect(() => {
     if (router.query?.q && !query) setQuery(router.query.q);
@@ -40,9 +40,7 @@ export default function Search() {
 
   const matchedVenues = useMemo(() => {
     if (!q) return [];
-    return venues.filter(v =>
-      v.name?.toLowerCase().includes(q) || v.city?.toLowerCase().includes(q)
-    ).slice(0, 12);
+    return venues.filter(v => v.name?.toLowerCase().includes(q) || v.city?.toLowerCase().includes(q)).slice(0, 12);
   }, [venues, q]);
 
   const hasResults = matchedArtists.length > 0 || matchedVenues.length > 0;
@@ -52,11 +50,10 @@ export default function Search() {
       <Head>
         <title>{query ? `"${query}" — GigRadar` : 'Search — GigRadar'}</title>
       </Head>
-      <div className="min-h-screen bg-surface">
-        {/* Search hero */}
-        <div className="bg-surface-1 border-b border-white/5">
-          <div className="section py-12">
-            <p className="text-sm text-brand-light font-medium mb-2 uppercase tracking-widest">Search</p>
+      <div className="min-h-screen bg-zinc-950">
+        <div className="bg-zinc-950 border-b border-zinc-800">
+          <div className="max-w-5xl mx-auto px-6 py-10">
+            <p className="text-xs font-semibold text-violet-400 uppercase tracking-widest mb-2">Search</p>
             <h1 className="text-4xl font-black text-white mb-6">Find artists & venues</h1>
 
             <div className="relative max-w-xl">
@@ -69,7 +66,7 @@ export default function Search() {
                 placeholder="Search artists, venues, cities…"
                 value={query}
                 onChange={handleChange}
-                className="input pl-12 pr-10 py-3.5 text-base w-full rounded-xl"
+                className="w-full bg-zinc-900 border border-zinc-700 rounded-xl pl-12 pr-10 py-3.5 text-white placeholder-zinc-500 focus:outline-none focus:border-violet-500 text-base transition-colors"
               />
               {query && (
                 <button
@@ -83,38 +80,38 @@ export default function Search() {
           </div>
         </div>
 
-        {/* Results */}
-        <div className="section py-8 pb-16">
+        <div className="max-w-5xl mx-auto px-6 py-8 pb-20">
           {loading ? (
-            <div className="space-y-2.5">
+            <div className="space-y-2">
               {Array.from({ length: 4 }).map((_, i) => (
-                <div key={i} className="h-12 skeleton rounded-xl" />
+                <div key={i} className="h-12 bg-zinc-800 rounded-xl animate-pulse" />
               ))}
             </div>
-
           ) : !q ? (
             <div className="text-center py-20">
-              <span className="text-4xl block mb-3">🔍</span>
-              <p className="text-white font-semibold">Start typing to search</p>
-              <p className="text-sm text-zinc-500 mt-1">Search across 18,000+ artists and 4,700+ UK venues.</p>
+              <p className="text-5xl mb-4">🔍</p>
+              <p className="text-white font-bold text-lg">Start typing to search</p>
+              <p className="text-zinc-400 text-sm mt-2">Search across 18,000+ artists and 4,700+ UK venues.</p>
               <div className="flex gap-3 justify-center mt-6">
-                <Link href="/artists" className="btn-secondary px-5 py-2.5 rounded-xl text-sm">Browse artists</Link>
-                <Link href="/venues"  className="btn-secondary px-5 py-2.5 rounded-xl text-sm">Browse venues</Link>
+                <Link href="/artists" className="bg-zinc-800 hover:bg-zinc-700 border border-zinc-700 text-white font-semibold px-5 py-2.5 rounded-xl transition-colors text-sm">
+                  Browse artists
+                </Link>
+                <Link href="/venues" className="bg-zinc-800 hover:bg-zinc-700 border border-zinc-700 text-white font-semibold px-5 py-2.5 rounded-xl transition-colors text-sm">
+                  Browse venues
+                </Link>
               </div>
             </div>
-
           ) : !hasResults ? (
             <div className="text-center py-20">
-              <span className="text-4xl block mb-3">😕</span>
-              <p className="text-white font-semibold">No results for "{query}"</p>
-              <p className="text-sm text-zinc-500 mt-1">
+              <p className="text-5xl mb-4">😕</p>
+              <p className="text-white font-bold text-lg">No results for "{query}"</p>
+              <p className="text-zinc-400 text-sm mt-2">
                 If they're a UK act, they may appear soon as we scan more venues.
               </p>
-              <Link href="/discover" className="inline-block mt-5 btn-secondary px-5 py-2.5 rounded-xl text-sm">
+              <Link href="/discover" className="inline-block mt-5 bg-zinc-800 hover:bg-zinc-700 border border-zinc-700 text-white font-semibold px-5 py-2.5 rounded-xl transition-colors text-sm">
                 Browse all gigs →
               </Link>
             </div>
-
           ) : (
             <div className="space-y-10">
               {matchedArtists.length > 0 && (
@@ -128,7 +125,6 @@ export default function Search() {
                   </div>
                 </section>
               )}
-
               {matchedVenues.length > 0 && (
                 <section>
                   <div className="flex items-center justify-between mb-4">

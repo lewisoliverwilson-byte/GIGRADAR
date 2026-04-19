@@ -26,14 +26,14 @@ export default function Unsubscribe() {
           <>
             <h1 className="text-2xl font-bold mb-3">Unsubscribed</h1>
             <p className="text-gray-400 mb-6">You won't receive any more alerts from this subscription.</p>
-            <Link href="/" className="text-brand hover:underline">Back to GigRadar</Link>
+            <Link href="/" className="text-violet-400 hover:underline">Back to GigRadar</Link>
           </>
         )}
         {status === 'error' && (
           <>
             <h1 className="text-2xl font-bold mb-3">Link expired</h1>
             <p className="text-gray-400 mb-6">This unsubscribe link is invalid or has already been used.</p>
-            <Link href="/" className="text-brand hover:underline">Back to GigRadar</Link>
+            <Link href="/" className="text-violet-400 hover:underline">Back to GigRadar</Link>
           </>
         )}
       </div>

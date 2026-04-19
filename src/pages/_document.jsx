@@ -9,7 +9,7 @@ export default function Document() {
         <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
         <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
       </Head>
-      <body className="bg-surface text-white antialiased">
+      <body className="bg-zinc-950 text-white antialiased">
         <Main />
         <NextScript />
       </body>
