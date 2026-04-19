@@ -28,7 +28,7 @@ const sleep = ms => new Promise(r => setTimeout(r, ms));
 const HDR = { 'User-Agent': 'GigRadar/1.0 (lewis.oliver.wilson@googlemail.com)' };
 
 // Domains that are NOT official venue websites
-const NOT_OFFICIAL = /wikipedia|wikidata|wikimedia|facebook|instagram|twitter|x\.com|youtube|ticketmaster|eventbrite|skiddle|songkick|dice\.fm|seetickets|gigantic|ents24|google|maps\.app|openstreetmap|tripadvisor|yelp|visitbritain|timeout\.com|theguardian|bbc\.|nme\.|thisisnotawebsite/i;
+const NOT_OFFICIAL = /wikipedia|wikidata|wikimedia|facebook|instagram|twitter|x\.com|youtube|ticketmaster|eventbrite|skiddle|songkick|dice\.fm|seetickets|gigantic|ents24|google|maps\.app|openstreetmap|tripadvisor|yelp|visitbritain|timeout\.com|theguardian|bbc\.|nme\.|thisisnotawebsite|cricinfo|cricbuzz|espn\.|gov\.uk|gov\.scot|gov\.wales|council\.|\.gov\b|theguardian|independent\.co|telegraph\.|mirror\.|metro\.|dailymail|theface\.com|pitchfork|rollingstone|musicweek|residentadvisor|ra\.co|mixmag|clashmusic|loudersound|faroutmagazine|hotpress|uncut\.|mojo|recordcollectormag|thequietus/i;
 
 // ─── Wikidata P856 (official website) ────────────────────────────────────────
 
@@ -94,9 +94,17 @@ async function websiteFromWikipediaLinks(wikiUrl) {
       .filter(u => u && !NOT_OFFICIAL.test(u))
       .filter(u => {
         try {
-          const dom = new URL(u).hostname.replace(/^www\./, '');
-          // Prefer short domains (venue own site), reject aggregator subpaths
-          return dom.split('.').length <= 3 && !u.includes('/search') && !u.includes('/venues');
+          const parsed = new URL(u);
+          const dom    = parsed.hostname.replace(/^www\./, '');
+          const pathDepth = parsed.pathname.replace(/\/$/, '').split('/').length - 1;
+          // Must look like a homepage/short URL (not a deep article page)
+          if (pathDepth > 2) return false;
+          // Short domain (venue own site), reject aggregator subpaths
+          if (dom.split('.').length > 3) return false;
+          if (u.includes('/search') || u.includes('/venues')) return false;
+          // Reject if path contains year/article patterns
+          if (/\/\d{4}\/\d{2}\/|\/articles\/|\/news\/|\/blog\/|\/post\/|\/story\//.test(parsed.pathname)) return false;
+          return true;
         } catch { return false; }
       });
     return candidates[0] || null;
@@ -141,10 +149,7 @@ async function loadVenues() {
     if (v.wikiUrl) {
       website = await websiteFromWikidata(v.wikiUrl);
       await sleep(400);
-      if (!website) {
-        website = await websiteFromWikipediaLinks(v.wikiUrl);
-        await sleep(400);
-      }
+      // Skip Wikipedia external links fallback — too noisy (finds unrelated sites)
     }
     if (!website && v.mbid) {
       website = await websiteFromMusicBrainz(v.mbid);
