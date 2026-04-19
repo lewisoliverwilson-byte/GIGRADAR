@@ -1181,7 +1181,7 @@ async function upsertVenues(gigsArr, today) {
 // scrapes their Skiddle per-venue feed + own website JSON-LD, saves new gigs.
 // Full cycle across all ~4,700 venues takes ~16 days at 6 runs/day.
 
-const VENUE_BATCH_SIZE = 50;
+const VENUE_BATCH_SIZE = 100;
 
 const VENUE_WEBSITE_HEADERS = {
   'User-Agent':      'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
@@ -1213,65 +1213,143 @@ function extractVenueJsonLdEvents(html) {
   return events;
 }
 
+// Extract artist from event title (handles "Series | Artist: Tour" patterns)
+function extractVenueArtistFromTitle(evName) {
+  let s = (evName || '').replace(/\s+[—–]\s+[^—–]+$/, '').trim(); // strip trailing "— Venue"
+  if (s.includes('|')) s = s.split('|').pop().trim(); // prefer part after pipe
+  return s
+    .replace(/\s*\bft\.?\s+.+$/i, '')
+    .replace(/\s*\bfeat(?:uring)?\.?\s+.+$/i, '')
+    .replace(/\s*[:–—]\s*.*$/, '')
+    .replace(/\s+(?:live|tour|concert|show)\s*$/i, '')
+    .replace(/\s+(?:at|in)\s+[A-Z].+$/i, '')
+    .replace(/\s*@\s*.+$/, '')
+    .trim();
+}
+
+// Parse minimal iCal (Squarespace event pages support ?format=ical → 350 bytes)
+function parseVenueIcal(text) {
+  const summary = text.match(/SUMMARY:(.+)/)?.[1]?.trim();
+  const dtstart = text.match(/DTSTART:([^\r\n]+)/)?.[1]?.trim();
+  if (!summary || !dtstart) return null;
+  const d = dtstart.match(/(\d{4})(\d{2})(\d{2})/);
+  return d ? { name: summary, startDate: `${d[1]}-${d[2]}-${d[3]}` } : null;
+}
+
+// Extract Dice event links embedded in venue pages (artist name is in URL slug)
+function extractVenueDiceEvents(html) {
+  const events = [];
+  for (const [, url] of html.matchAll(/href="(https?:\/\/(?:link\.)?dice\.fm\/event\/([^"?]+))"/gi)) {
+    const slug = url.split('/event/')[1] || '';
+    const s    = slug.replace(/-tickets$/, '').replace(/\?.*$/, '');
+    const m    = s.match(/^[^-]+-(.+?)-((?:\d+[a-z]{0,2}|[a-z]+)-(?:jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)[a-z]*-\d+)/i);
+    if (!m) continue;
+    const artistName = m[1].replace(/-/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
+    const dp = m[2].match(/(\d+)[a-z]*-(jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)[a-z]*-(\d{4})/i);
+    if (!dp) continue;
+    const MONTHS = {jan:1,feb:2,mar:3,apr:4,may:5,jun:6,jul:7,aug:8,sep:9,oct:10,nov:11,dec:12};
+    const mon = MONTHS[dp[2].toLowerCase().slice(0,3)];
+    if (!mon) continue;
+    const date = `${dp[3]}-${String(mon).padStart(2,'0')}-${String(parseInt(dp[1])).padStart(2,'0')}`;
+    events.push({ '@type': 'Event', name: artistName, startDate: date, offers: { url }, _platform: 'dice' });
+  }
+  return events;
+}
+
+const TICKETING_WEBSITE_RE = /ticketmaster|seetickets\.com|eventbrite\.|skiddle\.com|dice\.fm|songkick\.com|wegottickets|ticketweb|gigantic\.com|ents24\.com|bandsintown|axs\.com/i;
+
 async function fetchVenueWebsiteGigs(venue, nameMap) {
   if (!venue.website) return [];
   let base = venue.website.startsWith('http') ? venue.website : `https://${venue.website}`;
   base = base.replace(/\/$/, '');
+  if (TICKETING_WEBSITE_RE.test(base)) return []; // skip ticketing platform URLs
 
-  const today = new Date().toISOString().split('T')[0];
-  const gigs  = [];
+  const today   = new Date().toISOString().split('T')[0];
+  const gigs    = [];
+  const allEvts = [];
 
-  // Try homepage first, then common events paths
+  const SQSP_PATH_RE = /href="(\/[^"?#]+\/\d{4}\/\d{1,2}\/\d{1,2}\/[^"?#]+)"/gi;
+
+  // Try common event paths; collect Squarespace event links and Dice event links
   const paths = ['', '/events', '/whats-on', '/gigs', '/whatson', '/listings', '/calendar', '/shows'];
   for (const p of paths) {
     try {
-      const res  = await fetch(`${base}${p}`, { headers: VENUE_WEBSITE_HEADERS, redirect: 'follow', signal: AbortSignal.timeout(8000) });
-      if (!res.ok) continue;
-      const html   = await res.text();
-      const events = extractVenueJsonLdEvents(html);
-      if (!events.length) { await sleep(300); continue; }
+      const res  = await fetch(`${base}${p}`, { headers: VENUE_WEBSITE_HEADERS, redirect: 'follow', signal: AbortSignal.timeout(7000) });
+      if (!res.ok) { await sleep(150); continue; }
+      const html = await res.text();
 
-      for (const ev of events) {
-        const date = (ev.startDate || '').split('T')[0];
-        if (!date || date < today) continue;
-        const performers = Array.isArray(ev.performer) ? ev.performer : ev.performer ? [ev.performer] : [];
-        const rawName    = performers[0]?.name || (ev.name || '').replace(/\s*@\s*.+$/, '').trim();
-        if (!isValidVenueArtist(rawName)) continue;
-        const norm   = normaliseName(rawName);
-        let   artist = nameMap[norm];
-        if (!artist) { artist = await autoSeedArtist(rawName, nameMap); if (!artist) continue; }
+      // JSON-LD events
+      const jsonLd = extractVenueJsonLdEvents(html);
+      if (jsonLd.length) { allEvts.push(...jsonLd); break; }
 
-        const support    = performers.slice(1).map(p => p.name).filter(n => isValidVenueArtist(n));
-        const ticketUrl  = Array.isArray(ev.offers) ? ev.offers[0]?.url : ev.offers?.url;
-        const price      = Array.isArray(ev.offers) ? ev.offers[0]?.price : ev.offers?.price;
+      // Dice embedded events
+      const dice = extractVenueDiceEvents(html);
+      if (dice.length) { allEvts.push(...dice); break; }
 
-        gigs.push({
-          gigId:            `web-${normaliseName(venue.name)}-${artist.id}-${date}`,
-          dedupKey:         dedupKey(artist.id, date, venue.name),
-          artistId:         artist.id,
-          artistName:       artist.name,
-          date,
-          doorsTime:        ev.startDate?.includes('T') ? ev.startDate.split('T')[1]?.slice(0, 5) : null,
-          venueName:        venue.name,
-          venueId:          venue.venueId,
-          venueCity:        venue.city || '',
-          venueCountry:     'GB',
-          canonicalVenueId: venue.venueId,
-          isSoldOut:        false,
-          supportActs:      support,
-          tickets: [{
-            seller:    venue.name,
-            url:       ticketUrl || `${base}${p}`,
-            available: true,
-            price:     price ? `£${price}` : 'See site',
-          }],
-          sources:     ['venue-website'],
-          lastUpdated: new Date().toISOString(),
-        });
+      // Squarespace event page links (fetch individual iCal)
+      const sqspLinks = [...html.matchAll(SQSP_PATH_RE)]
+        .map(m => { try { return new URL(m[1], `${base}${p}`).href; } catch { return null; } })
+        .filter(Boolean)
+        .slice(0, 20);
+      if (sqspLinks.length) {
+        for (const link of sqspLinks) {
+          try {
+            const ir = await fetch(link + '?format=ical', { headers: VENUE_WEBSITE_HEADERS, signal: AbortSignal.timeout(5000) });
+            if (ir.ok) {
+              const text = await ir.text();
+              if (text.includes('VEVENT')) {
+                const ev = parseVenueIcal(text);
+                if (ev) allEvts.push({ ...ev, '@type': 'Event', _sourceUrl: link });
+              }
+            }
+          } catch {}
+          await sleep(100);
+        }
+        if (allEvts.length) break;
       }
-      if (gigs.length > 0) break; // found events, no need to try more paths
-      await sleep(300);
+
+      await sleep(200);
     } catch { break; }
+  }
+
+  for (const ev of allEvts) {
+    const date = (ev.startDate || '').split('T')[0];
+    if (!date || date < today) continue;
+    const performers = Array.isArray(ev.performer) ? ev.performer : ev.performer ? [ev.performer] : [];
+    const rawName    = performers[0]?.name || extractVenueArtistFromTitle(ev.name || '');
+    if (!isValidVenueArtist(rawName)) continue;
+    const norm   = normaliseName(rawName);
+    let   artist = nameMap[norm];
+    if (!artist) { artist = await autoSeedArtist(rawName, nameMap); if (!artist) continue; }
+
+    const support   = performers.slice(1).map(p => p.name).filter(n => isValidVenueArtist(n));
+    const ticketUrl = Array.isArray(ev.offers) ? ev.offers[0]?.url : ev.offers?.url;
+    const price     = Array.isArray(ev.offers) ? ev.offers[0]?.price : ev.offers?.price;
+    const platform  = ev._platform || 'venue-website';
+
+    gigs.push({
+      gigId:            `web-${normaliseName(venue.name)}-${artist.id}-${date}`,
+      dedupKey:         dedupKey(artist.id, date, venue.name),
+      artistId:         artist.id,
+      artistName:       artist.name,
+      date,
+      doorsTime:        ev.startDate?.includes('T') ? ev.startDate.split('T')[1]?.slice(0, 5) : null,
+      venueName:        venue.name,
+      venueId:          venue.venueId,
+      venueCity:        venue.city || '',
+      venueCountry:     'GB',
+      canonicalVenueId: venue.venueId,
+      isSoldOut:        false,
+      supportActs:      support,
+      tickets: [{
+        seller:    platform === 'venue-website' ? venue.name : platform,
+        url:       ticketUrl || ev._sourceUrl || base,
+        available: true,
+        price:     price ? `£${price}` : 'See site',
+      }],
+      sources:     [platform],
+      lastUpdated: new Date().toISOString(),
+    });
   }
   return gigs;
 }
