@@ -1475,6 +1475,89 @@ async function fetchVenueDiceGigs(venue, nameMap) {
   return gigs;
 }
 
+// ─── Venue-direct: scrape all stored ticketing URLs (from enrich-venues-ticketing-links.cjs)
+// Uses generic JSON-LD extraction — works across AXS, See Tickets, Gigantic, Ents24,
+// Songkick, Gigsandtours, Eventim, Ticketline, WeGotTickets, etc.
+async function fetchVenueStoredUrls(venue, nameMap) {
+  const urls = venue.ticketingUrls;
+  if (!urls || typeof urls !== 'object') return [];
+  const today = new Date().toISOString().split('T')[0];
+  const gigs  = [];
+  const seen  = new Set();
+
+  for (const [platform, basePageUrl] of Object.entries(urls)) {
+    // Skip platforms we already handle via dedicated functions to avoid duplication
+    if (['ticketmaster', 'skiddle', 'eventbrite', 'dice'].includes(platform)) continue;
+    if (!basePageUrl || typeof basePageUrl !== 'string') continue;
+
+    // For Songkick venue pages, paginate through up to 5 pages (50 events/page)
+    const maxPages = platform === 'songkick' ? 5 : 1;
+
+    for (let pg = 1; pg <= maxPages; pg++) {
+      const pageUrl = pg === 1 ? basePageUrl
+        : basePageUrl.includes('?') ? `${basePageUrl}&page=${pg}` : `${basePageUrl}?page=${pg}`;
+
+    try {
+      const res = await fetch(pageUrl, { headers: VENUE_WEBSITE_HEADERS, signal: AbortSignal.timeout(10000) });
+      if (!res.ok) break;
+      const html   = await res.text();
+      const events = extractVenueJsonLdEvents(html);
+      if (!events.length && pg > 1) break; // no more pages
+
+      for (const ev of events) {
+        const date = (ev.startDate || '').split('T')[0];
+        if (!date || date < today) continue;
+
+        // Get performer name — try performers list first, then event title
+        const performers = Array.isArray(ev.performer) ? ev.performer : ev.performer ? [ev.performer] : [];
+        let rawName = performers[0]?.name || '';
+        if (!rawName) rawName = extractArtistFromTitle(ev.name || '', '');
+        if (!isValidVenueArtist(rawName)) continue;
+
+        const dedupId = `${rawName}|${date}`;
+        if (seen.has(dedupId)) continue;
+        seen.add(dedupId);
+
+        const norm   = normaliseName(rawName);
+        let   artist = nameMap[norm];
+        if (!artist) { artist = await autoSeedArtist(rawName, nameMap); if (!artist) continue; }
+
+        const support   = performers.slice(1).map(p => p.name).filter(n => isValidVenueArtist(n));
+        const ticketUrl = Array.isArray(ev.offers) ? ev.offers[0]?.url : ev.offers?.url;
+        const price     = Array.isArray(ev.offers) ? ev.offers[0]?.price : ev.offers?.price;
+
+        gigs.push({
+          gigId:            `${platform}-${normaliseName(venue.name)}-${artist.id}-${date}`,
+          dedupKey:         dedupKey(artist.id, date, venue.name),
+          artistId:         artist.id,
+          artistName:       artist.name,
+          date,
+          doorsTime:        ev.startDate?.includes('T') ? ev.startDate.split('T')[1]?.slice(0, 5) : null,
+          venueName:        venue.name,
+          venueId:          venue.venueId,
+          venueCity:        venue.city || '',
+          venueCountry:     'GB',
+          canonicalVenueId: venue.venueId,
+          isSoldOut:        false,
+          supportActs:      support,
+          tickets: [{
+            seller:    platform.charAt(0).toUpperCase() + platform.slice(1),
+            url:       ticketUrl || pageUrl,
+            available: true,
+            price:     price ? `£${price}` : 'See site',
+          }],
+          sources:     [platform],
+          lastUpdated: new Date().toISOString(),
+        });
+      }
+      if (!events.length) break;
+    } catch { break; /* silently skip unreachable/rate-limited platforms */ }
+    await sleep(300);
+    } // end page loop
+  } // end platform loop
+  return gigs;
+}
+
 async function fetchVenueBatch(nameMap) {
   // Load all active venues, sort by lastVenueScraped ascending (null = never = highest priority)
   const venues = [];
@@ -1484,7 +1567,7 @@ async function fetchVenueBatch(nameMap) {
       TableName: VENUES_TABLE,
       FilterExpression: 'isActive = :a',
       ExpressionAttributeValues: { ':a': true },
-      ProjectionExpression: 'venueId, #n, city, website, skiddleId, tmVenueId, lastVenueScraped',
+      ProjectionExpression: 'venueId, #n, city, website, skiddleId, tmVenueId, ticketingUrls, lastVenueScraped',
       ExpressionAttributeNames: { '#n': 'name' },
     };
     if (lastKey) params.ExclusiveStartKey = lastKey;
@@ -1520,9 +1603,11 @@ async function fetchVenueBatch(nameMap) {
     await sleep(200);
     const diceGigs     = await fetchVenueDiceGigs(venue, nameMap);
     await sleep(200);
+    const storedGigs   = await fetchVenueStoredUrls(venue, nameMap);
+    await sleep(200);
     const websiteGigs  = await fetchVenueWebsiteGigs(venue, nameMap);
 
-    const venueGigs = [...skiddleGigs, ...tmGigs, ...ebGigs, ...diceGigs, ...websiteGigs];
+    const venueGigs = [...skiddleGigs, ...tmGigs, ...ebGigs, ...diceGigs, ...storedGigs, ...websiteGigs];
     for (const gig of venueGigs) {
       if (seen.has(gig.dedupKey)) continue;
       seen.add(gig.dedupKey);
