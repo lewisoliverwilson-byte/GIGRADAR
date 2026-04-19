@@ -144,6 +144,17 @@ export default function VenuePage() {
               <p className="text-zinc-400 text-sm leading-relaxed max-w-2xl mt-3">{venue.bio}</p>
             )}
 
+            {venue.address && (
+              <p className="text-xs text-zinc-500 mt-2 flex items-center gap-1">
+                <svg className="w-3 h-3 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+                {venue.address}
+              </p>
+            )}
+
+            {venue.capacity && (
+              <p className="text-xs text-zinc-500 mt-1">Capacity: {venue.capacity.toLocaleString()}</p>
+            )}
+
             <div className="flex items-center gap-4 mt-3 flex-wrap">
               {venue.website && (
                 <a href={venue.website} target="_blank" rel="noopener noreferrer"
@@ -155,6 +166,12 @@ export default function VenuePage() {
                 <a href={`https://instagram.com/${venue.instagram.replace('@', '')}`} target="_blank" rel="noopener noreferrer"
                   className="text-xs text-zinc-500 hover:text-white transition-colors flex items-center gap-1">
                   Instagram <span className="opacity-60">↗</span>
+                </a>
+              )}
+              {venue.wikiUrl && (
+                <a href={venue.wikiUrl} target="_blank" rel="noopener noreferrer"
+                  className="text-xs text-zinc-500 hover:text-white transition-colors flex items-center gap-1">
+                  Wikipedia <span className="opacity-60">↗</span>
                 </a>
               )}
             </div>

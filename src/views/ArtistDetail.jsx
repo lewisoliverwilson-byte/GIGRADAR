@@ -208,6 +208,12 @@ export default function ArtistDetail() {
                     Facebook <span className="opacity-60">↗</span>
                   </a>
                 )}
+                {artist.wikiUrl && (
+                  <a href={artist.wikiUrl} target="_blank" rel="noopener noreferrer"
+                    className="text-xs text-zinc-500 hover:text-white transition-colors flex items-center gap-1">
+                    Wikipedia <span className="opacity-60">↗</span>
+                  </a>
+                )}
               </div>
             )}
 

@@ -75,6 +75,30 @@ function isGenericName(name) {
   return !name || name.trim().length < 2 || GENERIC_ACT_RE.test(name.trim()) || isEventTitle(name);
 }
 
+// ─── Extract artist name from event title or URL slug ────────────────────────
+// Handles: "Eric Clapton: Slowhand at 80" → "Eric Clapton"
+//          "Coldplay - Music of the Spheres Tour" → "Coldplay"
+//          "The 1975 live at O2" → "The 1975"
+function extractArtistFromTitle(evName, evUrl) {
+  let fromTitle = (evName || '')
+    .replace(/\s*\bft\.?\s+.+$/i, '')
+    .replace(/\s*\bfeat(?:uring)?\.?\s+.+$/i, '')
+    .replace(/\s*[:\-–—|]\s*.*$/, '')
+    .replace(/\s+(?:live|tour|concert|show)\s*$/i, '')
+    .replace(/\s+(?:at|in)\s+[A-Z].+$/i, '')
+    .trim();
+  if (fromTitle.length >= 2 && fromTitle.length <= 70 && !isGenericName(fromTitle)) return fromTitle;
+
+  const urlSlug = (evUrl || '').match(/\/e\/([^/?]+)/)?.[1] || '';
+  if (!urlSlug) return '';
+  return urlSlug
+    .replace(/-tickets-\d+.*$/, '')
+    .replace(/-(?:live|tour|concert|the)-.*$/, '')
+    .replace(/-/g, ' ')
+    .replace(/\b\w/g, c => c.toUpperCase())
+    .trim();
+}
+
 // ─── Venue ID / slug helpers ─────────────────────────────────────────────────
 
 function toVenueId(name, city) {
@@ -246,10 +270,10 @@ async function fetchTicketmaster(artists) {
 async function fetchTicketmasterBulk(nameMap) {
   if (!TM_KEY) return [];
 
-  // Only run once per 22 hours — TM quota resets daily; no point burning it on every 4h scrape
+  // Only run once per 6 hours — matches scraper frequency so every cycle discovers new events
   const meta = await ddb.send(new GetCommand({ TableName: ARTISTS_TABLE, Key: { artistId: '_gigradar_meta' } })).catch(() => ({ Item: null }));
   const lastTmRun = meta.Item?.tmBulkLastRun;
-  if (lastTmRun && (Date.now() - new Date(lastTmRun).getTime()) < 22 * 3600 * 1000) {
+  if (lastTmRun && (Date.now() - new Date(lastTmRun).getTime()) < 6 * 3600 * 1000) {
     console.log(`Ticketmaster bulk: skipping — last ran ${Math.round((Date.now() - new Date(lastTmRun).getTime()) / 3600000)}h ago`);
     return [];
   }
@@ -656,6 +680,21 @@ async function fetchSeeTickets(nameMap) {
 // London (24426) confirmed working; others added as discovered.
 const SK_UK_METROS = [
   { id: 24426, name: 'London' },
+  { id: 31366, name: 'Manchester' },
+  { id: 24521, name: 'Birmingham' },
+  { id: 25014, name: 'Glasgow' },
+  { id: 24516, name: 'Leeds' },
+  { id: 24803, name: 'Bristol' },
+  { id: 24523, name: 'Edinburgh' },
+  { id: 24517, name: 'Liverpool' },
+  { id: 24515, name: 'Newcastle upon Tyne' },
+  { id: 24518, name: 'Sheffield' },
+  { id: 25109, name: 'Nottingham' },
+  { id: 24512, name: 'Cardiff' },
+  { id: 24525, name: 'Brighton' },
+  { id: 24535, name: 'Oxford' },
+  { id: 24533, name: 'Cambridge' },
+  { id: 28458, name: 'Guildford' },
 ];
 
 async function fetchGigantic(nameMap) {
@@ -725,16 +764,27 @@ async function fetchEventbrite(nameMap) {
   const gigs  = [];
   const today = new Date().toISOString().split('T')[0];
 
-  // Eventbrite renders events in JSON-LD itemList on their search pages
-  // Artist name is extracted from the URL slug (e.g. /e/band-name-tickets-12345)
-  const CATEGORIES = [
+  // Scrape national UK pages + city-specific pages to catch regional events like
+  // Eric Clapton at G Live Guildford that don't surface on the national browse.
+  const EB_NATIONAL = [
     'https://www.eventbrite.co.uk/d/united-kingdom/music/',
     'https://www.eventbrite.co.uk/d/united-kingdom/concerts/',
   ];
+  const EB_UK_CITIES = [
+    'london','manchester','birmingham','glasgow','edinburgh','liverpool',
+    'bristol','leeds','sheffield','newcastle-upon-tyne','nottingham','cardiff',
+    'oxford','cambridge','brighton','guildford','reading','york','exeter','bath',
+    'coventry','leicester','derby','hull','portsmouth','southampton','norwich',
+    'cheltenham','wolverhampton','milton-keynes','stoke-on-trent','belfast',
+  ];
+  const CATEGORIES = [
+    ...EB_NATIONAL.map(u => ({ url: u, pages: 10 })),
+    ...EB_UK_CITIES.map(c => ({ url: `https://www.eventbrite.co.uk/d/united-kingdom--${c}/music/`, pages: 3 })),
+  ];
 
   try {
-    for (const baseUrl of CATEGORIES) {
-      for (let pg = 1; pg <= 10; pg++) {
+    for (const { url: baseUrl, pages: maxPages } of CATEGORIES) {
+      for (let pg = 1; pg <= maxPages; pg++) {
         const url = `${baseUrl}?page=${pg}`;
         const res = await fetch(url, { headers: { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/120' } });
         if (!res.ok) break;
@@ -752,13 +802,8 @@ async function fetchEventbrite(nameMap) {
             const date = (ev.startDate || '').split('T')[0];
             if (!date || date < today) continue;
 
-            // Extract name from URL slug: /e/artist-name-tickets-12345
-            const urlSlug = (ev.url || '').match(/\/e\/([^/?]+)/)?.[1] || '';
-            const rawName = urlSlug
-              .replace(/-tickets-\d+$/, '')   // strip "-tickets-12345"
-              .replace(/-/g, ' ')
-              .replace(/\b\w/g, c => c.toUpperCase())
-              .trim();
+            // Extract artist from event title (more reliable than URL slug)
+            const rawName = extractArtistFromTitle(ev.name || '', ev.url || '');
 
             if (!rawName || isGenericName(rawName) || isTributeAct(rawName)) continue;
             const norm = normaliseName(rawName);
@@ -768,19 +813,23 @@ async function fetchEventbrite(nameMap) {
               if (!artist) continue;
             }
 
+            // Extract venue from JSON-LD location field
+            const venueName = ev.location?.name || '';
+            const venueCity = ev.location?.address?.addressLocality || ev.location?.address?.addressRegion || '';
+
             // Extract event ID from URL
             const ebId = (ev.url || '').match(/tickets-(\d+)/)?.[1] || normaliseName(rawName + date);
 
             gigs.push({
               gigId:        `eb-${ebId}`,
-              dedupKey:     dedupKey(artist.id, date, ''),
+              dedupKey:     dedupKey(artist.id, date, venueName),
               artistId:     artist.id,
               artistName:   artist.name,
               date,
               doorsTime:    null,
-              venueName:    '',
-              venueId:      `venue-eb-${ebId}`,
-              venueCity:    '',
+              venueName,
+              venueId:      venueName ? `venue#${normaliseName(venueName)}#${normaliseName(venueCity)}` : `venue-eb-${ebId}`,
+              venueCity,
               venueCountry: 'GB',
               isSoldOut:    false,
               supportActs:  [],
@@ -1276,6 +1325,156 @@ async function fetchVenueSkiddleGigs(venue, nameMap) {
   return gigs;
 }
 
+// ─── Venue-direct: Ticketmaster by stored tmVenueId ─────────────────────────
+async function fetchVenueTMGigs(venue, nameMap) {
+  if (!venue.tmVenueId || !TM_KEY) return [];
+  const today = new Date().toISOString().split('T')[0];
+  const end   = new Date(Date.now() + 365 * 864e5).toISOString().split('.')[0] + 'Z';
+  const gigs  = [];
+  try {
+    const url  = `https://app.ticketmaster.com/discovery/v2/events.json?classificationName=music&venueId=${venue.tmVenueId}&startDateTime=${today}T00:00:00Z&endDateTime=${end}&size=200&apikey=${TM_KEY}`;
+    const res  = await fetch(url);
+    if (!res.ok) return [];
+    const data   = await res.json();
+    const events = data?._embedded?.events || [];
+    for (const ev of events) {
+      const date    = ev.dates?.start?.localDate;
+      if (!date) continue;
+      const attract = ev._embedded?.attractions || [];
+      const mainAct = attract[0];
+      if (!mainAct?.name) continue;
+      const norm   = normaliseName(mainAct.name);
+      let   artist = nameMap[norm];
+      if (!artist) { artist = await autoSeedArtist(mainAct.name, nameMap); if (!artist) continue; }
+      const pr  = ev.priceRanges?.[0];
+      const sym = currSym(pr?.currency);
+      gigs.push({
+        gigId:            `tm-${ev.id}`,
+        dedupKey:         dedupKey(artist.id, date, venue.name),
+        artistId:         artist.id,
+        artistName:       artist.name,
+        date,
+        doorsTime:        ev.dates?.start?.localTime || null,
+        venueName:        venue.name,
+        venueId:          venue.venueId,
+        venueCity:        venue.city || '',
+        venueCountry:     'GB',
+        canonicalVenueId: venue.venueId,
+        isSoldOut:        ev.dates?.status?.code === 'offsale',
+        supportActs:      attract.slice(1).map(a => a.name).filter(Boolean),
+        tickets: [{ seller: 'Ticketmaster', url: ev.url || '#', available: ev.dates?.status?.code !== 'offsale', price: pr ? `${sym}${Math.round(pr.min)}` : 'See site' }],
+        sources:          ['ticketmaster-venue'],
+        lastUpdated:      new Date().toISOString(),
+      });
+    }
+  } catch (e) { console.error(`TM venue ${venue.name}:`, e.message); }
+  return gigs;
+}
+
+// ─── Venue-direct: Eventbrite city+venue search ──────────────────────────────
+async function fetchVenueEventbriteGigs(venue, nameMap) {
+  if (!venue.name) return [];
+  const today = new Date().toISOString().split('T')[0];
+  const gigs  = [];
+  const city  = (venue.city || '').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '');
+  const q     = encodeURIComponent(venue.name);
+  const url   = city
+    ? `https://www.eventbrite.co.uk/d/united-kingdom--${city}/music/?q=${q}`
+    : `https://www.eventbrite.co.uk/d/united-kingdom/music/?q=${q}`;
+  try {
+    const res = await fetch(url, { headers: { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/120' }, signal: AbortSignal.timeout(10000) });
+    if (!res.ok) return [];
+    const html = await res.text();
+    for (const [, json] of html.matchAll(/<script type="application\/ld\+json">([\s\S]*?)<\/script>/g)) {
+      let ld; try { ld = JSON.parse(json); } catch { continue; }
+      if (!ld?.itemListElement) continue;
+      for (const item of ld.itemListElement) {
+        const ev = item.item || item;
+        const date = (ev.startDate || '').split('T')[0];
+        if (!date || date < today) continue;
+        const evVenueName = ev.location?.name || '';
+        if (evVenueName && normaliseName(evVenueName) !== normaliseName(venue.name)) continue;
+        const rawName = extractArtistFromTitle(ev.name || '', ev.url || '');
+        if (!rawName || isGenericName(rawName)) continue;
+        const norm   = normaliseName(rawName);
+        let   artist = nameMap[norm];
+        if (!artist) { artist = await autoSeedArtist(rawName, nameMap); if (!artist) continue; }
+        const ebId = (ev.url || '').match(/tickets-(\d+)/)?.[1] || normaliseName(rawName + date);
+        gigs.push({
+          gigId:            `eb-${ebId}`,
+          dedupKey:         dedupKey(artist.id, date, venue.name),
+          artistId:         artist.id,
+          artistName:       artist.name,
+          date,
+          doorsTime:        ev.startDate?.includes('T') ? ev.startDate.split('T')[1]?.slice(0, 5) : null,
+          venueName:        venue.name,
+          venueId:          venue.venueId,
+          venueCity:        venue.city || '',
+          venueCountry:     'GB',
+          canonicalVenueId: venue.venueId,
+          isSoldOut:        false,
+          supportActs:      [],
+          tickets: [{ seller: 'Eventbrite', url: ev.url || 'https://eventbrite.co.uk', available: true, price: 'See site' }],
+          sources:          ['eventbrite-venue'],
+          lastUpdated:      new Date().toISOString(),
+        });
+      }
+    }
+  } catch (e) { console.error(`EB venue ${venue.name}:`, e.message); }
+  return gigs;
+}
+
+// ─── Venue-direct: Dice.fm by venue name search ──────────────────────────────
+async function fetchVenueDiceGigs(venue, nameMap) {
+  if (!venue.name) return [];
+  const today = new Date().toISOString().split('T')[0];
+  const gigs  = [];
+  try {
+    const q   = encodeURIComponent(venue.name);
+    const url = `https://dice.fm/search?query=${q}`;
+    const res = await fetch(url, { headers: { 'User-Agent': 'Mozilla/5.0', Accept: 'text/html' }, signal: AbortSignal.timeout(8000) });
+    if (!res.ok) return [];
+    const html = await res.text();
+    const m = html.match(/<script id="__NEXT_DATA__"[^>]*>([\s\S]*?)<\/script>/);
+    if (!m) return [];
+    const data   = JSON.parse(m[1]);
+    const events = data?.props?.pageProps?.events || data?.props?.pageProps?.results?.events || [];
+    for (const ev of events) {
+      const evVenueName = ev.venues?.[0]?.name || '';
+      if (evVenueName && normaliseName(evVenueName) !== normaliseName(venue.name)) continue;
+      const dateUnix = ev.dates?.[0]?.date || ev.date_unix;
+      const date = dateUnix ? new Date(typeof dateUnix === 'number' ? dateUnix * 1000 : dateUnix).toISOString().split('T')[0] : '';
+      if (!date || date < today) continue;
+      const artists = ev.summary_lineup?.top_artists || [];
+      if (!artists.length) continue;
+      const artName = artists[0]?.name || '';
+      if (isGenericName(artName)) continue;
+      const norm   = normaliseName(artName);
+      let   artist = nameMap[norm];
+      if (!artist) { artist = await autoSeedArtist(artName, nameMap); if (!artist) continue; }
+      gigs.push({
+        gigId:            `dice-${ev.id}`,
+        dedupKey:         dedupKey(artist.id, date, venue.name),
+        artistId:         artist.id,
+        artistName:       artist.name,
+        date,
+        doorsTime:        null,
+        venueName:        venue.name,
+        venueId:          venue.venueId,
+        venueCity:        venue.city || '',
+        venueCountry:     'GB',
+        canonicalVenueId: venue.venueId,
+        isSoldOut:        ev.status === 'sold_out',
+        supportActs:      artists.slice(1).map(a => a.name).filter(Boolean),
+        tickets: [{ seller: 'Dice', url: `https://dice.fm/event/${ev.perm_name}`, available: ev.status !== 'sold_out', price: ev.price?.amount ? `${currSym(ev.price.currency)}${(ev.price.amount / 100).toFixed(2)}` : 'See site' }],
+        sources:          ['dice-venue'],
+        lastUpdated:      new Date().toISOString(),
+      });
+    }
+  } catch { /* Dice search may 403 */ }
+  return gigs;
+}
+
 async function fetchVenueBatch(nameMap) {
   // Load all active venues, sort by lastVenueScraped ascending (null = never = highest priority)
   const venues = [];
@@ -1285,7 +1484,7 @@ async function fetchVenueBatch(nameMap) {
       TableName: VENUES_TABLE,
       FilterExpression: 'isActive = :a',
       ExpressionAttributeValues: { ':a': true },
-      ProjectionExpression: 'venueId, #n, city, website, skiddleId, lastVenueScraped',
+      ProjectionExpression: 'venueId, #n, city, website, skiddleId, tmVenueId, lastVenueScraped',
       ExpressionAttributeNames: { '#n': 'name' },
     };
     if (lastKey) params.ExclusiveStartKey = lastKey;
@@ -1313,11 +1512,17 @@ async function fetchVenueBatch(nameMap) {
   const seen  = new Set();
 
   for (const venue of batch) {
-    const skiddleGigs = await fetchVenueSkiddleGigs(venue, nameMap);
-    await sleep(300);
-    const websiteGigs = await fetchVenueWebsiteGigs(venue, nameMap);
+    const skiddleGigs  = await fetchVenueSkiddleGigs(venue, nameMap);
+    await sleep(200);
+    const tmGigs       = await fetchVenueTMGigs(venue, nameMap);
+    await sleep(200);
+    const ebGigs       = await fetchVenueEventbriteGigs(venue, nameMap);
+    await sleep(200);
+    const diceGigs     = await fetchVenueDiceGigs(venue, nameMap);
+    await sleep(200);
+    const websiteGigs  = await fetchVenueWebsiteGigs(venue, nameMap);
 
-    const venueGigs = [...skiddleGigs, ...websiteGigs];
+    const venueGigs = [...skiddleGigs, ...tmGigs, ...ebGigs, ...diceGigs, ...websiteGigs];
     for (const gig of venueGigs) {
       if (seen.has(gig.dedupKey)) continue;
       seen.add(gig.dedupKey);
