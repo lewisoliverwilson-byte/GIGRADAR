@@ -3,10 +3,18 @@
 @tailwind utilities;
 
 @layer base {
-  html { @apply bg-[#0a0a0f] text-white; -webkit-font-smoothing: antialiased; }
+  html {
+    background-color: #09090b;
+    color: #ffffff;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+  body {
+    background-color: #09090b;
+  }
   * { box-sizing: border-box; }
 }
 
 ::-webkit-scrollbar { width: 5px; }
 ::-webkit-scrollbar-track { background: transparent; }
-::-webkit-scrollbar-thumb { background: #333; border-radius: 9px; }
+::-webkit-scrollbar-thumb { background: #3f3f46; border-radius: 9px; }

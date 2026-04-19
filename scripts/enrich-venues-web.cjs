@@ -3,15 +3,16 @@
  * Enriches venue profiles with descriptions, capacity, address, and images
  * from Wikipedia, MusicBrainz, and OpenStreetMap Nominatim.
  *
- * Usage: node scripts/enrich-venues-web.cjs [--limit 200]
- * Writes: description, imageUrl, capacity, address, wikiUrl fields to venues
+ * Usage: node scripts/enrich-venues-web.cjs [--limit=200]
+ * Writes: bio, imageUrl, address, wikiUrl fields to venues
  */
 'use strict';
 
-require('dotenv').config({ path: require('path').join(__dirname, '../.env') });
+const path = require('path');
+const SDK  = p => require(path.join(__dirname, '../lambda/scraper/node_modules', p));
 
-const { DynamoDBClient }                                     = require('@aws-sdk/client-dynamodb');
-const { DynamoDBDocumentClient, ScanCommand, UpdateCommand } = require('@aws-sdk/lib-dynamodb');
+const { DynamoDBClient }                                     = SDK('@aws-sdk/client-dynamodb');
+const { DynamoDBDocumentClient, ScanCommand, UpdateCommand } = SDK('@aws-sdk/lib-dynamodb');
 
 const ddb   = DynamoDBDocumentClient.from(new DynamoDBClient({ region: 'us-east-1' }));
 const TABLE = 'gigradar-venues';

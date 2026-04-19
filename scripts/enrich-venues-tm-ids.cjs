@@ -3,20 +3,22 @@
  * Enriches every venue in DynamoDB with its Ticketmaster venue ID.
  * Run once (or periodically) to enable venue-direct TM event queries.
  *
- * Usage: node scripts/enrich-venues-tm-ids.cjs
+ * Usage: TICKETMASTER_API_KEY=xxx node scripts/enrich-venues-tm-ids.cjs
+ *    or: node scripts/enrich-venues-tm-ids.cjs --api-key xxx
  *
- * Reads:  TICKETMASTER_API_KEY env var (or .env)
  * Writes: tmVenueId field to each gigradar-venues record
  */
 'use strict';
 
-require('dotenv').config({ path: require('path').join(__dirname, '../.env') });
+const path = require('path');
+const SDK  = p => require(path.join(__dirname, '../lambda/scraper/node_modules', p));
 
-const { DynamoDBClient }                                    = require('@aws-sdk/client-dynamodb');
-const { DynamoDBDocumentClient, ScanCommand, UpdateCommand } = require('@aws-sdk/lib-dynamodb');
+const { DynamoDBClient }                                    = SDK('@aws-sdk/client-dynamodb');
+const { DynamoDBDocumentClient, ScanCommand, UpdateCommand } = SDK('@aws-sdk/lib-dynamodb');
 
-const ddb      = DynamoDBDocumentClient.from(new DynamoDBClient({ region: 'us-east-1' }));
-const TM_KEY   = process.env.TICKETMASTER_API_KEY;
+const ddb    = DynamoDBDocumentClient.from(new DynamoDBClient({ region: 'us-east-1' }));
+const argVal = flag => { const i = process.argv.indexOf(flag); return i !== -1 ? process.argv[i + 1] : null; };
+const TM_KEY = process.env.TICKETMASTER_API_KEY || argVal('--api-key');
 const TABLE    = 'gigradar-venues';
 const BATCH    = parseInt(process.env.BATCH_SIZE || '500', 10);
 const DELAY_MS = 250; // ~4 req/s within TM rate limit

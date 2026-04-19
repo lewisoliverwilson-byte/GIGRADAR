@@ -32,7 +32,18 @@ const NOT_OFFICIAL = /wikipedia|wikidata|wikimedia|facebook|instagram|twitter|x\
 
 // ─── Wikidata P856 (official website) ────────────────────────────────────────
 
-async function websiteFromWikidata(wikiUrl) {
+function nameSimilar(a, b) {
+  const norm = s => s.toLowerCase().replace(/[^a-z0-9]/g, '');
+  const na = norm(a), nb = norm(b);
+  if (!na || !nb) return false;
+  // Accept if one contains the other (handles "The Roundhouse" vs "Roundhouse")
+  if (na.includes(nb) || nb.includes(na)) return true;
+  // Accept if they share at least 60% of characters (Levenshtein-lite: overlap)
+  const shared = [...na].filter(c => nb.includes(c)).length;
+  return shared / Math.max(na.length, nb.length) >= 0.6;
+}
+
+async function websiteFromWikidata(wikiUrl, venueName) {
   try {
     // Extract page title from URL
     const title = decodeURIComponent(wikiUrl.replace(/^.*\/wiki\//, ''));
@@ -51,6 +62,11 @@ async function websiteFromWikidata(wikiUrl) {
     const wdRes  = await fetch(`https://www.wikidata.org/wiki/Special:EntityData/${qid}.json`, { headers: HDR });
     const wdData = await wdRes.json();
     const entity = wdData?.entities?.[qid];
+
+    // Sanity-check: entity label should roughly match venue name
+    const label = entity?.labels?.en?.value || '';
+    if (label && venueName && !nameSimilar(label, venueName)) return null;
+
     // P856 = official website
     const p856   = entity?.claims?.P856;
     if (!p856?.length) return null;
@@ -147,7 +163,7 @@ async function loadVenues() {
     let website = null;
 
     if (v.wikiUrl) {
-      website = await websiteFromWikidata(v.wikiUrl);
+      website = await websiteFromWikidata(v.wikiUrl, v.name);
       await sleep(400);
       // Skip Wikipedia external links fallback — too noisy (finds unrelated sites)
     }

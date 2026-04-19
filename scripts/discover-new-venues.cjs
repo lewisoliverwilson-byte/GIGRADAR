@@ -10,14 +10,15 @@
  */
 'use strict';
 
-require('dotenv').config({ path: require('path').join(__dirname, '../.env') });
+const path = require('path');
+const SDK  = p => require(path.join(__dirname, '../lambda/scraper/node_modules', p));
 
-const { DynamoDBClient }                                     = require('@aws-sdk/client-dynamodb');
-const { DynamoDBDocumentClient, ScanCommand, UpdateCommand, PutCommand } = require('@aws-sdk/lib-dynamodb');
+const { DynamoDBClient }                                                  = SDK('@aws-sdk/client-dynamodb');
+const { DynamoDBDocumentClient, ScanCommand, UpdateCommand, PutCommand }  = SDK('@aws-sdk/lib-dynamodb');
 
 const ddb         = DynamoDBDocumentClient.from(new DynamoDBClient({ region: 'us-east-1' }));
 const TABLE       = 'gigradar-venues';
-const SKIDDLE_KEY = process.env.SKIDDLE_API_KEY || '';
+const SKIDDLE_KEY = process.env.SKIDDLE_API_KEY || '4e0a7a6dacf5930b9bf39ece1f9b456f';
 const SOURCE      = process.argv.find(a => a.startsWith('--source='))?.split('=')[1] || 'all';
 const sleep       = ms => new Promise(r => setTimeout(r, ms));
 

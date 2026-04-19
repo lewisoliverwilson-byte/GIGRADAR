@@ -3,20 +3,21 @@
  * Enriches artist profiles with bio, genres, social links, and images
  * from Wikipedia, MusicBrainz, and Spotify (if token available).
  *
- * Usage: node scripts/enrich-artists-web.cjs [--limit 500] [--missing-only]
+ * Usage: node scripts/enrich-artists-web.cjs [--limit=500] [--missing-only]
  *
- * Writes: bio, genres, imageUrl, spotifyId, mbid, wikiUrl fields to artists
+ * Writes: bio, genres, imageUrl, mbid, wikiUrl fields to artists
  */
 'use strict';
 
-require('dotenv').config({ path: require('path').join(__dirname, '../.env') });
+const path = require('path');
+const SDK  = p => require(path.join(__dirname, '../lambda/scraper/node_modules', p));
 
-const { DynamoDBClient }                                     = require('@aws-sdk/client-dynamodb');
-const { DynamoDBDocumentClient, ScanCommand, UpdateCommand } = require('@aws-sdk/lib-dynamodb');
+const { DynamoDBClient }                                     = SDK('@aws-sdk/client-dynamodb');
+const { DynamoDBDocumentClient, ScanCommand, UpdateCommand } = SDK('@aws-sdk/lib-dynamodb');
 
 const ddb          = DynamoDBDocumentClient.from(new DynamoDBClient({ region: 'us-east-1' }));
 const TABLE        = 'gigradar-artists';
-const LASTFM_KEY   = process.env.LASTFM_API_KEY;
+const LASTFM_KEY   = process.env.LASTFM_API_KEY || '37f3d1f6b6c7936d7074a9ecc21ed623';
 const LIMIT        = parseInt(process.argv.find(a => a.startsWith('--limit='))?.split('=')[1] || '500', 10);
 const MISSING_ONLY = process.argv.includes('--missing-only');
 const sleep        = ms => new Promise(r => setTimeout(r, ms));
