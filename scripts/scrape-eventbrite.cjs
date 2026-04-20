@@ -229,10 +229,8 @@ function parseEvents(html) {
     } catch {}
   }
 
-  // Check for next page — Eventbrite renders a next-page link when more exist
-  const hasMore = html.includes('aria-label="Next') ||
-                  html.includes('"rel":"next"') ||
-                  html.includes('page=' + (parseInt(html.match(/[?&]page=(\d+)/)?.[1] || 1) + 1));
+  // Eventbrite returns exactly 8 events per page when more exist; fewer = last page
+  const hasMore = events.length >= 8;
 
   return { events, hasMore };
 }
