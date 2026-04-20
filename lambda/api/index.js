@@ -248,7 +248,7 @@ async function getVenueGigs(slug) {
 async function getGigs(params) {
   const today = new Date().toISOString().split('T')[0];
   const limit = Math.min(parseInt(params?.limit || '200', 10), 500);
-  const city  = (params?.city  || '').trim().toLowerCase();
+  const city  = (params?.city  || '').trim().split(/\s+/).map(w => w ? w[0].toUpperCase() + w.slice(1).toLowerCase() : '').join(' ');
   const genre = (params?.genre || '').trim().toLowerCase();
   const from  = params?.from  || today;
   const to    = params?.to    || (() => { const d = new Date(); d.setDate(d.getDate() + 90); return d.toISOString().split('T')[0]; })();
