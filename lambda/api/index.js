@@ -267,7 +267,7 @@ async function getGigs(params) {
   const filterParts = [];
   const filterNames = {};
   const filterValues = {};
-  if (city)  { filterParts.push('contains(#city, :city)');   filterNames['#city']  = 'city';  filterValues[':city']  = city; }
+  if (city)  { filterParts.push('contains(#city, :city)');   filterNames['#city']  = 'venueCity';  filterValues[':city']  = city; }
   if (genre) { filterParts.push('contains(#genre, :genre)'); filterNames['#genre'] = 'genre'; filterValues[':genre'] = genre; }
 
   const allGigs = [];
