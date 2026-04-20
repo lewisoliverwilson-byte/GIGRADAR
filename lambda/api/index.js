@@ -251,35 +251,53 @@ async function getGigs(params) {
   const city  = (params?.city  || '').trim().toLowerCase();
   const genre = (params?.genre || '').trim().toLowerCase();
   const from  = params?.from  || today;
-  const to    = params?.to    || '';
+  const to    = params?.to    || (() => { const d = new Date(); d.setDate(d.getDate() + 90); return d.toISOString().split('T')[0]; })();
 
-  const filterParts = ['#d >= :from'];
-  const names  = { '#d': 'date' };
-  const values = { ':from': from };
+  // Build list of dates in range (capped at 90 days to avoid runaway queries)
+  const dates = [];
+  const start = new Date(from), end = new Date(to);
+  const dayLimit = Math.min(90, Math.ceil((end - start) / 86400000) + 1);
+  for (let i = 0; i < dayLimit; i++) {
+    const d = new Date(start);
+    d.setDate(d.getDate() + i);
+    dates.push(d.toISOString().split('T')[0]);
+  }
 
-  if (to)    { filterParts.push('#d <= :to');                      values[':to']    = to; }
-  if (city)  { filterParts.push('contains(#city, :city)');         names['#city']   = 'city';   values[':city']  = city; }
-  if (genre) { filterParts.push('contains(#genre, :genre)');       names['#genre']  = 'genre';  values[':genre'] = genre; }
+  // Query date-index for each date (parallel, batched 5 at a time)
+  const filterParts = [];
+  const filterNames = {};
+  const filterValues = {};
+  if (city)  { filterParts.push('contains(#city, :city)');   filterNames['#city']  = 'city';  filterValues[':city']  = city; }
+  if (genre) { filterParts.push('contains(#genre, :genre)'); filterNames['#genre'] = 'genre'; filterValues[':genre'] = genre; }
 
-  // Paginate fully so filters apply across all pages
-  const gigs = [];
-  let lastKey;
-  do {
-    const p = {
-      TableName:                 GIGS_TABLE,
-      FilterExpression:          filterParts.join(' AND '),
-      ExpressionAttributeNames:  names,
-      ExpressionAttributeValues: values,
-    };
-    if (lastKey) p.ExclusiveStartKey = lastKey;
-    const r = await ddb.send(new ScanCommand(p)).catch(() => ({ Items: [] }));
-    gigs.push(...(r.Items || []));
-    lastKey = r.LastEvaluatedKey;
-    if (gigs.length >= 2000) break; // safety cap
-  } while (lastKey);
+  const allGigs = [];
+  const BATCH = 5;
+  for (let i = 0; i < dates.length && allGigs.length < limit; i += BATCH) {
+    const batch = dates.slice(i, i + BATCH);
+    const batchResults = await Promise.all(batch.map(async date => {
+      const items = [];
+      let lastKey;
+      do {
+        const p = {
+          TableName:  GIGS_TABLE,
+          IndexName:  'date-index',
+          KeyConditionExpression: '#d = :date',
+          ExpressionAttributeNames:  { '#d': 'date', ...filterNames },
+          ExpressionAttributeValues: { ':date': date, ...filterValues },
+        };
+        if (filterParts.length) p.FilterExpression = filterParts.join(' AND ');
+        if (lastKey) p.ExclusiveStartKey = lastKey;
+        const r = await ddb.send(new QueryCommand(p)).catch(() => ({ Items: [] }));
+        items.push(...(r.Items || []));
+        lastKey = r.LastEvaluatedKey;
+      } while (lastKey);
+      return items;
+    }));
+    for (const items of batchResults) allGigs.push(...items);
+  }
 
   return ok(
-    gigs
+    allGigs
       .sort((a, b) => a.date.localeCompare(b.date))
       .slice(0, limit)
   );
