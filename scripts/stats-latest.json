@@ -1,0 +1,20 @@
+{
+  "timestamp": "2026-04-21T11:32:23.198Z",
+  "totalGigs": 103905,
+  "futureGigs": 93574,
+  "gigsWithGenres": 33789,
+  "gigsLinkedToVenue": 93574,
+  "totalArtists": 42238,
+  "artistsWithUpcoming": 35577,
+  "artistsWithGenres": 27019,
+  "artistsWithBio": 12671,
+  "artistsWithImage": 20922,
+  "totalVenues": 12351,
+  "venuesWithUpcoming": 9626,
+  "venuesWithWebsite": 3113,
+  "gigGenreCoverage": 36,
+  "artistGenreCoverage": 64,
+  "artistBioCoverage": 30,
+  "artistImageCoverage": 50,
+  "venueUpcomingPct": 78
+}

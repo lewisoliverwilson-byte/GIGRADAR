@@ -3264,6 +3264,23 @@
     "source": "osm"
   },
   {
+    "venueId": "venue#deadwax#norwich",
+    "name": "Dead Wax",
+    "city": "Norwich",
+    "postcode": "NR3 1BA",
+    "website": "https://www.deadwaxnorwich.pub",
+    "facebook": null,
+    "instagram": null,
+    "capacity": null,
+    "lat": 52.631047,
+    "lon": 1.2952413,
+    "osmId": "way/103337946",
+    "slug": "norwich-dead-wax",
+    "isActive": true,
+    "upcoming": 0,
+    "source": "osm"
+  },
+  {
     "venueId": "venue#sidneymatilda#sheffield",
     "name": "Sidney & Matilda",
     "city": "Sheffield",

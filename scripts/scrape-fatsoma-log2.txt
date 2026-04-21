@@ -1,0 +1,246 @@
+=== GigRadar Fatsoma Scraper ===
+
+Total events: 15,885 across 318 pages
+
+  [2/318] +44 | Total: 110 gigs, 99 artists     [3/318] +39 | Total: 149 gigs, 132 artists     [4/318] +43 | Total: 192 gigs, 171 artists     [5/318] +50 | Total: 242 gigs, 218 artists     [6/318] +74 | Total: 316 gigs, 290 artists     [7/318] +47 | Total: 363 gigs, 334 artists     [8/318] +45 | Total: 408 gigs, 376 artists     [9/318] +47 | Total: 455 gigs, 419 artists     [10/318] +55 | Total: 510 gigs, 471 artists     [11/318] +45 | Total: 555 gigs, 514 artists     [12/318] +51 | Total: 606 gigs, 559 artists     [13/318] +62 | Total: 668 gigs, 617 artists     [14/318] +43 | Total: 711 gigs, 655 artists     [15/318] +44 | Total: 755 gigs, 695 artists     [16/318] +44 | Total: 799 gigs, 736 artists     [17/318] +65 | Total: 864 gigs, 795 artists     [18/318] +43 | Total: 907 gigs, 833 artists     [19/318] +44 | Total: 951 gigs, 874 artists     [20/318] +47 | Total: 998 gigs, 920 artists     [21/318] +44 | Total: 1,042 gigs, 959 artists     [22/318] +49 | Total: 1,091 gigs, 1,005 artists     [23/318] +47 | Total: 1,138 gigs, 1,047 artists     [24/318] +50 | Total: 1,188 gigs, 1,089 artists     [25/318] +49 | Total: 1,237 gigs, 1,133 artists     [26/318] +45 | Total: 1,282 gigs, 1,174 artists     [27/318] +47 | Total: 1,329 gigs, 1,212 artists     [28/318] +58 | Total: 1,387 gigs, 1,267 artists     [29/318] +44 | Total: 1,431 gigs, 1,306 artists     [30/318] +57 | Total: 1,488 gigs, 1,359 artists     [31/318] +47 | Total: 1,535 gigs, 1,399 artists     [32/318] +51 | Total: 1,586 gigs, 1,444 artists     [33/318] +43 | Total: 1,629 gigs, 1,478 artists     [34/318] +45 | Total: 1,674 gigs, 1,518 artists     [35/318] +42 | Total: 1,716 gigs, 1,552 artists     [36/318] +45 | Total: 1,761 gigs, 1,591 artists     [37/318] +44 | Total: 1,805 gigs, 1,624 artists     [38/318] +46 | Total: 1,851 gigs, 1,662 artists     [39/318] +47 | Total: 1,898 gigs, 1,701 artists     [40/318] +47 | Total: 1,945 gigs, 1,742 artists     [41/318] +41 | Total: 1,986 gigs, 1,771 artists     [42/318] +50 | Total: 2,036 gigs, 1,816 artists     [43/318] +50 | Total: 2,086 gigs, 1,861 artists     [44/318] +44 | Total: 2,130 gigs, 1,897 artists     [45/318] +43 | Total: 2,173 gigs, 1,933 artists     [46/318] +45 | Total: 2,218 gigs, 1,967 artists     [47/318] +56 | Total: 2,274 gigs, 2,014 artists     [48/318] +51 | Total: 2,325 gigs, 2,053 artists     [49/318] +44 | Total: 2,369 gigs, 2,086 artists     [50/318] +54 | Total: 2,423 gigs, 2,129 artists     [51/318] +47 | Total: 2,470 gigs, 2,167 artists     [52/318] +47 | Total: 2,517 gigs, 2,206 artists     [53/318] +49 | Total: 2,566 gigs, 2,247 artists     [54/318] +52 | Total: 2,618 gigs, 2,293 artists     [55/318] +62 | Total: 2,680 gigs, 2,348 artists     [56/318] +53 | Total: 2,733 gigs, 2,387 artists     [57/318] +51 | Total: 2,784 gigs, 2,425 artists     [58/318] +51 | Total: 2,835 gigs, 2,465 artists     [59/318] +47 | Total: 2,882 gigs, 2,505 artists     [60/318] +52 | Total: 2,934 gigs, 2,540 artists     [61/318] +53 | Total: 2,987 gigs, 2,585 artists     [62/318] +51 | Total: 3,038 gigs, 2,632 artists     [63/318] +45 | Total: 3,083 gigs, 2,672 artists     [64/318] +53 | Total: 3,136 gigs, 2,715 artists     [65/318] +47 | Total: 3,183 gigs, 2,755 artists     [66/318] +45 | Total: 3,228 gigs, 2,792 artists     [67/318] +51 | Total: 3,279 gigs, 2,835 artists     [68/318] +47 | Total: 3,326 gigs, 2,876 artists     [69/318] +48 | Total: 3,374 gigs, 2,913 artists     [70/318] +47 | Total: 3,421 gigs, 2,951 artists     [71/318] +51 | Total: 3,472 gigs, 2,991 artists     [72/318] +43 | Total: 3,515 gigs, 3,022 artists     [73/318] +49 | Total: 3,564 gigs, 3,059 artists     [74/318] +52 | Total: 3,616 gigs, 3,106 artists     [75/318] +43 | Total: 3,659 gigs, 3,138 artists     [76/318] +56 | Total: 3,715 gigs, 3,183 artists     [77/318] +51 | Total: 3,766 gigs, 3,222 artists     [78/318] +52 | Total: 3,818 gigs, 3,262 artists     [79/318] +45 | Total: 3,863 gigs, 3,300 artists     [80/318] +57 | Total: 3,920 gigs, 3,346 artists     [81/318] +62 | Total: 3,982 gigs, 3,399 artists     [82/318] +47 | Total: 4,029 gigs, 3,434 artists     [83/318] +50 | Total: 4,079 gigs, 3,469 artists     [84/318] +52 | Total: 4,131 gigs, 3,512 artists     [85/318] +50 | Total: 4,181 gigs, 3,553 artists     [86/318] +50 | Total: 4,231 gigs, 3,595 artists     [87/318] +66 | Total: 4,297 gigs, 3,654 artists     [88/318] +49 | Total: 4,346 gigs, 3,693 artists     [89/318] +52 | Total: 4,398 gigs, 3,729 artists     [90/318] +49 | Total: 4,447 gigs, 3,764 artists     [91/318] +57 | Total: 4,504 gigs, 3,805 artists     [92/318] +52 | Total: 4,556 gigs, 3,845 artists     [93/318] +57 | Total: 4,613 gigs, 3,892 artists     [94/318] +45 | Total: 4,658 gigs, 3,924 artists     [95/318] +62 | Total: 4,720 gigs, 3,972 artists     [96/318] +45 | Total: 4,765 gigs, 4,007 artists     [97/318] +56 | Total: 4,821 gigs, 4,045 artists     [98/318] +64 | Total: 4,885 gigs, 4,099 artists     [99/318] +46 | Total: 4,931 gigs, 4,133 artists     [100/318] +46 | Total: 4,977 gigs, 4,169 artists     [101/318] +47 | Total: 5,024 gigs, 4,207 artists     [102/318] +44 | Total: 5,068 gigs, 4,243 artists     [103/318] +46 | Total: 5,114 gigs, 4,284 artists     [104/318] +49 | Total: 5,163 gigs, 4,317 artists     [105/318] +55 | Total: 5,218 gigs, 4,365 artists     [106/318] +45 | Total: 5,263 gigs, 4,400 artists     [107/318] +53 | Total: 5,316 gigs, 4,441 artists     [108/318] +49 | Total: 5,365 gigs, 4,475 artists     [109/318] +54 | Total: 5,419 gigs, 4,516 artists     [110/318] +45 | Total: 5,464 gigs, 4,553 artists     [111/318] +50 | Total: 5,514 gigs, 4,588 artists     [112/318] +44 | Total: 5,558 gigs, 4,623 artists     [113/318] +47 | Total: 5,605 gigs, 4,662 artists     [114/318] +69 | Total: 5,674 gigs, 4,720 artists     [115/318] +53 | Total: 5,727 gigs, 4,752 artists     [116/318] +53 | Total: 5,780 gigs, 4,793 artists     [117/318] +51 | Total: 5,831 gigs, 4,829 artists     [118/318] +49 | Total: 5,880 gigs, 4,863 artists     [119/318] +45 | Total: 5,925 gigs, 4,899 artists     [120/318] +53 | Total: 5,978 gigs, 4,938 artists     [121/318] +44 | Total: 6,022 gigs, 4,965 artists     [122/318] +51 | Total: 6,073 gigs, 4,999 artists     [123/318] +44 | Total: 6,117 gigs, 5,027 artists     [124/318] +48 | Total: 6,165 gigs, 5,064 artists     [125/318] +52 | Total: 6,217 gigs, 5,102 artists     [126/318] +43 | Total: 6,260 gigs, 5,128 artists     [127/318] +51 | Total: 6,311 gigs, 5,168 artists     [128/318] +48 | Total: 6,359 gigs, 5,204 artists     [129/318] +44 | Total: 6,403 gigs, 5,234 artists     [130/318] +42 | Total: 6,445 gigs, 5,262 artists     [131/318] +48 | Total: 6,493 gigs, 5,302 artists     [132/318] +45 | Total: 6,538 gigs, 5,338 artists     [133/318] +42 | Total: 6,580 gigs, 5,366 artists     [134/318] +42 | Total: 6,622 gigs, 5,392 artists     [135/318] +44 | Total: 6,666 gigs, 5,421 artists     [136/318] +57 | Total: 6,723 gigs, 5,462 artists     [137/318] +42 | Total: 6,765 gigs, 5,487 artists     [138/318] +46 | Total: 6,811 gigs, 5,519 artists     [139/318] +49 | Total: 6,860 gigs, 5,549 artists     [140/318] +46 | Total: 6,906 gigs, 5,569 artists     [141/318] +47 | Total: 6,953 gigs, 5,597 artists     [142/318] +46 | Total: 6,999 gigs, 5,621 artists     [143/318] +41 | Total: 7,040 gigs, 5,638 artists     [144/318] +42 | Total: 7,082 gigs, 5,662 artists     [145/318] +42 | Total: 7,124 gigs, 5,680 artists     [146/318] +46 | Total: 7,170 gigs, 5,706 artists     [147/318] +41 | Total: 7,211 gigs, 5,731 artists     [148/318] +46 | Total: 7,257 gigs, 5,753 artists     [149/318] +45 | Total: 7,302 gigs, 5,772 artists     [150/318] +45 | Total: 7,347 gigs, 5,802 artists     [151/318] +47 | Total: 7,394 gigs, 5,833 artists     [152/318] +44 | Total: 7,438 gigs, 5,853 artists     [153/318] +44 | Total: 7,482 gigs, 5,868 artists     [154/318] +44 | Total: 7,526 gigs, 5,897 artists     [155/318] +74 | Total: 7,600 gigs, 5,946 artists     [156/318] +49 | Total: 7,649 gigs, 5,972 artists     [157/318] +58 | Total: 7,707 gigs, 6,008 artists     [158/318] +54 | Total: 7,761 gigs, 6,038 artists     [159/318] +41 | Total: 7,802 gigs, 6,054 artists     [160/318] +46 | Total: 7,848 gigs, 6,075 artists     [161/318] +50 | Total: 7,898 gigs, 6,103 artists     [162/318] +45 | Total: 7,943 gigs, 6,130 artists     [163/318] +47 | Total: 7,990 gigs, 6,151 artists     [164/318] +45 | Total: 8,035 gigs, 6,171 artists     [165/318] +47 | Total: 8,082 gigs, 6,195 artists     [166/318] +44 | Total: 8,126 gigs, 6,218 artists     [167/318] +44 | Total: 8,170 gigs, 6,242 artists     [168/318] +43 | Total: 8,213 gigs, 6,267 artists     [169/318] +44 | Total: 8,257 gigs, 6,289 artists     [170/318] +46 | Total: 8,303 gigs, 6,316 artists     [171/318] +44 | Total: 8,347 gigs, 6,334 artists     [172/318] +47 | Total: 8,394 gigs, 6,355 artists     [173/318] +48 | Total: 8,442 gigs, 6,373 artists     [174/318] +45 | Total: 8,487 gigs, 6,391 artists     [175/318] +48 | Total: 8,535 gigs, 6,418 artists     [176/318] +47 | Total: 8,582 gigs, 6,437 artists     [177/318] +43 | Total: 8,625 gigs, 6,455 artists     [178/318] +46 | Total: 8,671 gigs, 6,484 artists     [179/318] +46 | Total: 8,717 gigs, 6,497 artists     [180/318] +41 | Total: 8,758 gigs, 6,518 artists     [181/318] +46 | Total: 8,804 gigs, 6,533 artists     [182/318] +47 | Total: 8,851 gigs, 6,553 artists     [183/318] +47 | Total: 8,898 gigs, 6,575 artists     [184/318] +42 | Total: 8,940 gigs, 6,595 artists     [185/318] +43 | Total: 8,983 gigs, 6,615 artists     [186/318] +48 | Total: 9,031 gigs, 6,636 artists     [187/318] +42 | Total: 9,073 gigs, 6,655 artists     [188/318] +41 | Total: 9,114 gigs, 6,675 artists     [189/318] +43 | Total: 9,157 gigs, 6,693 artists     [190/318] +40 | Total: 9,197 gigs, 6,710 artists     [191/318] +48 | Total: 9,245 gigs, 6,734 artists     [192/318] +44 | Total: 9,289 gigs, 6,753 artists     [193/318] +42 | Total: 9,331 gigs, 6,770 artists     [194/318] +45 | Total: 9,376 gigs, 6,793 artists     [195/318] +45 | Total: 9,421 gigs, 6,812 artists     [196/318] +40 | Total: 9,461 gigs, 6,829 artists     [197/318] +53 | Total: 9,514 gigs, 6,855 artists     [198/318] +62 | Total: 9,576 gigs, 6,892 artists     [199/318] +44 | Total: 9,620 gigs, 6,912 artists     [200/318] +44 | Total: 9,664 gigs, 6,931 artists   
+Failed to fetch page 201
+
+Failed to fetch page 202
+
+Failed to fetch page 203
+
+Failed to fetch page 204
+
+Failed to fetch page 205
+
+Failed to fetch page 206
+
+Failed to fetch page 207
+
+Failed to fetch page 208
+
+Failed to fetch page 209
+
+Failed to fetch page 210
+
+Failed to fetch page 211
+
+Failed to fetch page 212
+
+Failed to fetch page 213
+
+Failed to fetch page 214
+
+Failed to fetch page 215
+
+Failed to fetch page 216
+
+Failed to fetch page 217
+
+Failed to fetch page 218
+
+Failed to fetch page 219
+
+Failed to fetch page 220
+
+Failed to fetch page 221
+
+Failed to fetch page 222
+
+Failed to fetch page 223
+
+Failed to fetch page 224
+
+Failed to fetch page 225
+
+Failed to fetch page 226
+
+Failed to fetch page 227
+
+Failed to fetch page 228
+
+Failed to fetch page 229
+
+Failed to fetch page 230
+
+Failed to fetch page 231
+
+Failed to fetch page 232
+
+Failed to fetch page 233
+
+Failed to fetch page 234
+
+Failed to fetch page 235
+
+Failed to fetch page 236
+
+Failed to fetch page 237
+
+Failed to fetch page 238
+
+Failed to fetch page 239
+
+Failed to fetch page 240
+
+Failed to fetch page 241
+
+Failed to fetch page 242
+
+Failed to fetch page 243
+
+Failed to fetch page 244
+
+Failed to fetch page 245
+
+Failed to fetch page 246
+
+Failed to fetch page 247
+
+Failed to fetch page 248
+
+Failed to fetch page 249
+
+Failed to fetch page 250
+
+Failed to fetch page 251
+
+Failed to fetch page 252
+
+Failed to fetch page 253
+
+Failed to fetch page 254
+
+Failed to fetch page 255
+
+Failed to fetch page 256
+
+Failed to fetch page 257
+
+Failed to fetch page 258
+
+Failed to fetch page 259
+
+Failed to fetch page 260
+
+Failed to fetch page 261
+
+Failed to fetch page 262
+
+Failed to fetch page 263
+
+Failed to fetch page 264
+
+Failed to fetch page 265
+
+Failed to fetch page 266
+
+Failed to fetch page 267
+
+Failed to fetch page 268
+
+Failed to fetch page 269
+
+Failed to fetch page 270
+
+Failed to fetch page 271
+
+Failed to fetch page 272
+
+Failed to fetch page 273
+
+Failed to fetch page 274
+
+Failed to fetch page 275
+
+Failed to fetch page 276
+
+Failed to fetch page 277
+
+Failed to fetch page 278
+
+Failed to fetch page 279
+
+Failed to fetch page 280
+
+Failed to fetch page 281
+
+Failed to fetch page 282
+
+Failed to fetch page 283
+
+Failed to fetch page 284
+
+Failed to fetch page 285
+
+Failed to fetch page 286
+
+Failed to fetch page 287
+
+Failed to fetch page 288
+
+Failed to fetch page 289
+
+Failed to fetch page 290
+
+Failed to fetch page 291
+
+Failed to fetch page 292
+
+Failed to fetch page 293
+
+Failed to fetch page 294
+
+Failed to fetch page 295
+
+Failed to fetch page 296
+
+Failed to fetch page 297
+
+Failed to fetch page 298
+
+Failed to fetch page 299
+
+Failed to fetch page 300
+
+Failed to fetch page 301
+
+Failed to fetch page 302
+
+Failed to fetch page 303
+
+Failed to fetch page 304
+
+Failed to fetch page 305
+
+Failed to fetch page 306
+
+Failed to fetch page 307
+
+Failed to fetch page 308
+
+Failed to fetch page 309
+
+Failed to fetch page 310
+
+Failed to fetch page 311
+
+Failed to fetch page 312
+
+Failed to fetch page 313
+
+Failed to fetch page 314
+
+Failed to fetch page 315
+
+Failed to fetch page 316
+
+Failed to fetch page 317
+
+Failed to fetch page 318
+
+
+=== Complete ===
+Gigs saved     : 9,664
+Artists seeded : 6,931
+Venues seeded  : 2,199

@@ -1,0 +1,9 @@
+=== GigRadar DICE Scraper ===
+
+  [1/13] London          — +98 gigs | Total: 98 gigs, 96 artists     [2/13] Birmingham      — +66 gigs | Total: 164 gigs, 160 artists     [3/13] Brighton        — +82 gigs | Total: 246 gigs, 236 artists     [4/13] Bristol         — +83 gigs | Total: 329 gigs, 307 artists     [5/13] Chelmsford      — +9 gigs | Total: 338 gigs, 316 artists     [6/13] High Wycombe    — +8 gigs | Total: 346 gigs, 324 artists     [7/13] Leeds           — +79 gigs | Total: 425 gigs, 379 artists     [8/13] Liverpool       — +56 gigs | Total: 481 gigs, 427 artists     [9/13] Manchester      — +34 gigs | Total: 515 gigs, 448 artists     [10/13] Norwich         — +48 gigs | Total: 563 gigs, 490 artists     [11/13] Nottingham      — +67 gigs | Total: 630 gigs, 538 artists     [12/13] Sheffield       — +10 gigs | Total: 640 gigs, 544 artists     [13/13] Southampton     — +47 gigs | Total: 687 gigs, 581 artists   
+
+=== Complete ===
+Gigs saved     : 687
+Artists seeded : 581
+Venues seeded  : 276
+Errors         : 0

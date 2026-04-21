@@ -1,0 +1,111 @@
+=== GigRadar Eventbrite Scraper ===
+
+Date range: 2026-03-01 → 2027-05-01
+Months to process: 14
+
+
+  Eventbrite error 404: {"status_code":404,"error_description":"The path you requested does not exist.","error":"NOT_FOUND"}
+
+  Eventbrite error 404: {"status_code":404,"error_description":"The path you requested does not exist.","error":"NOT_FOUND"}
+
+  Eventbrite error 404: {"status_code":404,"error_description":"The path you requested does not exist.","error":"NOT_FOUND"}
+  Month 1/14 (7.1%) [2026-03] — +0 gigs | Total: 0 gigs, 0 artists, 0 venues   
+  Eventbrite error 404: {"status_code":404,"error_description":"The path you requested does not exist.","error":"NOT_FOUND"}
+
+  Eventbrite error 404: {"status_code":404,"error_description":"The path you requested does not exist.","error":"NOT_FOUND"}
+
+  Eventbrite error 404: {"status_code":404,"error_description":"The path you requested does not exist.","error":"NOT_FOUND"}
+  Month 2/14 (14.3%) [2026-04] — +0 gigs | Total: 0 gigs, 0 artists, 0 venues   
+  Eventbrite error 404: {"status_code":404,"error_description":"The path you requested does not exist.","error":"NOT_FOUND"}
+
+  Eventbrite error 404: {"status_code":404,"error_description":"The path you requested does not exist.","error":"NOT_FOUND"}
+
+  Eventbrite error 404: {"status_code":404,"error_description":"The path you requested does not exist.","error":"NOT_FOUND"}
+  Month 3/14 (21.4%) [2026-05] — +0 gigs | Total: 0 gigs, 0 artists, 0 venues   
+  Eventbrite error 404: {"status_code":404,"error_description":"The path you requested does not exist.","error":"NOT_FOUND"}
+
+  Eventbrite error 404: {"status_code":404,"error_description":"The path you requested does not exist.","error":"NOT_FOUND"}
+
+  Eventbrite error 404: {"status_code":404,"error_description":"The path you requested does not exist.","error":"NOT_FOUND"}
+  Month 4/14 (28.6%) [2026-06] — +0 gigs | Total: 0 gigs, 0 artists, 0 venues   
+  Eventbrite error 404: {"status_code":404,"error_description":"The path you requested does not exist.","error":"NOT_FOUND"}
+
+  Eventbrite error 404: {"status_code":404,"error_description":"The path you requested does not exist.","error":"NOT_FOUND"}
+
+  Eventbrite error 404: {"status_code":404,"error_description":"The path you requested does not exist.","error":"NOT_FOUND"}
+  Month 5/14 (35.7%) [2026-07] — +0 gigs | Total: 0 gigs, 0 artists, 0 venues   
+  Eventbrite error 404: {"status_code":404,"error_description":"The path you requested does not exist.","error":"NOT_FOUND"}
+
+  Eventbrite error 404: {"status_code":404,"error_description":"The path you requested does not exist.","error":"NOT_FOUND"}
+
+  Eventbrite error 404: {"status_code":404,"error_description":"The path you requested does not exist.","error":"NOT_FOUND"}
+  Month 6/14 (42.9%) [2026-08] — +0 gigs | Total: 0 gigs, 0 artists, 0 venues   
+  Eventbrite error 404: {"status_code":404,"error_description":"The path you requested does not exist.","error":"NOT_FOUND"}
+
+  Eventbrite error 404: {"status_code":404,"error_description":"The path you requested does not exist.","error":"NOT_FOUND"}
+
+  Eventbrite error 404: {"status_code":404,"error_description":"The path you requested does not exist.","error":"NOT_FOUND"}
+  Month 7/14 (50.0%) [2026-09] — +0 gigs | Total: 0 gigs, 0 artists, 0 venues   
+  Eventbrite error 404: {"status_code":404,"error_description":"The path you requested does not exist.","error":"NOT_FOUND"}
+
+  Eventbrite error 404: {"status_code":404,"error_description":"The path you requested does not exist.","error":"NOT_FOUND"}
+
+  Eventbrite error 404: {"status_code":404,"error_description":"The path you requested does not exist.","error":"NOT_FOUND"}
+  Month 8/14 (57.1%) [2026-10] — +0 gigs | Total: 0 gigs, 0 artists, 0 venues   
+  Eventbrite error 404: {"status_code":404,"error_description":"The path you requested does not exist.","error":"NOT_FOUND"}
+
+  Eventbrite error 404: {"status_code":404,"error_description":"The path you requested does not exist.","error":"NOT_FOUND"}
+
+  Eventbrite error 404: {"status_code":404,"error_description":"The path you requested does not exist.","error":"NOT_FOUND"}
+  Month 9/14 (64.3%) [2026-11] — +0 gigs | Total: 0 gigs, 0 artists, 0 venues   
+  Eventbrite error 404: {"status_code":404,"error_description":"The path you requested does not exist.","error":"NOT_FOUND"}
+
+  Eventbrite error 404: {"status_code":404,"error_description":"The path you requested does not exist.","error":"NOT_FOUND"}
+
+  Eventbrite error 404: {"status_code":404,"error_description":"The path you requested does not exist.","error":"NOT_FOUND"}
+  Month 10/14 (71.4%) [2026-12] — +0 gigs | Total: 0 gigs, 0 artists, 0 venues   
+  Eventbrite error 404: {"status_code":404,"error_description":"The path you requested does not exist.","error":"NOT_FOUND"}
+
+  Eventbrite error 404: {"status_code":404,"error_description":"The path you requested does not exist.","error":"NOT_FOUND"}
+
+  Eventbrite error 404: {"status_code":404,"error_description":"The path you requested does not exist.","error":"NOT_FOUND"}
+  Month 11/14 (78.6%) [2027-01] — +0 gigs | Total: 0 gigs, 0 artists, 0 venues   
+  Eventbrite error 404: {"status_code":404,"error_description":"The path you requested does not exist.","error":"NOT_FOUND"}
+
+  Eventbrite error 404: {"status_code":404,"error_description":"The path you requested does not exist.","error":"NOT_FOUND"}
+
+  Eventbrite error 404: {"status_code":404,"error_description":"The path you requested does not exist.","error":"NOT_FOUND"}
+  Month 12/14 (85.7%) [2027-02] — +0 gigs | Total: 0 gigs, 0 artists, 0 venues   === GigRadar Eventbrite Scraper ===
+
+  [1/16] united-kingdom                 p1 — +0 gigs | Total: 0 gigs, 0 artists     [
+  Eventbrite error 404: {"status_code":404,"error_description":"The path you req  [3/16] manchester--england            p1 �
+  Eventbrite error 404: {"status_code":404,"error_description":"The path you requested does not exist.","error":"NOT_FOUND"}
+  Month 13/14 (92.9%) [2027-03] — +0 gigs | Total: 0 gigs, 0 artists, 0 venues   
+  Eventbrite error 404: {"status_code":404,"error_description":"The path you requested does not exist.","error":"NOT_FOUND"}
+
+  Eventbrite error 404: {"status_code":404,"error_description":"The path you requested does not exist.","error":"NOT_FOUND"}
+
+  Eventbrite error 404: {"status_code":404,"error_description":"The path you requested does not exist.","error":"NOT_FOUND"}
+  Month 14/14 (100.0%) [2027-04] — +0 gigs | Total: 0 gigs, 0 artists, 0 venues   
+
+=== Complete ===
+Gigs saved    : 0
+Artists seeded: 0
+Venues seeded : 0
+Errors        : 14
+1 — +0 gigs | Total: 0 gigs, 0 artists     [13/16] nottingham--england            p1 — +0 gigs | Total: 0 gigs, 0 artists     [14/16] brighton--england              p1 — +0 gigs | Total: 0 gigs, 0 artists     [15/16] oxford--england                p1 — +0 gigs | Total: 0 gigs, 0 artists     [16/16] cambridge--england             p1 — +0 gigs | Total: 0 gigs, 0 artists   
+
+=== Complete ===
+Gigs saved     : 0
+Artists seeded : 0
+Venues seeded  : 0
+Errors         : 0
+=== GigRadar Eventbrite Scraper ===
+
+  [1/28] united-kingdom                 p1 — +8 gigs | Total: 8 gigs, 8 artists     [2/28] london--england                p1 — +5 gigs | Total: 13 gigs, 13 artists     [3/28] manchester--england            p1 — +7 gigs | Total: 20 gigs, 19 artists     [4/28] birmingham--england            p1 — +8 gigs | Total: 28 gigs, 27 artists     [5/28] bristol--england               p1 — +8 gigs | Total: 36 gigs, 35 artists     [6/28] leeds--england                 p1 — +8 gigs | Total: 44 gigs, 43 artists     [7/28] sheffield--england             p1 — +8 gigs | Total: 52 gigs, 51 artists     [8/28] liverpool--england             p1 — +8 gigs | Total: 60 gigs, 59 artists     [9/28] newcastle-upon-tyne--england   p1 — +7 gigs | Total: 67 gigs, 65 artists     [10/28] edinburgh--scotland            p1 — +8 gigs | Total: 75 gigs, 72 artists     [11/28] glasgow--scotland              p1 — +8 gigs | Total: 83 gigs, 80 artists     [12/28] cardiff--wales                 p1 — +8 gigs | Total: 91 gigs, 87 artists     [13/28] nottingham--england            p1 — +7 gigs | Total: 98 gigs, 94 artists     [14/28] brighton--england              p1 — +8 gigs | Total: 106 gigs, 101 artists     [15/28] oxford--england                p1 — +8 gigs | Total: 114 gigs, 109 artists     [16/28] cambridge--england             p1 — +8 gigs | Total: 122 gigs, 117 artists     [17/28] bath--england                  p1 — +0 gigs | Total: 122 gigs, 117 artists     [18/28] bournemouth--england           p1 — +7 gigs | Total: 129 gigs, 124 artists     [19/28] reading--england               p1 — +7 gigs | Total: 136 gigs, 130 artists     [20/28] coventry--england              p1 — +8 gigs | Total: 144 gigs, 136 artists     [21/28] hull--england                  p1 — +8 gigs | Total: 152 gigs, 144 artists     [22/28] exeter--england                p1 — +8 gigs | Total: 160 gigs, 152 artists     [23/28] york--england                  p1 — +8 gigs | Total: 168 gigs, 160 artists     [24/28] norwich--england               p1 — +8 gigs | Total: 176 gigs, 168 artists     [25/28] derby--england                 p1 — +3 gigs | Total: 179 gigs, 171 artists     [26/28] aberdeen--scotland             p1 — +6 gigs | Total: 185 gigs, 177 artists     [27/28] dundee--scotland               p1 — +8 gigs | Total: 193 gigs, 185 artists     [28/28] belfast--northern-ireland      p1 — +7 gigs | Total: 200 gigs, 191 artists   
+
+=== Complete ===
+Gigs saved     : 200
+Artists seeded : 191
+Venues seeded  : 174
+Errors         : 0

@@ -1,0 +1,8 @@
+=== GigRadar Resident Advisor Scraper ===
+
+  [1/17] London          — +4721 gigs | Total: 4721 gigs, 3471 artists     [2/17] Manchester      — +924 gigs | Total: 5645 gigs, 3958 artists     [3/17] Glasgow         — +412 gigs | Total: 6057 gigs, 4202 artists     [4/17] Edinburgh       — +199 gigs | Total: 6256 gigs, 4306 artists     [5/17] Newcastle       — +121 gigs | Total: 6377 gigs, 4362 artists     [6/17] Bristol         — +436 gigs | Total: 6813 gigs, 4547 artists     [7/17] Leeds           — +239 gigs | Total: 7052 gigs, 4636 artists     [8/17] Liverpool       — +134 gigs | Total: 7186 gigs, 4702 artists     [9/17] Sheffield       — +151 gigs | Total: 7337 gigs, 4767 artists     [10/17] Brighton        — +166 gigs | Total: 7503 gigs, 4847 artists     [11/17] Nottingham      — +61 gigs | Total: 7564 gigs, 4871 artists     [12/17] Belfast         — +141 gigs | Total: 7705 gigs, 4939 artists     [13/17] Birmingham      — +76 gigs | Total: 7781 gigs, 4974 artists     [14/17] Cardiff         — +20 gigs | Total: 7801 gigs, 4982 artists     [15/17] Aberdeen        — +20 gigs | Total: 7821 gigs, 4988 artists     [16/17] Dundee          — +31 gigs | Total: 7852 gigs, 5002 artists     [17/17] Southampton     — +19 gigs | Total: 7871 gigs, 5011 artists   
+
+=== Complete ===
+Gigs saved     : 7,871
+Artists seeded : 5,011
+Venues seeded  : 621

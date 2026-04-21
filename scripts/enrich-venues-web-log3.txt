@@ -1,0 +1,1004 @@
+Loading venues…
+Total: 6344  Missing description: 1000  Processing: 1000
+[1/1000] Scottish Gas Murrayfield Stadium (Edinburgh) → ✓ bio, imageUrl, wikiUrl, address, lat, lng
+[2/1000] The Empire (Great Yarmouth) → ✓ bio, wikiUrl, address, lat, lng
+[3/1000] The Kings Arms, Central London (London) → ✓ bio, imageUrl, wikiUrl, address, lat, lng
+[4/1000] Hillsborough Castle and Gardens (Hillsborough) → ✓ bio, imageUrl, wikiUrl, address, lat, lng
+[5/1000] Audley End (Essex) → ✓ bio, imageUrl, wikiUrl, address, lat, lng
+[6/1000] Lane7 The Bullring (Birmingham) (Birmingham) → no data found
+[7/1000] Taino's Bar And Lounge (WALSALL) → no data found
+[8/1000] The London Eye  (London) → ✓ bio, wikiUrl, address, lat, lng
+[9/1000] Shrewsbury Folk Festival (Shrewsbury) → ✓ bio, imageUrl, wikiUrl
+[10/1000] Secret Garden Leisure (Wisbech) → no data found
+[11/1000] Thekia (Bristol) → no data found
+[12/1000] Handsome Snuff Bar (Kendal) → ✓ address, lat, lng
+[13/1000] The Griffin (Loughborough) → ✓ bio, imageUrl, wikiUrl, address, lat, lng
+[14/1000] The Star Sidcup (Chislehurst) → no data found
+[15/1000] Bullitt Belfast (Belfast) → ✓ bio, wikiUrl
+[16/1000] St Andrew's Church (High Wycombe) → ✓ bio, imageUrl, wikiUrl, address, lat, lng
+[17/1000] Yeovil Labour Club (Yeovil) → no data found
+[18/1000] TBA - THE STRAY, HARROGATE (Leeds) → no data found
+[19/1000] NE30 1JE (North Shields) → no data found
+[20/1000] Princess Theatre - Torquay (Torquay) → ✓ bio, imageUrl, wikiUrl, address, lat, lng
+[21/1000] Gorseinon Events Centre (Swansea) → no data found
+[22/1000] MK40 1RZ (Bedford) → ✓ address, lat, lng
+[23/1000] Metro Reloaded (Saltcoats) → ✓ bio, imageUrl, wikiUrl
+[24/1000] The Bristol Music Club (Clifton) → ✓ bio, imageUrl, wikiUrl
+[25/1000] Fairfield Social Club (Manchester) → ✓ bio, imageUrl, wikiUrl, address, lat, lng
+[26/1000] Oswestry Showground (Oswestry) → ✓ address, lat, lng
+[27/1000] Temple Island Meadows (Henley-On-Thames) → ✓ bio, imageUrl, wikiUrl
+[28/1000] The Old Dispensary (London) → ✓ bio, wikiUrl, address, lat, lng
+[29/1000] The Benidorm Bar (Liverpool) → ✓ bio, imageUrl, wikiUrl
+[30/1000] St John the Evangelist (London) → ✓ bio, imageUrl, wikiUrl, mbid, address, lat, lng
+[31/1000] Shorts Sports & Recreational Club (Belfast) → no data found
+[32/1000] The Quad Theatre, Marjon Arts Centre (Plymouth) → no data found
+[33/1000] Cobalt Studios (Newcastle) → ✓ bio, imageUrl, wikiUrl, address, lat, lng
+[34/1000] Shanghai Nightclub (Edinburgh) → ✓ bio, imageUrl, wikiUrl
+[35/1000] The Powerhouse (Newcastle Upon Tyne) → ✓ bio, wikiUrl
+[36/1000] St Mary's Church (London) → ✓ bio, imageUrl, wikiUrl, address, lat, lng
+[37/1000] Beacon Hall (Bristol) → ✓ bio, imageUrl, wikiUrl, address, lat, lng
+[38/1000] Temple Golf Club (The Temple) → ✓ bio, imageUrl, wikiUrl
+[39/1000] Great Hall (Exeter) → ✓ bio, imageUrl, wikiUrl, address, lat, lng
+[40/1000] The Bank Vault (Aberystwyth) → ✓ bio, imageUrl, wikiUrl, address, lat, lng
+[41/1000] Istituto Italiano di Cultura (Amsterdam) → ✓ bio, imageUrl, wikiUrl
+[42/1000] Hand of Glory (London) → ✓ bio, imageUrl, wikiUrl, address, lat, lng
+[43/1000] Hampton Court (London) → ✓ bio, imageUrl, wikiUrl, address, lat, lng
+[44/1000] The Wine Cellar (Brighton) → ✓ bio, imageUrl, wikiUrl, address, lat, lng
+[45/1000] Brewhouse Arts Centre (Burton Upon Trent) → ✓ address, lat, lng
+[46/1000] Charisworth Farm Cottage (Blandford Forum) → no data found
+[47/1000] Woolston Manor Golf Course Chigwell Essex IG7 6BX (London) → no data found
+[48/1000] Riverside (Glasgow) → ✓ bio, imageUrl, wikiUrl, mbid, address, lat, lng
+[49/1000] KOLA Basement (Portsmouth) → no data found
+[50/1000] Bramcote Golf Course (Nuneaton) → ✓ bio, wikiUrl, address, lat, lng
+[51/1000] Boucher Road Playing Fields (Belfast) → no data found
+[52/1000] Bridlington CYP  (Bridlington) → no data found
+[53/1000] Newington Temple (Liverpool) → ✓ bio, imageUrl, wikiUrl, address, lat, lng
+[54/1000] Roccos Music Lounge (Glasgow) → ✓ bio, imageUrl, wikiUrl
+[55/1000] Singer Tavern (London) → ✓ address, lat, lng
+[56/1000] The Tunnel (Liverpool) → ✓ bio, imageUrl, wikiUrl, address, lat, lng
+[57/1000] Viper Rooms (Sheffield) → ✓ address, lat, lng
+[58/1000] Community Church Putney (London) → ✓ bio, imageUrl, wikiUrl, address, lat, lng
+[59/1000] Knutsford Market Hall (Knutsford) → ✓ bio, imageUrl, wikiUrl
+[60/1000] Six Trees Bar And Kitchen Manchester (Manchester) → ✓ bio, wikiUrl
+[61/1000] The Flying Duck (Glasgow) → ✓ bio, imageUrl, wikiUrl
+[62/1000] Leamington Spa Assembly (Leamington Spa) → ✓ bio, imageUrl, wikiUrl
+[63/1000] Grand Opera House, York (York) → ✓ bio, imageUrl, wikiUrl, address, lat, lng
+[64/1000] Fuel Rock Club (Cardiff) → ✓ bio, imageUrl, wikiUrl, address, lat, lng
+[65/1000] Ex Servicemen's Club, Perth (Perth) → no data found
+[66/1000] Paloma (London) → ✓ bio, imageUrl, wikiUrl, address, lat, lng
+[67/1000] The Empire, Coventry (Coventry) → ✓ bio, imageUrl, wikiUrl, address, lat, lng
+[68/1000] St Vincent's Chapel, Edinburgh (Edinburgh) → ✓ bio, imageUrl, wikiUrl, address, lat, lng
+[69/1000] SOUP (Manchester) → ✓ bio, imageUrl, wikiUrl, address, lat, lng
+[70/1000] Veranstaltungssaal Windjammer (Cuxhaven) → no data found
+[71/1000] Barn United Social Club (Carrickfergus) → ✓ bio, imageUrl, wikiUrl, address, lat, lng
+[72/1000] Simmons Holborn (London) → ✓ bio, wikiUrl, address, lat, lng
+[73/1000] Warminster Athenaeum (Warminster) → ✓ bio, imageUrl, wikiUrl
+[74/1000] STEREO Covent Garden (London) → ✓ address, lat, lng
+[75/1000] The Crypt (Olympia) → ✓ bio, imageUrl, wikiUrl
+[76/1000] The Old Parcels Office (Scarborough) → ✓ bio, imageUrl, wikiUrl
+[77/1000] Peckham Rye Park (London) → ✓ bio, imageUrl, wikiUrl, address, lat, lng
+[78/1000] St Bride’s Scottish Episcopal Church (Glasgow) → ✓ bio, imageUrl, wikiUrl
+[79/1000] Trilogy High Wycombe (High Wycombe) → ✓ bio, imageUrl, wikiUrl, address, lat, lng
+[80/1000] The O2 Academy (Oxford) → ✓ bio, imageUrl, wikiUrl
+[81/1000] Elmfield Park, Doncaster (Doncaster) → ✓ address, lat, lng
+[82/1000] All Saints Church (Warwick) → ✓ bio, imageUrl, wikiUrl, address, lat, lng
+[83/1000] Diamond Dolls (Glasgow) → no data found
+[84/1000] (Imber Court) (East Molesey) → ✓ bio, imageUrl, wikiUrl
+[85/1000] The Head of Steam (Leeds) → ✓ bio, imageUrl, wikiUrl, address, lat, lng
+[86/1000] TBA - The Mount Without (Bristol) → ✓ bio, imageUrl, wikiUrl
+[87/1000] Milton Keynes Theatre (Milton Keynes) → ✓ bio, imageUrl, wikiUrl, address, lat, lng
+[88/1000] Big Belly Comedy Club (London) → no data found
+[89/1000] Worksop College (Worksop) → ✓ bio, imageUrl, wikiUrl, mbid, address, lat, lng
+[90/1000] The Alexandra (Birmingham) → ✓ bio, imageUrl, wikiUrl, mbid, address
+[91/1000] Reinstate (London) → ✓ bio, wikiUrl
+[92/1000] Pental Hotel, Reading (Reading) → no data found
+[93/1000] The Windmill (York) → ✓ bio, imageUrl, wikiUrl, address, lat, lng
+[94/1000] Ivy Room (Albany) → ✓ bio, imageUrl, wikiUrl
+[95/1000] Leazes Park (Newcastle Upon Tyne) → ✓ bio, wikiUrl, address, lat, lng
+[96/1000] Network (Sheffield) → ✓ bio, wikiUrl, address, lat, lng
+[97/1000] Durham Cathedral (Durham) → ✓ bio, imageUrl, wikiUrl, mbid, address, lat, lng
+[98/1000] Bristol Aquarium (Bristol) → ✓ bio, imageUrl, wikiUrl, address, lat, lng
+[99/1000] Aviva Studios (Factory International) (Manchester) → ✓ bio, imageUrl, wikiUrl
+[100/1000] Revolution Southampton (Southampton) → ✓ bio, imageUrl, wikiUrl, address, lat, lng
+[101/1000] Royal Birmingham Conservatoire (Birmingham) → ✓ bio, imageUrl, wikiUrl, address, lat, lng
+[102/1000] Brownedge St Mary's Church, Bamber Bridge (Preston) → ✓ bio, imageUrl, wikiUrl
+[103/1000] The Lucan Pavilion Laleham, Staines, Tw18 1rz (Staines-upon-Thames) → no data found
+[104/1000] Atique Room At The Velvet Lounge (Worcester) → no data found
+[105/1000] TBA - The Tate Institute, E16 (London) → no data found
+[106/1000] Chinnerys (Southend-On-Sea) → ✓ bio, wikiUrl, mbid, address
+[107/1000] Royal 66 (Arkansas) → ✓ bio, imageUrl, wikiUrl
+[108/1000] The Nest (Nottingham) → ✓ bio, wikiUrl, address, lat, lng
+[109/1000] The Walston Castle Beefeater (Cardiff) → no data found
+[110/1000] Secret Location Loughborough (Loughborough) → no data found
+[111/1000] G2 (Glasgow) → ✓ bio, wikiUrl, address, lat, lng
+[112/1000] The Eagle Manchester (Manchester) → ✓ bio, imageUrl, wikiUrl, address, lat, lng
+[113/1000] Milton Court Concert Hall (London) → ✓ mbid, address
+[114/1000] The Habit (York) → ✓ bio, imageUrl, wikiUrl, address, lat, lng
+[115/1000] The Bell Inn (Newport) → ✓ bio, imageUrl, wikiUrl, address, lat, lng
+[116/1000] Jumunjy Bar (London) → no data found
+[117/1000] Oving Village Hall (Aylesbury) → ✓ bio, imageUrl, wikiUrl
+[118/1000] Red Dog Saloon Hoxton Square (London) → ✓ address, lat, lng
+[119/1000] St. Georges Square London SW1V (Pimlico) → no data found
+[120/1000] Music Hall Dundee (Dundee) → ✓ bio, imageUrl, wikiUrl, address, lat, lng
+[121/1000] Groovetank Live (London) → no data found
+[122/1000] A L P H A B E T (Brighton and Hove) → ✓ address, lat, lng
+[123/1000] Foxtails Chorley (Chorley) → no data found
+[124/1000] Gbar (Liverpool) → ✓ bio, imageUrl, wikiUrl, address, lat, lng
+[125/1000] Lytham Green (Lytham St Annes) → ✓ bio, imageUrl, wikiUrl, mbid, address, lat, lng
+[126/1000] The Lodge Bridlington (Bridlington) → ✓ bio, imageUrl, wikiUrl, address, lat, lng
+[127/1000] Lingua Diversa Group (London) → no data found
+[128/1000] Kasbah Nightclub (Coventry) → ✓ bio, imageUrl, wikiUrl
+[129/1000] 116-120 Great Victoria St (Belfast) → ✓ address, lat, lng
+[130/1000] The Pit The Sun Inn (Ulverston) → ✓ bio, imageUrl, wikiUrl
+[131/1000] Alfie's Soho (London) → ✓ bio, imageUrl, wikiUrl
+[132/1000] NT's Loft (Stoke Newington) → no data found
+[133/1000] Beck Theatre (Hayes) → ✓ bio, imageUrl, wikiUrl, address, lat, lng
+[134/1000] BONAR HALL (Dundee) → ✓ bio, imageUrl, wikiUrl, address, lat, lng
+[135/1000] London Stadium (London) → ✓ bio, imageUrl, wikiUrl, address, lat, lng
+[136/1000] The Playlist Live (Reading) → ✓ bio, imageUrl, wikiUrl
+[137/1000] Green Room At 24 Kitchen Street (Liverpool) → no data found
+[138/1000] Venue Cymru Theatre (Llandudno) → ✓ bio, imageUrl, wikiUrl, address, lat, lng
+[139/1000] Gallery Nightclub Leigh (Leigh) → ✓ bio, imageUrl, wikiUrl
+[140/1000] St Lawrence Parish Church, York (York) → ✓ bio, imageUrl, wikiUrl
+[141/1000] Pump House Theatre (Watford) → ✓ bio, imageUrl, wikiUrl, address, lat, lng
+[142/1000] Purrfect Space (Brighton) → no data found
+[143/1000] The Palace Stage Door Wellingborough (Wellingborough) → no data found
+[144/1000] The Stags Head (London) → ✓ bio, imageUrl, wikiUrl, address, lat, lng
+[145/1000] Palace Theatre, Southend (Southend-On-Sea) → ✓ bio, imageUrl, wikiUrl, address, lat, lng
+[146/1000] St Mary's Church, Church Walk, Hinckley, LE10 1DW (Hinckley) → ✓ address, lat, lng
+[147/1000] Fermanagh House Broadmeadow Place Enniskillen BT74 (Enniskillen) → ✓ bio, imageUrl, wikiUrl
+[148/1000] Winchester Royal Hotel (Winchester) → ✓ bio, imageUrl, wikiUrl, address, lat, lng
+[149/1000] The Alchemist George Street (Edinburgh) → ✓ bio, imageUrl, wikiUrl, address, lat, lng
+[150/1000] Derry Secret Venue (TBA) (Derry) → ✓ bio, imageUrl, wikiUrl
+[151/1000] The Liquid Room (Edinburgh) → ✓ bio, imageUrl, wikiUrl, address, lat, lng
+[152/1000] Chelmsford City Racecourse (London) → ✓ bio, imageUrl, wikiUrl
+[153/1000] The Welly (Kingston upon Hull) → ✓ bio, imageUrl, wikiUrl, address, lat, lng
+[154/1000] The County Ground Swindon In Swindon (Swindon) → ✓ bio, imageUrl, wikiUrl
+[155/1000] E Rooms Bar And Music Venue (Skelmersdale) → ✓ bio, imageUrl, wikiUrl
+[156/1000] Stonham Barns Car Boot Sale (Stonham Aspal) → no data found
+[157/1000] Kavanagh’s (Portlaoise) → ✓ bio, imageUrl, wikiUrl
+[158/1000] Liquid Rooms Studio (Edinburgh) → no data found
+[159/1000] Make-Out Room (San Francisco) → ✓ bio, imageUrl, wikiUrl
+[160/1000] Cowgirls And Country (Newcastle) → ✓ bio, imageUrl, wikiUrl
+[161/1000] IKLECTIK (London) → ✓ bio, imageUrl, wikiUrl, mbid, address, lat, lng
+[162/1000] RNCM Theatre (Manchester) → no data found
+[163/1000] Loughborough Town Hall, Loughborough (Loughborough) → ✓ bio, imageUrl, wikiUrl, address, lat, lng
+[164/1000] SSE Arena (Belfast) → ✓ bio, wikiUrl, mbid, address, lat, lng
+[165/1000] BLUNDELL STREET SUPPER CLUB (Liverpool) → no data found
+[166/1000] Seaford Baptist Church (Seaford) → ✓ bio, imageUrl, wikiUrl, address, lat, lng
+[167/1000] Bramhall Parish Church Of St Michael And All Angels (Bramhall, Stockport) → ✓ bio, imageUrl, wikiUrl
+[168/1000] DareToClub (Bristol) → no data found
+[169/1000] Trevince (Redruth) → no data found
+[170/1000] Hickory's Smokehouse Wrexham (Wrexham) → ✓ address, lat, lng
+[171/1000] The Jazz Cafe (London) → ✓ bio, wikiUrl, address, lat, lng
+[172/1000] The Timber Loft (London) → ✓ bio, imageUrl, wikiUrl
+[173/1000] BEAT BOX   BOXPARK (Liverpool) → no data found
+[174/1000] Cheshire Showground (Knutsford, Cheshire) → ✓ bio, imageUrl, wikiUrl
+[175/1000] The Regency Hotel Corus Hotel (Solihull) → no data found
+[176/1000] Kelvedon Hall (London) → ✓ bio, imageUrl, wikiUrl
+[177/1000] Easterbrook Hall (Dumfries) → ✓ address, lat, lng
+[178/1000] Comrie Parish Church (Comrie) → ✓ bio, imageUrl, wikiUrl, address, lat, lng
+[179/1000] Whitecliffs Saltdean Beach (Brighton) → no data found
+[180/1000] 4 Mill Bank (Liverpool) → ✓ bio, imageUrl, wikiUrl, address, lat, lng
+[181/1000] Rock City (Nottingham) → ✓ bio, imageUrl, wikiUrl, address, lat, lng
+[182/1000] Riff Raffs (London) → ✓ bio, imageUrl, wikiUrl
+[183/1000] Villa 2 Lounge Bar (St. Albans) → ✓ bio, imageUrl, wikiUrl
+[184/1000] Churchill Theatre (Bromley) → ✓ bio, imageUrl, wikiUrl, address, lat, lng
+[185/1000] Starr Sports (Canvey Island) → no data found
+[186/1000] Westhoughton Cricket Club (Bolton) → ✓ address, lat, lng
+[187/1000] Heaven Swansea (Swansea) → ✓ bio, imageUrl, wikiUrl, address, lat, lng
+[188/1000] The Legion Club (Sutton Coldfield) → no data found
+[189/1000] New Theatre Oxford (Oxford) → ✓ bio, wikiUrl, mbid, address, lat, lng
+[190/1000] All Saints Church (Preston) → ✓ bio, imageUrl, wikiUrl, address, lat, lng
+[191/1000] Regent Theatre (Stoke-On-Trent) → ✓ bio, imageUrl, wikiUrl, address, lat, lng
+[192/1000] Think Tank (NEWCASTLE Upon TYNE) → ✓ bio, wikiUrl
+[193/1000] Jungle Nightclub Southport (Southport) → no data found
+[194/1000] Slug And Lettuce   Aldgate (London ) → ✓ address, lat, lng
+[195/1000] The Back Room Cottingham (Cottingham) → ✓ bio, wikiUrl
+[196/1000] Billy Bootleggers (Newcastle upon Tyne) → ✓ address, lat, lng
+[197/1000] Bute Yard (Rothesay) → ✓ address, lat, lng
+[198/1000] Corran Halls (Oban) → ✓ address, lat, lng
+[199/1000] The Rothley Court (Loughborough) → ✓ bio, imageUrl, wikiUrl
+[200/1000] Birchmeadow Centre (Shrewsbury) → no data found
+[201/1000] The Royal British Legion Marsden (Huddersfield) → no data found
+[202/1000] The Black Prince (Northampton) → ✓ bio, imageUrl, wikiUrl, address, lat, lng
+[203/1000] Melksham Assembly Hall (Melksham) → ✓ bio, imageUrl, wikiUrl, address, lat, lng
+[204/1000] Moyletts (London) → ✓ address, lat, lng
+[205/1000] The Manor House Tunbridge Wells (Tunbridge Wells) → ✓ bio, imageUrl, wikiUrl, address, lat, lng
+[206/1000] Lullingstone Castle & The World Garden (Eynsford) → ✓ bio, imageUrl, wikiUrl
+[207/1000] Three Cups Inn Malmesbury (Malmesbury) → no data found
+[208/1000] The Astor Theatre, Deal (Deal) → ✓ bio, imageUrl, wikiUrl, address, lat, lng
+[209/1000] Piano Bar Soho (London) → ✓ bio, imageUrl, wikiUrl, address, lat, lng
+[210/1000] The Henrician (Evesham) → ✓ bio, wikiUrl, address, lat, lng
+[211/1000] Bridewell Centre (London) → no data found
+[212/1000] The Warfield (San Francisco) → ✓ bio, imageUrl, wikiUrl
+[213/1000] York (York) → ✓ bio, imageUrl, wikiUrl, mbid, address, lat, lng
+[214/1000] Chapel Street & The Crescent, Salford (Manchester) → ✓ bio, imageUrl, wikiUrl
+[215/1000] Square Bar (Nottingham) → ✓ bio, imageUrl, wikiUrl, address, lat, lng
+[216/1000] Black Swan (Bristol) → ✓ bio, wikiUrl, address, lat, lng
+[217/1000] Playlist Live, Reading (Reading) → ✓ address, lat, lng
+[218/1000] Leicester Cathedral (Leicester) → ✓ bio, imageUrl, wikiUrl, mbid, address, lat, lng
+[219/1000] Moor Beer Co (Bristol) → ✓ mbid, address
+[220/1000] The Red Lion (Newport) → ✓ bio, wikiUrl, address, lat, lng
+[221/1000] Venue 24 (Bognor Regis) → no data found
+[222/1000] Metropolis (London) → ✓ bio, imageUrl, wikiUrl, mbid, address, lat, lng
+[223/1000] Canons Marsh Amphitheatre, Bristol Harbourside (Bristol) → ✓ bio, imageUrl, wikiUrl
+[224/1000] Slanj A Va (Stirling) → no data found
+[225/1000] Newmarket Racecourses (Newmarket) → ✓ bio, imageUrl, wikiUrl
+[226/1000] St John the Evangelist RC Church (London) → ✓ bio, imageUrl, wikiUrl
+[227/1000] Hampden Park National Stadium (Glasgow) → ✓ bio, imageUrl, wikiUrl
+[228/1000] Liquid Club and Lava Lounge (Belfast) → no data found
+[229/1000] Lower Deck (London) → ✓ bio, imageUrl, wikiUrl, address, lat, lng
+[230/1000] The Rat And Pidgeon (Manchester) → no data found
+[231/1000] Stour Centre   Station Approach   TN23 1ET (Ashford) → ✓ address, lat, lng
+[232/1000] Derby Secret Venue (TBA) (Derby) → no data found
+[233/1000] The Dog And Whistle (Hertford) → ✓ bio, imageUrl, wikiUrl, address, lat, lng
+[234/1000] Davies Symphony Hall (San Francisco) → ✓ bio, imageUrl, wikiUrl
+[235/1000] 9inety6ix (Manchester) → no data found
+[236/1000] Patterns (Brighton) → ✓ bio, imageUrl, wikiUrl, mbid, address, lat, lng
+[237/1000] OverDraught (Manchester) → ✓ bio, imageUrl, wikiUrl, address, lat, lng
+[238/1000] Congress Theatre (Eastbourne) → ✓ bio, imageUrl, wikiUrl, mbid, address, lat, lng
+[239/1000] Fat Fugu Collective (Northampton) → no data found
+[240/1000] The Underground (Stoke-on-Trent) → ✓ bio, wikiUrl
+[241/1000] Royal Concert Hall (Nottingham) → ✓ bio, imageUrl, wikiUrl, mbid, address, lat, lng
+[242/1000] Digital (Newcastle) → ✓ bio, imageUrl, wikiUrl, mbid, address, lat, lng
+[243/1000] Live House (Dundee) → ✓ bio, imageUrl, wikiUrl
+[244/1000] Live Lounge, Wishaw, ML2 7NG (Wishaw) → no data found
+[245/1000] Ticking Clock Brewing Company (Worksop) → no data found
+[246/1000] The Ladybird Bar (London) → ✓ bio, imageUrl, wikiUrl, address, lat, lng
+[247/1000] King's Hall (Ilkley) → ✓ bio, wikiUrl, address, lat, lng
+[248/1000] The Hop (York) → ✓ bio, imageUrl, wikiUrl, address, lat, lng
+[249/1000] The Bunkhouse Swansea (Swansea) → ✓ address, lat, lng
+[250/1000] Brighton And Hove   Multiple Venues (Brighton) → ✓ bio, imageUrl, wikiUrl
+[251/1000] Buzz Bingo Dundee (Dundee) → ✓ address, lat, lng
+[252/1000] Metropolis London (London) → ✓ bio, imageUrl, wikiUrl, address, lat, lng
+[253/1000] CHESTER RACECOURSE (Chester) → ✓ bio, imageUrl, wikiUrl, address, lat, lng
+[254/1000] The New Inn (Pershore) → ✓ bio, imageUrl, wikiUrl, address, lat, lng
+[255/1000] Mansfield Central Library (Mansfield) → ✓ bio, imageUrl, wikiUrl, address, lat, lng
+[256/1000] Boxpark Liverpool (Liverpool) → ✓ bio, imageUrl, wikiUrl, address, lat, lng
+[257/1000] Temple Pier (London) → ✓ bio, imageUrl, wikiUrl, address, lat, lng
+[258/1000] Viva Blackpool - The Show & Party Venue (Blackpool) → ✓ bio, imageUrl, wikiUrl
+[259/1000] Blackfriars of Bell Street (Glasgow) → ✓ bio, imageUrl, wikiUrl, address, lat, lng
+[260/1000] Central Park Brighton Seafront (Brighton) → ✓ bio, imageUrl, wikiUrl
+[261/1000] 44 Moulsham Street (Chelmsford) → ✓ address, lat, lng
+[262/1000] First Direct Bank Arena (Leeds) → ✓ bio, wikiUrl, address, lat, lng
+[263/1000] JazzBones (Tacoma) → ✓ bio, wikiUrl, mbid, address
+[264/1000] All Saints, Blackheath (London) → ✓ bio, imageUrl, wikiUrl, address, lat, lng
+[265/1000] Dominion Theatre (London) → ✓ bio, imageUrl, wikiUrl, mbid, address, lat, lng
+[266/1000] Yoga Universe (Wigan) → ✓ bio, wikiUrl
+[267/1000] Stockbridge Parish Church (Stockbridge) → ✓ bio, imageUrl, wikiUrl, address, lat, lng
+[268/1000] Clock Factory (Bristol) → ✓ bio, imageUrl, wikiUrl, address, lat, lng
+[269/1000] The New Johnny Todd (Liverpool) → ✓ bio, imageUrl, wikiUrl
+[270/1000] Penny Blacks (Burnley) → ✓ bio, imageUrl, wikiUrl
+[271/1000] Gaunson House (London) → ✓ address, lat, lng
+[272/1000] Ulster Hall Belfast (Belfast) → ✓ bio, imageUrl, wikiUrl, address, lat, lng
+[273/1000] Sheiks Nightclub (Bognor Regis) → no data found
+[274/1000] District Atlanta (Atlanta) → ✓ bio, imageUrl, wikiUrl
+[275/1000] Unit 2, 110 Pennington St, London E1W 2BB (London) → no data found
+[276/1000] Star of Bethnal Green (London) → ✓ address, lat, lng
+[277/1000] Empire Rochdale (Greater - Manchester) → ✓ bio, imageUrl, wikiUrl, address, lat, lng
+[278/1000] Alcove Nottingham (Nottingham) → ✓ address, lat, lng
+[279/1000] W1D 7EF (London) → ✓ address, lat, lng
+[280/1000] The Buttom Factory (Birmingham) → no data found
+[281/1000] The Lower Third (London) → ✓ bio, imageUrl, wikiUrl, mbid, address, lat, lng
+[282/1000] Dewsbury Minster - Mother Church of West Yorkshire (Dewsbury) → ✓ bio, imageUrl, wikiUrl
+[283/1000] Solihull Moors FC (Solihull) → ✓ bio, imageUrl, wikiUrl, address, lat, lng
+[284/1000] Village Underground (London) → ✓ address, lat, lng
+[285/1000] Wallsend Coronation Club (Wallsend) → no data found
+[286/1000] Dunnings 2 (London) → no data found
+[287/1000] O2 Academy 2 (Liverpool) → ✓ bio, imageUrl, wikiUrl
+[288/1000] Portsmouth Cathedral (Old Portsmouth) → ✓ bio, imageUrl, wikiUrl, address, lat, lng
+[289/1000] St Mary de Haura Church Shoreham-by-Sea (Shoreham-by-Sea) → ✓ bio, imageUrl, wikiUrl, address, lat, lng
+[290/1000] St Peter's Church, Belper (Belper) → ✓ bio, imageUrl, wikiUrl, address, lat, lng
+[291/1000] Queen's Park Arena (Glasgow) → ✓ bio, imageUrl, wikiUrl
+[292/1000] Strange Brew (Bristol) → ✓ bio, imageUrl, wikiUrl, address, lat, lng
+[293/1000] The Limelight Belfast (Belfast) → ✓ bio, wikiUrl, address, lat, lng
+[294/1000] Strongroom Bar (London) → ✓ address, lat, lng
+[295/1000] The National Bowl (Milton Keynes) → ✓ bio, imageUrl, wikiUrl, address, lat, lng
+[296/1000] Cathedral Quarter Arts Festival (Belfast) → ✓ bio, imageUrl, wikiUrl
+[297/1000] Kioki (Swindon) → ✓ address, lat, lng
+[298/1000] The Doghouse bar & Record Store (Leeds) → ✓ bio, imageUrl, wikiUrl
+[299/1000] The Others (London) → ✓ bio, imageUrl, wikiUrl
+[300/1000] Ropetackle Arts Centre (Shoreham-By-Sea) → ✓ address, lat, lng
+[301/1000] The Baths Ipswich (Ipswich) → ✓ bio, imageUrl, wikiUrl
+[302/1000] The Good Mixer (London) → ✓ address, lat, lng
+[303/1000] Feast At The Mills (Wigan) → ✓ bio, imageUrl, wikiUrl, address, lat, lng
+[304/1000] St Catherine's Church (Gorseinon) → ✓ bio, imageUrl, wikiUrl, address, lat, lng
+[305/1000] The Brougham (London) → ✓ bio, imageUrl, wikiUrl, address, lat, lng
+[306/1000] Pitt St Skatepark (Portsmouth) → no data found
+[307/1000] Chichester Secret Venue (TBA) (Chichester) → no data found
+[308/1000] XS Nightclub Wrexham (Wrexham) → no data found
+[309/1000] Alphabet Brighton (Brighton) → ✓ bio, imageUrl, wikiUrl
+[310/1000] Waterlow Park (London) → ✓ bio, imageUrl, wikiUrl, address, lat, lng
+[311/1000] The Civic Hall (Cottingham) → ✓ bio, wikiUrl
+[312/1000] Usher Hall, Edinburgh (Edinburgh) → ✓ bio, imageUrl, wikiUrl, address, lat, lng
+[313/1000] Coppa Club Maidenhead (Maidenhead) → ✓ address, lat, lng
+[314/1000] Tiny Rebel (Cardiff) → ✓ bio, wikiUrl, address, lat, lng
+[315/1000] The Hall (Manchester) → ✓ bio, imageUrl, wikiUrl, address, lat, lng
+[316/1000] Saint Andrew's Uniterd Church (Kirton in Lindsey) → no data found
+[317/1000] The Waterfront (Norwich) → ✓ bio, wikiUrl, mbid, address, lat, lng
+[318/1000] The Drill (Lincoln) → ✓ bio, imageUrl, wikiUrl
+[319/1000] M&S Bank Arena (Liverpool) → ✓ bio, wikiUrl, mbid, address, lat, lng
+[320/1000] TBA - EBB & FLOW SUTTON (London) → no data found
+[321/1000] Chester Cathedral, Chester (Chester) → ✓ bio, imageUrl, wikiUrl, address, lat, lng
+[322/1000] The Cluny 2 (Newcastle upon Tyne) → ✓ bio, imageUrl, wikiUrl, mbid, address, lat, lng
+[323/1000] Rogue's Sport Bar (Bolton) → no data found
+[324/1000] Medway Park Leisure Centre (Gillingham) → ✓ bio, imageUrl, wikiUrl, address, lat, lng
+[325/1000] Millwall Football Club (London) → ✓ bio, imageUrl, wikiUrl, address, lat, lng
+[326/1000] Mobberley Cottage Cattery (Knutsford) → ✓ address, lat, lng
+[327/1000] The Botanic House (Inverness) → ✓ address, lat, lng
+[328/1000] St Andrew's United Reformed Church (Cheltenham) → ✓ bio, imageUrl, wikiUrl
+[329/1000] Cafe Etch (Middlesbrough) → ✓ address, lat, lng
+[330/1000] New Cross Inn (New Cross) → ✓ bio, imageUrl, wikiUrl, address, lat, lng
+[331/1000] Defected's The Basement (London) → ✓ bio, imageUrl, wikiUrl
+[332/1000] Firth Park Working Men's Club (Sheffield) → ✓ bio, imageUrl, wikiUrl
+[333/1000] Kana Winery (Yakima) → no data found
+[334/1000] An Seomar (Inverness) → no data found
+[335/1000] The Pavilion At Oscars, Swinfen Hall Estate Grounds (Lichfield) → no data found
+[336/1000] The Tunnel Club Nottingham (Nottingham) → ✓ bio, imageUrl, wikiUrl
+[337/1000] Kilowatt (San Francisco) → ✓ bio, imageUrl, wikiUrl
+[338/1000] Sound Lounge Extra (Darwen) → no data found
+[339/1000] Regis School of Music (Bognor Regis) → ✓ bio, imageUrl, wikiUrl, address, lat, lng
+[340/1000] The Garage Chilwell (Nottingham) → ✓ address, lat, lng
+[341/1000] Southbank Warehouse (Sheffield) → ✓ bio, imageUrl, wikiUrl, address, lat, lng
+[342/1000] Newbottle Workmens Club (Houghton Le Spring) → no data found
+[343/1000] Hyde Park Book Club Leeds (Leeds) → ✓ bio, imageUrl, wikiUrl, address, lat, lng
+[344/1000] Sunderland Minster (Sunderland) → ✓ bio, imageUrl, wikiUrl, address, lat, lng
+[345/1000] Leith Depot (Edinburgh) → ✓ bio, imageUrl, wikiUrl, address, lat, lng
+[346/1000] The Crescent (York) → ✓ bio, imageUrl, wikiUrl, address, lat, lng
+[347/1000] Southsea Common (Portsmouth) → ✓ bio, imageUrl, wikiUrl, address, lat, lng
+[348/1000] Ten Green Bottles (Newcastle-under-Lyme) → ✓ bio, wikiUrl
+[349/1000] The Apartment Cheltenham (Cheltenham) → ✓ bio, imageUrl, wikiUrl, address, lat, lng
+[350/1000] Dunsbridge Turnpike (Royston) → ✓ bio, wikiUrl
+[351/1000] Roadmender Northampton (Northampton) → ✓ bio, imageUrl, wikiUrl, address, lat, lng
+[352/1000] Walgrave Village Hall (Walgrave) → ✓ bio, imageUrl, wikiUrl, address, lat, lng
+[353/1000] The Space Leeds (Leeds) → ✓ bio, imageUrl, wikiUrl, address, lat, lng
+[354/1000] Buzz Bingo Doncaster (Doncaster) → ✓ address, lat, lng
+[355/1000] Dreamland (Margate, Kent) → ✓ bio, imageUrl, wikiUrl, address, lat, lng
+[356/1000] Saltburn Community Theatre (Saltburn by the Sea) → ✓ bio, imageUrl, wikiUrl, address, lat, lng
+[357/1000] Kilburn Library (Brent) (London) → ✓ bio, imageUrl, wikiUrl, address, lat, lng
+[358/1000] Holding Patterns (Leeds) → ✓ bio, wikiUrl, address, lat, lng
+[359/1000] The Hill Station (London) → ✓ bio, imageUrl, wikiUrl, address, lat, lng
+[360/1000] Horsehoe Hideaway PR5 0UA (Preston) → no data found
+[361/1000] The Sunflower (Belfast) → ✓ bio, imageUrl, wikiUrl, address, lat, lng
+[362/1000] Waterfront Southport Hotel (Southport) → no data found
+[363/1000] The Barge (Belfast) → ✓ bio, imageUrl, wikiUrl, address, lat, lng
+[364/1000] Coventry Central Hall (Coventry) → ✓ bio, imageUrl, wikiUrl
+[365/1000] The Bennett Centre (Frome) → no data found
+[366/1000] 1901 Arts Club (London) → no data found
+[367/1000] Sanford Stadium (Athens) → ✓ bio, imageUrl, wikiUrl
+[368/1000] Harbour Lights Picturehouse (Southampton) → ✓ bio, imageUrl, wikiUrl, address, lat, lng
+[369/1000] Newsam Green Farm (Leeds) → ✓ address, lat, lng
+[370/1000] Cafe Continental (Kirkcaldy) → ✓ bio, wikiUrl, address, lat, lng
+[371/1000] The ARK South City Studios (Stockport) → ✓ bio, imageUrl, wikiUrl
+[372/1000] Baker Street Preston (Preston) → ✓ bio, imageUrl, wikiUrl, address, lat, lng
+[373/1000] Boucher Road Fields (Belfast) → no data found
+[374/1000] Exhibition Centre Liverpool (Liverpool) → ✓ bio, imageUrl, wikiUrl, address, lat, lng
+[375/1000] Boldre War Memorial Hall (Lymington) → ✓ address, lat, lng
+[376/1000] Functional Drinks Club (Otley) → no data found
+[377/1000] St Leonards Church, Watlington (Watlington) → ✓ bio, imageUrl, wikiUrl
+[378/1000] Six Lane Ends Birstall Circus Site (Birstall) → no data found
+[379/1000] Hidden (Manchester) → ✓ bio, imageUrl, wikiUrl, address, lat, lng
+[380/1000] St Peter's Church Hereford (Hereford) → ✓ bio, imageUrl, wikiUrl, address, lat, lng
+[381/1000] Shamrock Sports And Social Club (Belfast) → ✓ bio, imageUrl, wikiUrl
+[382/1000] APT Disco (Manchester) → ✓ bio, imageUrl, wikiUrl
+[383/1000] Secret London Location (London) → ✓ bio, imageUrl, wikiUrl
+[384/1000] Savoy Nightlcub (Glasgow) → no data found
+[385/1000] Out Out Ibiza (Plymouth) → ✓ bio, imageUrl, wikiUrl, address, lat, lng
+[386/1000] Bo'ness Town Hall (Boness) → ✓ bio, imageUrl, wikiUrl
+[387/1000] Club Severn (Shrewsbury) → no data found
+[388/1000] Manuka (Glasgow) → ✓ bio, wikiUrl
+[389/1000] The Risley Park (Risley) → ✓ bio, imageUrl, wikiUrl, address, lat, lng
+[390/1000] The Black Heart (London) → ✓ bio, imageUrl, wikiUrl, mbid, address, lat, lng
+[391/1000] Eleven Live Music Venua (Stoke-on-Trent) → no data found
+[392/1000] Bethel Chapel café (Pontrhydyfen) → ✓ bio, imageUrl, wikiUrl
+[393/1000] The Globe Newcastle (Newcastle Upon Tyne) → ✓ bio, imageUrl, wikiUrl, address, lat, lng
+[394/1000] The Tenterden Club (Tenterden) → ✓ bio, imageUrl, wikiUrl
+[395/1000] Hare And Hounds Kings Heath (Birmingham) → ✓ bio, imageUrl, wikiUrl
+[396/1000] Pigstock (Abbotsham) → no data found
+[397/1000] CQ Lounge (London) → no data found
+[398/1000] Regans (Purley) → no data found
+[399/1000] The Orchid Hotel (Bournemouth) → ✓ address, lat, lng
+[400/1000] Hyde Park (London) → ✓ bio, imageUrl, wikiUrl, address, lat, lng
+[401/1000] Loco, Nantwich CW5 (Nantwich) → no data found
+[402/1000] The Scala  (Kings Cross) → ✓ bio, imageUrl, wikiUrl
+[403/1000] HERE at Outernet, London (London) → ✓ bio, imageUrl, wikiUrl
+[404/1000] District21 (Dudley) → no data found
+[405/1000] Sore Bee (Sowerby Bridge) → ✓ address, lat, lng
+[406/1000] Cinnabar (Stevenage) → ✓ bio, imageUrl, wikiUrl, address, lat, lng
+[407/1000] The Steam and Whistle (Cheltenham) → ✓ bio, imageUrl, wikiUrl, address, lat, lng
+[408/1000] Smileys (Carlisle) → ✓ bio, imageUrl, wikiUrl
+[409/1000] Core Padel (Tyseley) → no data found
+[410/1000] The Waterside Theatre, Aylesbury (Aylesbury) → ✓ bio, imageUrl, wikiUrl
+[411/1000] Metamorphika Studio (London) → no data found
+[412/1000] Canley Community Centre (Coventry) → ✓ bio, imageUrl, wikiUrl, address, lat, lng
+[413/1000] Belgo Nottingham (Nottingham) → ✓ bio, imageUrl, wikiUrl
+[414/1000] The Navy Bar (Liverpool) → ✓ address, lat, lng
+[415/1000] Belgrave Pizza Pop up Leeds (Leeds) → no data found
+[416/1000] World Harvest Christian Centre (Manchester) → ✓ address, lat, lng
+[417/1000] The Royal Hotel Whitby (Whitby, UK) → ✓ bio, wikiUrl
+[418/1000] These Things Happen (Sunderland) → ✓ bio, wikiUrl
+[419/1000] Sheraton Skyline Hotel (Hayes) → ✓ bio, imageUrl, wikiUrl, address, lat, lng
+[420/1000] Boxpark Wembley (London) → ✓ bio, imageUrl, wikiUrl, address, lat, lng
+[421/1000] Streamz Hub (Birmingham) → no data found
+[422/1000] Royal Isle Of Wight Showground (Cowes) → no data found
+[423/1000] The Penthouse, Bar Fibre, Leeds (Leeds) → no data found
+[424/1000] Wavendon Community Centre (Milton Keynes) → ✓ address, lat, lng
+[425/1000] Gaffe (London) → ✓ bio, wikiUrl, address, lat, lng
+[426/1000] Breakneck Comedy (Aberdeen) → ✓ address, lat, lng
+[427/1000] Tonight Josephine (London) → ✓ bio, imageUrl, wikiUrl, address, lat, lng
+[428/1000] Shirley Park (Shirley) → ✓ bio, imageUrl, wikiUrl, address, lat, lng
+[429/1000] The Hertford Club (Hertford) → ✓ bio, imageUrl, wikiUrl, address, lat, lng
+[430/1000] Wigmore Hall (London) → ✓ bio, imageUrl, wikiUrl, address, lat, lng
+[431/1000] Buzz Bingo Morecambe (Morecambe) → ✓ address, lat, lng
+[432/1000] The Carlisle (Hastings) → ✓ bio, imageUrl, wikiUrl, address, lat, lng
+[433/1000] Darlington Market (Darlington) → ✓ bio, imageUrl, wikiUrl, address, lat, lng
+[434/1000] The Bag Factory (next To The White Hotel) (Salford) → ✓ bio, imageUrl, wikiUrl
+[435/1000] Wish Lounge at Believe Music Hall (Atlanta) → no data found
+[436/1000] Battersea Barge (London) → ✓ bio, imageUrl, wikiUrl, address, lat, lng
+[437/1000] Red Dog Saloon   Liverpool Restaurant (Liverpool) → no data found
+[438/1000] Regal Theatre (Redruth) → ✓ bio, imageUrl, wikiUrl
+[439/1000] Shooters, Dawlish (Dawlish) → no data found
+[440/1000] TBA - secret (London) → no data found
+[441/1000] The Old Brewery Store (Faversham) → no data found
+[442/1000] Sketchy Beats Cafe (Leith) → ✓ bio, imageUrl, wikiUrl, address, lat, lng
+[443/1000] Kable (Manchester) → ✓ bio, wikiUrl
+[444/1000] Mitre Inn (Abertillery) → ✓ bio, imageUrl, wikiUrl, address, lat, lng
+[445/1000] BRIX Coffee Co (Doncaster) → ✓ address, lat, lng
+[446/1000] The Monaco (Hindley) → ✓ bio, imageUrl, wikiUrl, address, lat, lng
+[447/1000] Victoria Park London (London) → ✓ bio, imageUrl, wikiUrl, address, lat, lng
+[448/1000] Moe's Alley (Santa Cruz) → ✓ bio, imageUrl, wikiUrl, mbid
+[449/1000] O2 Academy2 Leicester (Leicester) → ✓ bio, wikiUrl
+[450/1000] The Arches (Coventry) → ✓ bio, wikiUrl, address, lat, lng
+[451/1000] Quarters (Brighton and Hove) → ✓ bio, wikiUrl, address, lat, lng
+[452/1000] Beach Ballroom (Aberdeen) → ✓ bio, imageUrl, wikiUrl, address, lat, lng
+[453/1000] Festival Hall, Alderley Edge (Alderley Edge) → ✓ bio, imageUrl, wikiUrl, address, lat, lng
+[454/1000] Artichoke, Bridgwater (Bridgwater) → no data found
+[455/1000] Princess Hall (Cheltenham) → ✓ bio, wikiUrl
+[456/1000] The Glad Cafe (Shawlands, Glasgow) → no data found
+[457/1000] Walton Hall and Gardens (Warrington) → ✓ bio, imageUrl, wikiUrl, address, lat, lng
+[458/1000] West Barns Village Hall (West Barns) → ✓ bio, imageUrl, wikiUrl, address, lat, lng
+[459/1000] The Hallamshire Hotel (Sheffield) → ✓ bio, imageUrl, wikiUrl
+[460/1000] Velvet Nightclub (Worcester ) → ✓ bio, wikiUrl
+[461/1000] The Antwerp Arms, Church Road, London N17 8AS, UK (London) → no data found
+[462/1000] Chepstow TIC (Chepstow) → no data found
+[463/1000] Theatre Royal Winchester (Winchester) → ✓ bio, imageUrl, wikiUrl, address, lat, lng
+[464/1000] Royal Nawaab London (Greenford) → ✓ address, lat, lng
+[465/1000] The Chapel Nightclub (Salisbury) → ✓ bio, imageUrl, wikiUrl
+[466/1000] HERE (London) → ✓ bio, imageUrl, wikiUrl, address, lat, lng
+[467/1000] Buzz Bingo Motherwell (Motherwell ) → ✓ address, lat, lng
+[468/1000] Jacobs Car Park (Cardiff) → ✓ bio, imageUrl, wikiUrl
+[469/1000] Signature Brew Taproom (London) → ✓ address, lat, lng
+[470/1000] Victoria Hall (Sheffield City Centre) → ✓ bio, imageUrl, wikiUrl, address, lat, lng
+[471/1000] Port A Bhaigh Campsite (Ullapool) → no data found
+[472/1000] Carlisle Secret Venue (TBA) (Carlisle) → no data found
+[473/1000] Hope & Anchor (London) → ✓ bio, imageUrl, wikiUrl, address, lat, lng
+[474/1000] The Three Sisters (Edinburgh) → ✓ bio, imageUrl, wikiUrl
+[475/1000] Utilita Arena Sheffield (Sheffield) → ✓ bio, imageUrl, wikiUrl, address, lat, lng
+[476/1000] Duffy's Bar (Leicester) → ✓ bio, imageUrl, wikiUrl
+[477/1000] The River Thames (London) → ✓ bio, imageUrl, wikiUrl, address, lat, lng
+[478/1000] Sidney & Matilda (Sheffield City Centre) → ✓ bio, imageUrl, wikiUrl, address, lat, lng
+[479/1000] Kugelbakehalle (Cuxhaven) → no data found
+[480/1000] Het Koninklijk Concertgebouw (Amsterdam) → ✓ bio, imageUrl, wikiUrl
+[481/1000] Mint Warehouse (Leeds) → ✓ address, lat, lng
+[482/1000] TBA - Be At One Regent Street (London) → ✓ bio, wikiUrl
+[483/1000] Shenley Brook End School (Shenley Brook End) → ✓ bio, imageUrl, wikiUrl, address, lat, lng
+[484/1000] Home Lincoln (Lincoln) → ✓ bio, imageUrl, wikiUrl, address, lat, lng
+[485/1000] Centrala (Birmingham) → ✓ bio, imageUrl, wikiUrl, address, lat, lng
+[486/1000] Comedy Freaks   Camden (London) → no data found
+[487/1000] The Grove (Newcastle upon Tyne) → ✓ bio, imageUrl, wikiUrl, mbid, address, lat, lng
+[488/1000] Future Yard (Liverpool) → ✓ address, lat, lng
+[489/1000] Rodber Suite (Northampton) → no data found
+[490/1000] Kaleider (Exeter) → no data found
+[491/1000] Newcastle City Centre (Newcastle-Upon-Tyne) → ✓ bio, imageUrl, wikiUrl, address, lat, lng
+[492/1000] House of Ora (London) → ✓ bio, wikiUrl
+[493/1000] St Symphorian's Church, Durrington (Durrington) → ✓ bio, imageUrl, wikiUrl, address, lat, lng
+[494/1000] Apollo Wolverhampton (Wolverhampton) → no data found
+[495/1000] Namak Mandi (Glasgow) → ✓ address, lat, lng
+[496/1000] SLICE Ramsgate (Ramsgate) → ✓ address, lat, lng
+[497/1000] Turtle Bay (Plymouth) → ✓ bio, imageUrl, wikiUrl, address, lat, lng
+[498/1000] Subway Cowgate (Edinburgh) → ✓ address, lat, lng
+[499/1000] The Mixologist (Nottingham) → ✓ address, lat, lng
+[500/1000] The Strines Nightingale (Stockport) → ✓ address, lat, lng
+[501/1000] St James' Park (Newcastle upon Tyne) → ✓ bio, imageUrl, wikiUrl, mbid, address, lat, lng
+[502/1000] The Engine Room (North Shields) → ✓ bio, imageUrl, wikiUrl, address, lat, lng
+[503/1000] The Love Inn (Bristol) → ✓ address, lat, lng
+[504/1000] Mssng Pieces (Nottingham) → no data found
+[505/1000] O'Hares Lounge Bars (Newcastle) → no data found
+[506/1000] LAB11 (Birmingham) → no data found
+[507/1000] Billingham Forum Theatre (Stockton-on-Tees) → ✓ bio, imageUrl, wikiUrl
+[508/1000] Hamilton Park Racecourse (Hamilton) → ✓ bio, imageUrl, wikiUrl
+[509/1000] Le Voyeur (Olympia) → ✓ bio, imageUrl, wikiUrl
+[510/1000] Hotel Pelirocco Bar (Brighton) → no data found
+[511/1000] The Little Yellow Door (London) → ✓ bio, imageUrl, wikiUrl, address, lat, lng
+[512/1000] A.I.R Rooftop Bar And Lounge (Plymouth) → no data found
+[513/1000] Port of Leith Distillery (Edinburgh) → ✓ bio, imageUrl, wikiUrl, address, lat, lng
+[514/1000] Halle at St Michael's (Manchester) → ✓ bio, imageUrl, wikiUrl
+[515/1000] The Golden Eagle (Derby) → ✓ bio, imageUrl, wikiUrl, address, lat, lng
+[516/1000] Oslo Hackney London (London) → ✓ bio, imageUrl, wikiUrl, address, lat, lng
+[517/1000] komunal (Birmingham) → no data found
+[518/1000] Forde Hall Social Club (Newton Abbot) → ✓ address, lat, lng
+[519/1000] Tempo Nightclub And Bar (Clydebank) → no data found
+[520/1000] Aura Nightclub Tunbridge Wells (Tunbridge Wells) → no data found
+[521/1000] Hardwick Park (Stockton-on-Tees) → ✓ bio, imageUrl, wikiUrl, address, lat, lng
+[522/1000] Eden Project (St Austell) → ✓ bio, imageUrl, wikiUrl, mbid, address
+[523/1000] Liverpool Empire Theatre (Liverpool) → ✓ bio, imageUrl, wikiUrl, address, lat, lng
+[524/1000] The Ghost Nightclub (Nottingham) → no data found
+[525/1000] The Blues Kitchen (Manchester) → ✓ bio, wikiUrl
+[526/1000] High Wycombe Cricket Club (High Wycombe) → ✓ bio, imageUrl, wikiUrl, address, lat, lng
+[527/1000] Coast Worthing (Worthing) → ✓ bio, imageUrl, wikiUrl, address, lat, lng
+[528/1000] Freedom City Church (Cumbernauld) → ✓ bio, imageUrl, wikiUrl
+[529/1000] La Forja Event Center (Yakima) → no data found
+[530/1000] Honey Street Studio (Manchester) → ✓ bio, imageUrl, wikiUrl
+[531/1000] Camberley Theatre (Camberley) → ✓ bio, imageUrl, wikiUrl, address, lat, lng
+[532/1000] The O2 Arena (London) → ✓ bio, imageUrl, wikiUrl, address, lat, lng
+[533/1000] The Brunswick (Brighton) → ✓ bio, imageUrl, wikiUrl, address, lat, lng
+[534/1000] Royal and Derngate (Northampton) → ✓ bio, imageUrl, wikiUrl, address, lat, lng
+[535/1000] The Old Market (Brighton) → ✓ bio, imageUrl, wikiUrl, mbid, address, lat, lng
+[536/1000] The Limelight (Belfast) → ✓ bio, wikiUrl, address, lat, lng
+[537/1000] Rickshaw Stop (San Francisco) → ✓ bio, imageUrl, wikiUrl
+[538/1000] Legends (Brynmawr) → ✓ bio, wikiUrl, address, lat, lng
+[539/1000] BVSMNT, Darwen (Darwen) → no data found
+[540/1000] Lightbox London, (London) → ✓ bio, wikiUrl, address, lat, lng
+[541/1000] The Boxmoor Playhouse (Hemel Hempstead) → ✓ bio, imageUrl, wikiUrl
+[542/1000] Netil Market (London) → ✓ address, lat, lng
+[543/1000] Coatham Memorial Hall Redcar (Redcar) → ✓ bio, imageUrl, wikiUrl, address, lat, lng
+[544/1000] Gorilla Beer Hall (Mexborough) → ✓ address, lat, lng
+[545/1000] Number 90 Bar (London) → ✓ bio, imageUrl, wikiUrl, address, lat, lng
+[546/1000] St Guthlac's Church : Market Deeping (Market Deeping) → ✓ bio, imageUrl, wikiUrl, address, lat, lng
+[547/1000] The Whistle And Flute (Nottingham) → ✓ bio, imageUrl, wikiUrl
+[548/1000] Various Venues (Glasgow) → ✓ bio, wikiUrl
+[549/1000] D2 (Aberdeen) → ✓ bio, wikiUrl, address, lat, lng
+[550/1000] Bradford Live (Bradford) → ✓ bio, imageUrl, wikiUrl, address, lat, lng
+[551/1000] Braemar Lodge Care Home (Salisbury) → no data found
+[552/1000] Blitz Venue & Nightclub (Preston) → ✓ bio, imageUrl, wikiUrl
+[553/1000] Fox And Firkin, London (London) → ✓ bio, imageUrl, wikiUrl
+[554/1000] Loopfest 2026 (Shrewsbury) → no data found
+[555/1000] Louth Riverhead Theatre (Louth) → ✓ bio, imageUrl, wikiUrl
+[556/1000] Komedia Basement (Brighton and Hove) → no data found
+[557/1000] The Empire (Coventry) → ✓ bio, wikiUrl, address, lat, lng
+[558/1000] EartH Kitchen (London) → ✓ bio, imageUrl, wikiUrl
+[559/1000] Adrian Flux Waterfront Studio (Norwich) → no data found
+[560/1000] Liverpool Secret Venue (TBA) (Liverpool) → no data found
+[561/1000] Church Dundee (Dundee) → ✓ bio, imageUrl, wikiUrl, address, lat, lng
+[562/1000] Custom House, Exeter Quay (Exeter) → ✓ bio, imageUrl, wikiUrl, address, lat, lng
+[563/1000] The Alchemist (Victoria, London) → ✓ bio, imageUrl, wikiUrl, address, lat, lng
+[564/1000] SLESSOR GARDENS (Dundee) → ✓ address, lat, lng
+[565/1000] SOUL Church (Norwich) → ✓ bio, wikiUrl, address, lat, lng
+[566/1000] Bush Inn (Blaina) → ✓ bio, imageUrl, wikiUrl, address, lat, lng
+[567/1000] Denroyd Farm (Huddersfield) → ✓ address, lat, lng
+[568/1000] O2 Shepherd's Bush Empire   London (London) → ✓ bio, imageUrl, wikiUrl
+[569/1000] Islington Arts Club (London) → ✓ bio, imageUrl, wikiUrl
+[570/1000] Beaverwork (Leeds) → no data found
+[571/1000] The Middlesbrough Empire (Middlesbrough) → ✓ bio, imageUrl, wikiUrl, mbid, address
+[572/1000] Vibe Dance Bar Paisley (Paisley) → no data found
+[573/1000] Buzz Bingo Sunderland (Sunderland) → ✓ address, lat, lng
+[574/1000] House Belfast (Belfast) → ✓ bio, imageUrl, wikiUrl, address, lat, lng
+[575/1000] MC Motors (London) → no data found
+[576/1000] Home The Venue (Sydney NSW) → ✓ bio, wikiUrl
+[577/1000] hmv Empire (Coventry) → ✓ bio, imageUrl, wikiUrl, address, lat, lng
+[578/1000] The Joiners, Southampton (Southampton) → ✓ bio, imageUrl, wikiUrl, address, lat, lng
+[579/1000] Independent (Sunderland) → ✓ bio, wikiUrl, address, lat, lng
+[580/1000] Sheffield City Hall Memorial Hall (Sheffield) → ✓ bio, imageUrl, wikiUrl
+[581/1000] Jaks Mayfair (London) → no data found
+[582/1000] O2 Academy (Glasgow) → ✓ bio, imageUrl, wikiUrl, address, lat, lng
+[583/1000] Angels Cut Bar (Darlington) → no data found
+[584/1000] Folkestone 51 (Folkestone) → ✓ bio, imageUrl, wikiUrl, address, lat, lng
+[585/1000] The Farmers Arms (Chorley) → ✓ address, lat, lng
+[586/1000] Railway Inn (Oldham) → ✓ bio, imageUrl, wikiUrl, address, lat, lng
+[587/1000] St. Gabriel's Church (London) → ✓ bio, imageUrl, wikiUrl, address, lat, lng
+[588/1000] Schloss Ritzebüttel (Cuxhaven) → ✓ bio, imageUrl, wikiUrl
+[589/1000] New Victoria Theatre (Woking) → ✓ bio, imageUrl, wikiUrl, address, lat, lng
+[590/1000] Sheffield Secret Venue (TBA) (Sheffield) → ✓ bio, imageUrl, wikiUrl
+[591/1000] Oedipus Brewery (Amsterdam) → no data found
+[592/1000] The Castle (London) → ✓ bio, imageUrl, wikiUrl, address, lat, lng
+[593/1000] Bath Komedia (Bath) → ✓ bio, imageUrl, wikiUrl
+[594/1000] Bootleggers Cardiff (Cardiff) → ✓ bio, imageUrl, wikiUrl
+[595/1000] O'Donnabháin (Kenmare) → no data found
+[596/1000] The King's Inn (York) → ✓ bio, wikiUrl, address, lat, lng
+[597/1000] Makoto Bar (Walsall) → ✓ bio, imageUrl, wikiUrl
+[598/1000] Barmston Village Primary School (Washington) → ✓ address, lat, lng
+[599/1000] Eutopia (Barking) → ✓ bio, imageUrl, wikiUrl
+[600/1000] Circuit Cardiff (Cardiff) → ✓ bio, imageUrl, wikiUrl, address, lat, lng
+[601/1000] The Masquerade (Atlanta) → ✓ bio, imageUrl, wikiUrl, mbid, address
+[602/1000] University of Wolverhampton at The Wulfrun Hall (Wolverhampton) → ✓ bio, imageUrl, wikiUrl
+[603/1000] The Mesmerist (Brighton and Hove) → ✓ address, lat, lng
+[604/1000] Cluny 2 (Newcastle upon Tyne, NE1 2PQ) → ✓ bio, imageUrl, wikiUrl
+[605/1000] People's Leisure Club (Edinburgh) → ✓ bio, imageUrl, wikiUrl, address, lat, lng
+[606/1000] Bomba Exeter (Exeter) → ✓ address, lat, lng
+[607/1000] The Terrace, Dewsbury (Dewsbury) → ✓ bio, imageUrl, wikiUrl, address, lat, lng
+[608/1000] Cosy Club Canterbury (Canterbury) → ✓ address, lat, lng
+[609/1000] Garstang Summer Festival (Preston) → no data found
+[610/1000] Electric Bulavard Bournemouth (Bournemouth) → no data found
+[611/1000] Oxford Brookes University (Headington) → ✓ bio, imageUrl, wikiUrl, address, lat, lng
+[612/1000] Victoria Gallery & Museum (Liverpool) → ✓ bio, imageUrl, wikiUrl, address, lat, lng
+[613/1000] King Street Social Club (North Shields) → ✓ bio, imageUrl, wikiUrl, address, lat, lng
+[614/1000] TBA - Bunker (Sheffield) → no data found
+[615/1000] Walsoken Village Hall (Wisbech) → ✓ bio, imageUrl, wikiUrl, address, lat, lng
+[616/1000] KOMEDIA BATH (Bath) → ✓ bio, imageUrl, wikiUrl, address, lat, lng
+[617/1000] St. George's Church, Brighton (Brighton and Hove) → ✓ bio, imageUrl, wikiUrl, address, lat, lng
+[618/1000] Stadium MK (Milton Keynes) → ✓ bio, imageUrl, wikiUrl, mbid, address, lat, lng
+[619/1000] The Adelphi Club (Hull) → ✓ bio, imageUrl, wikiUrl, address, lat, lng
+[620/1000] Ventnor Arts Club (Ventnor) → ✓ bio, imageUrl, wikiUrl
+[621/1000] StMs.Presents (Sheriffhales) → no data found
+[622/1000] Amsterdam - Melkweg / Paradiso (Amsterdam) → ✓ bio, imageUrl, wikiUrl
+[623/1000] Birmingham Dead Wax (Birmingham) → no data found
+[624/1000] Brighton Venue TBA (Brighton) → no data found
+[625/1000] Exeter Phoenix (Place) → ✓ bio, imageUrl, wikiUrl, address, lat, lng
+[626/1000] Kingston Upon Hull Secret Venue (TBA) (Kingston Upon Hull) → no data found
+[627/1000] Riverside Museum (Glasgow) → ✓ bio, imageUrl, wikiUrl, address, lat, lng
+[628/1000] Forgan's St Andrews (St. Andrews) → ✓ bio, wikiUrl, address, lat, lng
+[629/1000] Shai Sapce (London) → no data found
+[630/1000] Yakima Maker Space (Yakima) → no data found
+[631/1000] Sin City (Swansea) → ✓ bio, imageUrl, wikiUrl, address, lat, lng
+[632/1000] Working Men's Club Radstock (Radstock) → no data found
+[633/1000] Duchess Theatre (London) → ✓ bio, imageUrl, wikiUrl, address, lat, lng
+[634/1000] Shanklin Theatre, UK (Shanklin) → ✓ bio, imageUrl, wikiUrl
+[635/1000] Metronome Nottingham (Nottingham) → ✓ bio, imageUrl, wikiUrl, address, lat, lng
+[636/1000] Club Tanzanite (Leicester) → no data found
+[637/1000] Thyme Cocktail Bar (Rossendale) → no data found
+[638/1000] Oxygenic (Newcastle) → ✓ bio, imageUrl, wikiUrl
+[639/1000] Townhouse Bexhill (Bexhill-on-Sea) → no data found
+[640/1000] HARTA retreat (East Down) → no data found
+[641/1000] The Backroom (Leeds) → ✓ bio, imageUrl, wikiUrl
+[642/1000] The Dublin Castle (London) → ✓ bio, imageUrl, wikiUrl, address, lat, lng
+[643/1000] Usworth And Washington Gardeners Club (Washington) → ✓ bio, imageUrl, wikiUrl
+[644/1000] Innervisions Alchemy (London) → no data found
+[645/1000] Eden Venue (Nottingham) → ✓ bio, imageUrl, wikiUrl
+[646/1000] Kings Arms E2 (London) → ✓ address, lat, lng
+[647/1000] Charnwood Theatre (Sutton Bonington) → ✓ bio, wikiUrl
+[648/1000] The Ivory Harrogate (Harrogate) → no data found
+[649/1000] The Bootlegger Leeds (Leeds) → ✓ bio, imageUrl, wikiUrl
+[650/1000] Morgan's Bar (Manchester) → ✓ bio, imageUrl, wikiUrl
+[651/1000] Thames River Sightseeing Festival Pier (London) → ✓ bio, imageUrl, wikiUrl
+[652/1000] The Victoria Inn, Derby (Derby) → ✓ bio, imageUrl, wikiUrl
+[653/1000] Tofte Manor (Bedford) → no data found
+[654/1000] The Beach Hut Lossiemouth (Lossiemouth) → ✓ address, lat, lng
+[655/1000] Beacon Arts Centre (Greenock) → ✓ bio, imageUrl, wikiUrl
+[656/1000] STEREO CLUB TEESSIDE (Middlesbrough) → no data found
+[657/1000] The Exchange 1856 (North Shields) → ✓ address, lat, lng
+[658/1000] Market Halls Oxford Street (London) → ✓ bio, imageUrl, wikiUrl
+[659/1000] Penicuik Town Hall (Penicuik) → ✓ bio, imageUrl, wikiUrl, address, lat, lng
+[660/1000] Basing House (London) → ✓ bio, imageUrl, wikiUrl, address, lat, lng
+[661/1000] Plaza Theatre (Romsey) → ✓ bio, wikiUrl, address, lat, lng
+[662/1000] Perth Theatre (Perth) → ✓ bio, imageUrl, wikiUrl, address, lat, lng
+[663/1000] The Boulevard (Wigan) → ✓ bio, wikiUrl, address, lat, lng
+[664/1000] Plot 22 (Sheffield) → ✓ bio, imageUrl, wikiUrl, address, lat, lng
+[665/1000] Bannermans Edinburgh (Edinburgh) → no data found
+[666/1000] World Headquarters (Newcastle Upon Tyne) → ✓ bio, imageUrl, wikiUrl, address, lat, lng
+[667/1000] Cheese and Grain (Frome) → ✓ bio, imageUrl, wikiUrl, address, lat, lng
+[668/1000] Borde Hill Garden Haywards Heath (Haywards Heath) → ✓ bio, imageUrl, wikiUrl, address, lat, lng
+[669/1000] Museum of Archaeology and Anthropology (Cambridge) → ✓ bio, imageUrl, wikiUrl, address, lat, lng
+[670/1000] The Hobbit (Southampton) → ✓ bio, imageUrl, wikiUrl, address, lat, lng
+[671/1000] Freight Island (Manchester) → ✓ address, lat, lng
+[672/1000] Sankey Street Basement (Warrington) → ✓ bio, imageUrl, wikiUrl
+[673/1000] Vortex Jazz Club (London) → ✓ bio, imageUrl, wikiUrl, address, lat, lng
+[674/1000] Sheffield City Hall (Sheffield) → ✓ bio, imageUrl, wikiUrl, address, lat, lng
+[675/1000] TBA - KINGS CROSS VENUE DETAILS ON PURCHASE (London) → no data found
+[676/1000] Pangbourne Working Mens Club (Reading) → no data found
+[677/1000] West London Secret Venue (London) → ✓ bio, imageUrl, wikiUrl
+[678/1000] People's Leisure Club, Edinburgh (Edinburgh) → ✓ bio, imageUrl, wikiUrl, address, lat, lng
+[679/1000] Esquires (Bedford) → ✓ bio, imageUrl, wikiUrl, mbid, address, lat, lng
+[680/1000] Catholic Church of the Immaculate Conception, Mayfair (London) → ✓ bio, imageUrl, wikiUrl
+[681/1000] Big Penny Social (London) → ✓ bio, imageUrl, wikiUrl, address, lat, lng
+[682/1000] The Norfolk Showground Arena (Norwich) → no data found
+[683/1000] The Piggott C of E School (Reading) → ✓ bio, imageUrl, wikiUrl
+[684/1000] Aster Restaurant (London) → ✓ bio, imageUrl, wikiUrl, address, lat, lng
+[685/1000] East End Park (Dunfermline) → ✓ bio, imageUrl, wikiUrl, address, lat, lng
+[686/1000] Waterperry Gardens (Waterperry) → ✓ bio, imageUrl, wikiUrl, address, lat, lng
+[687/1000] Skylark Roof Garden (London) → no data found
+[688/1000] Clarence Hall Hawley Road, Camden, London, NW1 8RN (London) → no data found
+[689/1000] Three Wise Monkeys (Colchester) → ✓ bio, imageUrl, wikiUrl, address, lat, lng
+[690/1000] Venue 229 (London) → ✓ address, lat, lng
+[691/1000] Horse Hospital Colonnade (London) → ✓ bio, imageUrl, wikiUrl, address, lat, lng
+[692/1000] Swimmer At The Grafton (London) → ✓ bio, imageUrl, wikiUrl, address, lat, lng
+[693/1000] Belgrave Music Hall and Canteen (Leeds) → ✓ address, lat, lng
+[694/1000] Cambridge Corn Exchange (Cambridge) → ✓ bio, imageUrl, wikiUrl, mbid, address
+[695/1000] Firewater Dundee (Dundee) → ✓ address, lat, lng
+[696/1000] Sunflower Public House (Belfast) → ✓ bio, imageUrl, wikiUrl
+[697/1000] Church of the Good Shepherd (Newtownabbey) → ✓ bio, imageUrl, wikiUrl, address, lat, lng
+[698/1000] 6th Avenue Nightclub (Stewarton) → no data found
+[699/1000] The Old School House And Courtyard (Hull) → ✓ bio, imageUrl, wikiUrl
+[700/1000] Websters Ropery (Sunderland) → no data found
+[701/1000] Theater Amsterdam (Amsterdam) → ✓ bio, wikiUrl
+[702/1000] Thrive Wellbeing Hub (Sale) → no data found
+[703/1000] Other Space Arts (Windsor) → ✓ bio, imageUrl, wikiUrl
+[704/1000] Strange Brew, Bristol (Bristol) → ✓ address, lat, lng
+[705/1000] Yorkshire Wildlife Park (Doncaster) → ✓ bio, imageUrl, wikiUrl, address, lat, lng
+[706/1000] Risqué Liverpool (Liverpool) → ✓ bio, imageUrl, wikiUrl
+[707/1000] Siren Craft Brew Tap Yard (Finchampstead) → ✓ address, lat, lng
+[708/1000] Classic Grand Lounge (Glasgow) → no data found
+[709/1000] Fitzwilliam College Chapel (Cambridge) → ✓ bio, imageUrl, wikiUrl
+[710/1000] Manchester Gorilla (Manchester) → ✓ bio, imageUrl, wikiUrl
+[711/1000] Victoria Palace Theatre (London) → ✓ bio, imageUrl, wikiUrl, address, lat, lng
+[712/1000] Westlands Entertainment Venue (Yeovil) → ✓ address, lat, lng
+[713/1000] Southampton Joiners (Southampton) → ✓ bio, imageUrl, wikiUrl
+[714/1000] Middlesbrough Town Hall (Middlesbrough) → ✓ bio, imageUrl, wikiUrl, address, lat, lng
+[715/1000] The Full Moon And Attic Bar (Bristol) → ✓ bio, imageUrl, wikiUrl
+[716/1000] Bournemouth Highcliff Marriot Hotel (Bournemouth) → no data found
+[717/1000] Central Theatre (Chatham) → ✓ bio, imageUrl, wikiUrl, mbid, address, lat, lng
+[718/1000] Lakota Moon Club (Bristol) → ✓ bio, imageUrl, wikiUrl
+[719/1000] TWELVE (Wolverhampton) → ✓ bio, imageUrl, wikiUrl
+[720/1000] The Gaiety Southsea (Portsmouth) → ✓ bio, imageUrl, wikiUrl, address, lat, lng
+[721/1000] The Hive, Edinburgh (Edinburgh) → ✓ bio, wikiUrl, address, lat, lng
+[722/1000] Luton Hat Factory (Luton ) → ✓ bio, imageUrl, wikiUrl
+[723/1000] Paramount Bar And Restaurant (Aberdeen) → ✓ bio, imageUrl, wikiUrl
+[724/1000] The Scotia Bar (Glasgow) → ✓ bio, wikiUrl, address, lat, lng
+[725/1000] The Cellar (Aberdeen) → ✓ bio, wikiUrl
+[726/1000] Scarborough Spa Theatre (Scarborough) → ✓ bio, imageUrl, wikiUrl, address, lat, lng
+[727/1000] Morocco Bound (London) → ✓ bio, wikiUrl, address, lat, lng
+[728/1000] Norwich Theatre Royal (Norwich) → ✓ bio, imageUrl, wikiUrl
+[729/1000] Port Of Leith Distillery Leith, Edinburgh (Leith, Edinburgh) → ✓ bio, imageUrl, wikiUrl, address, lat, lng
+[730/1000] St Ninian's Scottish Episcopal Church (Glasgow) → ✓ bio, imageUrl, wikiUrl
+[731/1000] Rossi Bar (Brighton) → ✓ address, lat, lng
+[732/1000] The Essex Arms (Brentwood) → ✓ bio, imageUrl, wikiUrl
+[733/1000] Spondon Liberal Club (Derby) → ✓ address, lat, lng
+[734/1000] The Old Rep Theatre (Birmingham) → ✓ bio, imageUrl, wikiUrl
+[735/1000] Maison Close (London) → ✓ bio, wikiUrl
+[736/1000] The Star By Liverpool Street (London) → ✓ bio, imageUrl, wikiUrl, address, lat, lng
+[737/1000] Utilita Arena Newcastle (Newcastle Upon Tyne) → ✓ bio, imageUrl, wikiUrl, mbid, address, lat, lng
+[738/1000] One Ninety Four (London) → ✓ bio, wikiUrl
+[739/1000] Beeding and Bramber Village Hall (Upper Beeding) → ✓ address, lat, lng
+[740/1000] St Anne's (Richmond) → ✓ bio, imageUrl, wikiUrl, address, lat, lng
+[741/1000] Grace's Irish Centre (Glasgow) → ✓ bio, imageUrl, wikiUrl
+[742/1000] Rugby Railway Club (Rugby) → ✓ bio, imageUrl, wikiUrl
+[743/1000] Club Sixes (Bedford) → no data found
+[744/1000] Ilkeston Rugby Club (Ilkeston) → ✓ bio, imageUrl, wikiUrl, address, lat, lng
+[745/1000] Co-op Live (Manchester) → ✓ bio, imageUrl, wikiUrl, address, lat, lng
+[746/1000] SEC Armadillo (Glasgow) → ✓ bio, imageUrl, wikiUrl, mbid, address, lat, lng
+[747/1000] Gas South Theater (Duluth) → ✓ mbid, address
+[748/1000] Defiance Spirits (Rochdale) → ✓ bio, wikiUrl
+[749/1000] Blue Note (Derby) → ✓ bio, wikiUrl, address, lat, lng
+[750/1000] Soho Comedy At 7 Dials (London) → ✓ bio, imageUrl, wikiUrl
+[751/1000] Pulse Studios (London) → ✓ bio, imageUrl, wikiUrl
+[752/1000] Olympia (London) → ✓ bio, imageUrl, wikiUrl, address, lat, lng
+[753/1000] Big Top (Barnsley) → ✓ bio, wikiUrl
+[754/1000] Secular Hall (Leicester) → ✓ bio, imageUrl, wikiUrl, address, lat, lng
+[755/1000] Shredenhams (Bristol) → ✓ address, lat, lng
+[756/1000] Rough Trade Liverpool (Liverpool) → ✓ bio, imageUrl, wikiUrl, address, lat, lng
+[757/1000] Southend Cliffs Pavilion (Southend-On-Sea) → ✓ bio, imageUrl, wikiUrl
+[758/1000] The Steel Bar Venue (Corby) → ✓ bio, imageUrl, wikiUrl
+[759/1000] The Glad Cafe CIC (Glasgow) → no data found
+[760/1000] Silverlake Stadium (Eastleigh) → ✓ address, lat, lng
+[761/1000] Commune Liverpool (Liverpool) → ✓ address, lat, lng
+[762/1000] Waterfront Hall (Belfast) → ✓ bio, imageUrl, wikiUrl, mbid, address, lat, lng
+[763/1000] Sector 57, Birmingham (Birmingham) → ✓ bio, imageUrl, wikiUrl
+[764/1000] Krakatoa (ABERDEEN) → ✓ bio, imageUrl, wikiUrl, address, lat, lng
+[765/1000] Worcester Secret Venue (TBA) (Worcester) → no data found
+[766/1000] Earlston Rugby Club (Earlston) → ✓ bio, imageUrl, wikiUrl, address, lat, lng
+[767/1000] Big Belly Bar And Comedy Club Southbank (London) → no data found
+[768/1000] Hot Numbers Coffee - Gwydir St (Dale's Brewery) (Cambridge) → no data found
+[769/1000] Royal Nawaab Pyramid (Stockport) → ✓ address, lat, lng
+[770/1000] Ashton Court Estate (Bristol) → ✓ bio, imageUrl, wikiUrl, address, lat, lng
+[771/1000] White Lion (Castleford) → ✓ bio, imageUrl, wikiUrl, address, lat, lng
+[772/1000] The Pig Bar (Olympia) → no data found
+[773/1000] De Montfort Hall (Leicester) → ✓ bio, imageUrl, wikiUrl, mbid, address, lat, lng
+[774/1000] Brickhouse Social NWS (Manchester) → no data found
+[775/1000] The Lubber Fiend (Newcastle Upon Tyne) → ✓ bio, wikiUrl, address, lat, lng
+[776/1000] 1st Norwich Sea Scouts Hall (Norwich) → ✓ bio, imageUrl, wikiUrl
+[777/1000] The Red Lodge Museum (Bristol) → ✓ bio, imageUrl, wikiUrl, address, lat, lng
+[778/1000] Mickey Zoggs (Bristol) → ✓ address, lat, lng
+[779/1000] Jubilee Square (Brighton) → ✓ bio, imageUrl, wikiUrl, address, lat, lng
+[780/1000] Thirty3Hz (Guildford) → ✓ address, lat, lng
+[781/1000] 33 Oldham St. (Manchester) → ✓ bio, imageUrl, wikiUrl, address, lat, lng
+[782/1000] 606 Club (London) → ✓ bio, imageUrl, wikiUrl, address, lat, lng
+[783/1000] Indigo (Leyland) → ✓ bio, imageUrl, wikiUrl
+[784/1000] Tullyglass House Hotel (Ballymena) → ✓ address, lat, lng
+[785/1000] St Michael & All Angels, Walthamstow (London) → ✓ bio, imageUrl, wikiUrl, address, lat, lng
+[786/1000] Wollaton Hall Park (Nottingham) → ✓ bio, imageUrl, wikiUrl, address, lat, lng
+[787/1000] Guildhall Square (Southampton) → ✓ address, lat, lng
+[788/1000] Horsham Sports Club (Horsham) → ✓ bio, imageUrl, wikiUrl, address, lat, lng
+[789/1000] Supermax (London) → ✓ bio, wikiUrl
+[790/1000] FunnyBoyz Liverpool UK (Liverpool) → no data found
+[791/1000] The Glee Club (Glasgow) → ✓ bio, imageUrl, wikiUrl, address, lat, lng
+[792/1000] Stockport Masonic Guildhall (Stockport) → ✓ address, lat, lng
+[793/1000] The Robin Hotel (Wolverhampton) → ✓ bio, imageUrl, wikiUrl
+[794/1000] BBC Radio 1's Live Lounge (London) → ✓ bio, imageUrl, wikiUrl
+[795/1000] Gaer Inn (Newport) → ✓ address, lat, lng
+[796/1000] Nice N Sleazys Upstairs (Glasgow) → no data found
+[797/1000] Asylum Bar and Venue (Birmingham) → no data found
+[798/1000] Kola (Southsea) → ✓ bio, wikiUrl
+[799/1000] The White Horse (London Colney) → ✓ bio, imageUrl, wikiUrl
+[800/1000] Liquid Belfast (Belfast) → ✓ bio, imageUrl, wikiUrl, address, lat, lng
+[801/1000] The Dutch Master (London) → ✓ bio, imageUrl, wikiUrl
+[802/1000] No.4 Banqueting Suit (Dudley) → no data found
+[803/1000] Elm Bank Banqueting And Conference Centre (Manchester) → no data found
+[804/1000] Elysium Nightclub Sunderland (SUNDERLAND) → no data found
+[805/1000] Agaton Social Club  (Plymouth) → ✓ address, lat, lng
+[806/1000] 1812 Bournemouth (Bournemouth) → ✓ bio, imageUrl, wikiUrl, address, lat, lng
+[807/1000] Sweetwater Music Hall (Mill Valley) → ✓ bio, imageUrl, wikiUrl
+[808/1000] DUDLEY TOWN HALL (DUDLEY) → ✓ bio, imageUrl, wikiUrl, address, lat, lng
+[809/1000] (The Refuge) The Mermaid (Exeter) → ✓ bio, imageUrl, wikiUrl
+[810/1000] Murray's (Bargoed) → ✓ address, lat, lng
+[811/1000] Coventry Building Society Arena (Coventry) → ✓ bio, imageUrl, wikiUrl, mbid, address, lat, lng
+[812/1000] Cardiff West End Social Club (Cardiff) → ✓ bio, imageUrl, wikiUrl, address, lat, lng
+[813/1000] Thompsons Garage (Belfast) → ✓ bio, wikiUrl
+[814/1000] Wunderbar (GLASGOW) → ✓ bio, wikiUrl, address, lat, lng
+[815/1000] Latvian House (London) → ✓ bio, imageUrl, wikiUrl
+[816/1000] The Basement, Bristol Exchange (Bristol) → ✓ bio, imageUrl, wikiUrl
+[817/1000] Derby Cricket Ground (Derby) → ✓ bio, imageUrl, wikiUrl
+[818/1000] The New Adelphi Club (Kingston upon Hull) → ✓ bio, imageUrl, wikiUrl, address, lat, lng
+[819/1000] Fire Vauxhall (Vauxhall) → ✓ bio, imageUrl, wikiUrl, address, lat, lng
+[820/1000] The Anchor Wingham (Canterbury) → ✓ bio, imageUrl, wikiUrl, address, lat, lng
+[821/1000] Vittoria Wharf Studio (London) → ✓ address, lat, lng
+[822/1000] The Commercial Inn (Risca) → ✓ address, lat, lng
+[823/1000] 1000 Trades (Birmingham) → ✓ address, lat, lng
+[824/1000] Portree High School (Portree) → ✓ bio, imageUrl, wikiUrl, address, lat, lng
+[825/1000] The Windmill Clapham (Clapham) → ✓ bio, wikiUrl, address, lat, lng
+[826/1000] Lydney Rugby Football Club (Lydney) → ✓ bio, imageUrl, wikiUrl
+[827/1000] DNA Lounge (San Francisco) → ✓ bio, imageUrl, wikiUrl, mbid, address
+[828/1000] Oxygene Nightclub (Wolverhampton) → no data found
+[829/1000] Time. (London) → ✓ bio, imageUrl, wikiUrl, address, lat, lng
+[830/1000] Rangers Bar (Sutton) → no data found
+[831/1000] Michaelangelos (Blaydon-on-Tyne) → no data found
+[832/1000] Venue MOT Unit 18 (London) → no data found
+[833/1000] The Glasshouse International Centre for Music (Gateshead) → ✓ bio, imageUrl, wikiUrl
+[834/1000] Bar Dos Hermanos (Leicester) → ✓ bio, imageUrl, wikiUrl, address, lat, lng
+[835/1000] Powderham Castle (Exeter) → ✓ bio, imageUrl, wikiUrl, address, lat, lng
+[836/1000] Harewood House (Leeds) → ✓ bio, imageUrl, wikiUrl, address, lat, lng
+[837/1000] Portishead Show Field, (Portishead) → ✓ bio, imageUrl, wikiUrl
+[838/1000] Harmby Village Hall (Leyburn) → ✓ bio, imageUrl, wikiUrl
+[839/1000] Seacote Hotel - Tel - 01946 822 300 (St Bees) → no data found
+[840/1000] Gut Level (Sheffield) → ✓ bio, imageUrl, wikiUrl, address, lat, lng
+[841/1000] 229 London (London) → ✓ bio, imageUrl, wikiUrl, address, lat, lng
+[842/1000] Comedy Carpet (Blackpool) → ✓ bio, imageUrl, wikiUrl, address, lat, lng
+[843/1000] Prince Bishop Cruiser (Newcastle) → no data found
+[844/1000] Zerodegrees Restaurant Microwbrewery (Reading) → no data found
+[845/1000] Southbank Centre Belvedere Road London SE1 (London) → ✓ bio, imageUrl, wikiUrl
+[846/1000] SEC Centre - Lomond Auditorium (Glasgow) → no data found
+[847/1000] The Lexington (Islington) → ✓ bio, imageUrl, wikiUrl, address, lat, lng
+[848/1000] Mary Street Live (Sheffield) → ✓ bio, imageUrl, wikiUrl
+[849/1000] Vauxhall Food & Beer Garden (London) → no data found
+[850/1000] Disgraceland Middlesbrough (Middlesbrough) → ✓ address, lat, lng
+[851/1000] The Rainbow (Bordesley) → ✓ bio, imageUrl, wikiUrl, address, lat, lng
+[852/1000] The Gate (Cardiff) → ✓ bio, wikiUrl, address, lat, lng
+[853/1000] SJQ (London) → ✓ bio, wikiUrl
+[854/1000] Blue Anchor (Dundalk) → ✓ bio, imageUrl, wikiUrl
+[855/1000] Trafalgar Warehouse (Sheffield) → ✓ bio, imageUrl, wikiUrl, address, lat, lng
+[856/1000] Blackburn Cathedral (BLACKBURN) → ✓ bio, imageUrl, wikiUrl, mbid, address, lat, lng
+[857/1000] Dune Peninsula (Tacoma) → ✓ bio, imageUrl, wikiUrl
+[858/1000] BH10 4HY (Bournemouth) → ✓ address, lat, lng
+[859/1000] Excellar (Surbiton) → no data found
+[860/1000] Rochester Cathedral (The Precinct) → ✓ bio, imageUrl, wikiUrl, address, lat, lng
+[861/1000] Falls Park (Belfast) → ✓ bio, imageUrl, wikiUrl, address, lat, lng
+[862/1000] The Shipping Forecast (Liverpool) → ✓ bio, imageUrl, wikiUrl, address, lat, lng
+[863/1000] Guys Cliffe House (Warwickshire) → ✓ bio, imageUrl, wikiUrl
+[864/1000] Cobalt Studios (Shieldfield) → ✓ bio, imageUrl, wikiUrl, address, lat, lng
+[865/1000] The Grove Balham (London) → ✓ bio, imageUrl, wikiUrl, address, lat, lng
+[866/1000] Forum Theatre Billingham (Billingham) → ✓ bio, imageUrl, wikiUrl, address, lat, lng
+[867/1000] Loftus Road Stadium (London) → ✓ bio, imageUrl, wikiUrl, address, lat, lng
+[868/1000] O2 Academy Leeds (Leeds) → ✓ bio, imageUrl, wikiUrl, address, lat, lng
+[869/1000] Hutton Village Hall (Preston) → ✓ bio, wikiUrl
+[870/1000] Beat (London) → ✓ bio, wikiUrl, address, lat, lng
+[871/1000] Space Talk (London) → ✓ bio, wikiUrl
+[872/1000] Yardbirds Rock Club (Grimsby) → no data found
+[873/1000] Islington Partnerships Office (London) → no data found
+[874/1000] Prince Of Wales Theatre (London) → ✓ bio, imageUrl, wikiUrl, address, lat, lng
+[875/1000] The Sugarmill (Stoke-on-Trent) → ✓ bio, wikiUrl
+[876/1000] Sealife London Aquarium (London) → ✓ bio, imageUrl, wikiUrl
+[877/1000] Mu Mu (Maidstone) → ✓ bio, imageUrl, wikiUrl
+[878/1000] M.E.C.A. Swindon (Wiltshire) → ✓ bio, imageUrl, wikiUrl
+[879/1000] Boothstown Royal British Legion (Boothstown) → no data found
+[880/1000] The Water Rats (London) → ✓ bio, imageUrl, wikiUrl, address, lat, lng
+[881/1000] Club 69 (Glasgow) → ✓ bio, wikiUrl
+[882/1000] Airdrie Town Hall (Airdrie) → ✓ bio, imageUrl, wikiUrl, address, lat, lng
+[883/1000] Broad Street West (Oxford) → ✓ bio, imageUrl, wikiUrl, address, lat, lng
+[884/1000] Music Hall Dundee (Lower) → ✓ bio, imageUrl, wikiUrl
+[885/1000] The Greenhouse (Manchester) → ✓ bio, imageUrl, wikiUrl, address, lat, lng
+[886/1000] Pilgrim Bar 3 Robertson's Cl, Cowgate (Edinburgh) → no data found
+[887/1000] The Old Toll Bar (Glasgow) → ✓ bio, imageUrl, wikiUrl
+[888/1000] HIDDEN Dundee (Dundee) → ✓ address, lat, lng
+[889/1000] Coffee No1 (Sutton Coldfield) → no data found
+[890/1000] Swansea Building Society Arena (Swansea) → ✓ bio, imageUrl, wikiUrl
+[891/1000] Woolton Village Club (Liverpool) → ✓ bio, imageUrl, wikiUrl, address, lat, lng
+[892/1000] The Engine Rooms Rehearsal Studios (London) → no data found
+[893/1000] Pier 14 (Amsterdam) → ✓ bio, imageUrl, wikiUrl
+[894/1000] Macsorley's (Glasgow) → ✓ address, lat, lng
+[895/1000] Addlestone Community Centre (Addlestone) → ✓ bio, imageUrl, wikiUrl, address, lat, lng
+[896/1000] Archives London (London) → ✓ bio, imageUrl, wikiUrl, address, lat, lng
+[897/1000] The Chapel (Old Angel) (Nottingham) → ✓ bio, imageUrl, wikiUrl
+[898/1000] Home Rule Club (Kilkenny) → no data found
+[899/1000] Indigo Rooms (Galashiels) → no data found
+[900/1000] Hoxton Cabin (London) → ✓ address, lat, lng
+[901/1000] Spread Eagle Chortlon (Manchester) → no data found
+[902/1000] The Ginistry (Oxted, Surrey) → no data found
+[903/1000] Kingswood Village Hall (Banstead) → ✓ bio, imageUrl, wikiUrl, address, lat, lng
+[904/1000] Revolution Cambridge (Cambridge) → ✓ bio, imageUrl, wikiUrl, address, lat, lng
+[905/1000] Mavericks Huddersfield  (Huddersfield) → no data found
+[906/1000] The OEC (Sheffield) → ✓ bio, wikiUrl
+[907/1000] Mahiki Kensington  2A Kensington High Street  London  W (London) → no data found
+[908/1000] St Andrew's Church Waterloo Street HOVE (Hove) → ✓ bio, imageUrl, wikiUrl
+[909/1000] Between the Bridges (London) → ✓ bio, imageUrl, wikiUrl
+[910/1000] The Drawing Board And Bluebox (York) → no data found
+[911/1000] Golden Lion (Bristol) → ✓ bio, imageUrl, wikiUrl, address, lat, lng
+[912/1000] The Blue Moon (Cambridge) → ✓ bio, imageUrl, wikiUrl, address, lat, lng
+[913/1000] The Underworld (London) → ✓ bio, wikiUrl, address, lat, lng
+[914/1000] Shaw Hall Holiday Park (Ormskirk) → no data found
+[915/1000] The Hideout Arena (Bolton) → no data found
+[916/1000] The Drill Shed (Margate) → ✓ bio, imageUrl, wikiUrl
+[917/1000] Bens Bar (Doncaster) → ✓ bio, imageUrl, wikiUrl
+[918/1000] Liverpool Irish Centre (Liverpool) → ✓ bio, imageUrl, wikiUrl
+[919/1000] Kuumba Project (Saint Paul's) → no data found
+[920/1000] The Eagle (London) → ✓ bio, imageUrl, wikiUrl, address, lat, lng
+[921/1000] Over The Bridge (Bridge Of Allan) → ✓ bio, imageUrl, wikiUrl
+[922/1000] The Venue Kirkcaldy (Kirkcaldy) → ✓ bio, imageUrl, wikiUrl, address, lat, lng
+[923/1000] Blackwell Grange Hotel (Darlington) → ✓ bio, imageUrl, wikiUrl, address, lat, lng
+[924/1000] Parish Church of St Augustine of Hippo (Grimsby) → ✓ bio, imageUrl, wikiUrl
+[925/1000] Holiday Inn Norwich North (Norwich) → ✓ bio, imageUrl, wikiUrl, address, lat, lng
+[926/1000] Dreamland Margate, Scenic Stage (Margate) → ✓ bio, imageUrl, wikiUrl
+[927/1000] Union Chapel (London) → ✓ bio, imageUrl, wikiUrl, address, lat, lng
+[928/1000] Fell Foot Wood Newby Bridge Ulverston LA12 8NN (Ulverston) → no data found
+[929/1000] Docks Academy (Grimsby) → ✓ bio, wikiUrl
+[930/1000] The Tunnels Frome (Frome) → ✓ bio, imageUrl, wikiUrl
+[931/1000] Chapel of Royal Holloway (Egham) → ✓ bio, imageUrl, wikiUrl
+[932/1000] The Bubble Room Alderley Edge (Alderley Edge) → ✓ address, lat, lng
+[933/1000] Beer Emporium Bottle Bank (Crewe) → no data found
+[934/1000] Steiner Academy Exeter (Exeter) → ✓ bio, wikiUrl
+[935/1000] Huntingdon Hall (Worcester) → ✓ bio, imageUrl, wikiUrl, mbid, address, lat, lng
+[936/1000] Privilege Bar And Night Club (Manchester) → ✓ bio, imageUrl, wikiUrl
+[937/1000] HEADROW HOUSE (Leeds) → ✓ address, lat, lng
+[938/1000] Three Horseshoes (Morley) → ✓ bio, wikiUrl, address, lat, lng
+[939/1000] O2 Academy2 Bristol (Bristol) → ✓ bio, imageUrl, wikiUrl
+[940/1000] The Hold The Shipping Forecast (Liverpool) → ✓ bio, imageUrl, wikiUrl
+[941/1000] Holy Trinity & St Jude's Church (Halifax) → ✓ bio, imageUrl, wikiUrl
+[942/1000] Songbyrd (Washington D.C.) → no data found
+[943/1000] Hootananny Brixton (London) → ✓ address, lat, lng
+[944/1000] The Venue. (Worthing) → ✓ bio, wikiUrl
+[945/1000] Secret Venue TBA (Liverpool) → no data found
+[946/1000] The Italian Gardens (Weston-Super-Mare) → ✓ bio, imageUrl, wikiUrl
+[947/1000] The Harrison Chambers Of Distinction (Belfast) → no data found
+[948/1000] Jamboree (London) → ✓ bio, imageUrl, wikiUrl, mbid, address, lat, lng
+[949/1000] The Blue Dog (Glasgow) → ✓ bio, imageUrl, wikiUrl
+[950/1000] The Bag Factory (Manchester) → ✓ bio, imageUrl, wikiUrl, address, lat, lng
+[951/1000] Flamingo Rooms, O'Neill's Wardour Street (London) → no data found
+[952/1000] District 61 Jordan St, Liverpool L1 0BE (Liverpool) → ✓ address, lat, lng
+[953/1000] Mrs Fitzherbert's (Brighton and Hove) → ✓ bio, wikiUrl, address, lat, lng
+[954/1000] Off Grid 31 (Bridgend) → ✓ bio, wikiUrl
+[955/1000] Buzz Bingo Possilpark Glasgow (Glasgow) → ✓ address, lat, lng
+[956/1000] The Horse And Groom (Shoreditch) → ✓ bio, imageUrl, wikiUrl
+[957/1000] Manchester Gullivers (Manchester) → ✓ bio, imageUrl, wikiUrl
+[958/1000] JT Soars (Nottingham) → no data found
+[959/1000] Rae's (London) → ✓ bio, wikiUrl, address, lat, lng
+[960/1000] Skiddle (Preston) → ✓ bio, wikiUrl
+[961/1000] St James Church, New Barnet (London) → ✓ bio, imageUrl, wikiUrl, address, lat, lng
+[962/1000] Koninklijk Theater Carré (Amsterdam) → ✓ mbid, address
+[963/1000] Loch Lomond SEA LIFE Aquarium (Balloch) → ✓ bio, imageUrl, wikiUrl
+[964/1000] Tamworth Assembly Rooms (Tamworth) → ✓ bio, imageUrl, wikiUrl, address, lat, lng
+[965/1000] Dirty Dicks (Hull) → ✓ bio, imageUrl, wikiUrl
+[966/1000] Night & Day Café (Manchester) → ✓ bio, wikiUrl
+[967/1000] Big Splash Manor (Redhill) → ✓ bio, imageUrl, wikiUrl
+[968/1000] Norwich Secret Venue (TBA) (Norwich) → no data found
+[969/1000] The Dragonffli (Pont-y-Pwl) → ✓ address, lat, lng
+[970/1000] Renae (Manchester) → ✓ bio, imageUrl, wikiUrl
+[971/1000] Priory Centre, (Burton-On-Trent) → no data found
+[972/1000] Pink Moon (Brighton and Hove) → ✓ bio, imageUrl, wikiUrl, address, lat, lng
+[973/1000] Ambika Paul Building University Of Wolverhampton City (Wolverhampton) → ✓ bio, imageUrl, wikiUrl
+[974/1000] Oculist (Brighton) → ✓ bio, imageUrl, wikiUrl
+[975/1000] Revolution (Manchester) → ✓ bio, wikiUrl, address, lat, lng
+[976/1000] TBA - THE DANCEHALL LND 1 NAVIGATOR SQUARE LONDON N19 (London) → no data found
+[977/1000] Tottenham Hotspur New Stadium (Tottenham) → ✓ bio, imageUrl, wikiUrl
+[978/1000] HQ 232 Claremont Rd (Manchester) → no data found
+[979/1000] Forge Bar (London) → ✓ address, lat, lng
+[980/1000] St. Lawrence Chapel (Ashburton) → ✓ bio, imageUrl, wikiUrl, address, lat, lng
+[981/1000] The CISWO, Glenrothes (Glenrothes) → ✓ bio, imageUrl, wikiUrl
+[982/1000] Imperial St Helens (St. Helens) → ✓ bio, imageUrl, wikiUrl, address, lat, lng
+[983/1000] The Basement Club (Stoke-on-Trent) → ✓ bio, imageUrl, wikiUrl
+[984/1000] Teesside University Students' Union (Middlesbrough) → ✓ bio, imageUrl, wikiUrl
+[985/1000] Crown Inn (Bridport) → ✓ bio, wikiUrl, address, lat, lng
+[986/1000] Ultra Warehouse (Derby) → ✓ bio, imageUrl, wikiUrl, address, lat, lng
+[987/1000] O2 Apollo Manchester (Manchester) → ✓ bio, imageUrl, wikiUrl, address, lat, lng
+[988/1000] Tape (London) → ✓ bio, imageUrl, wikiUrl, mbid, address, lat, lng
+[989/1000] Pam's Bar And Nightclub Congleton (Congleton) → no data found
+[990/1000] Rolling Stock (London) → ✓ bio, imageUrl, wikiUrl, address, lat, lng
+[991/1000] Beaumanor Hall And Park (Leicestershire) → ✓ bio, imageUrl, wikiUrl
+[992/1000] Pontefract Castle (Pontefract) → ✓ bio, imageUrl, wikiUrl, address, lat, lng
+[993/1000] Fareham Live (Fareham) → ✓ bio, imageUrl, wikiUrl, mbid, address, lat, lng
+[994/1000] Birmingham TBC (Birmingham) → ✓ bio, imageUrl, wikiUrl
+[995/1000] Tower Of Song Music Venue (Birmingham) → ✓ bio, imageUrl, wikiUrl
+[996/1000] Styx Glenrothes (Glenrothes) → ✓ address, lat, lng
+[997/1000] Exeter Cathedral (Exeter) → ✓ bio, imageUrl, wikiUrl, address, lat, lng
+[998/1000] Sirius Academy West Sports Hall, HU4 7AB (Hull) → no data found
+[999/1000] Hopleys Family Camping (Bewdley) → ✓ address, lat, lng
+[1000/1000] Canvas Dundee (Dundee) → no data found
+
+Done. Enriched: 782/1000

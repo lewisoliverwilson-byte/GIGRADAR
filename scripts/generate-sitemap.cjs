@@ -59,6 +59,9 @@ function sitemapIndex(sitemaps) {
   );
   console.log(`  ${venues.length} active venues`);
 
+  const CITIES = ['london','manchester','birmingham','glasgow','liverpool','leeds','bristol','edinburgh','newcastle','sheffield','nottingham','cardiff','brighton','oxford','leicester','southampton','belfast','cambridge','norwich','exeter'];
+  const GENRES = ['rock','indie','pop','electronic','dance','jazz','hip-hop','folk','metal','punk'];
+
   // Static pages
   const staticXml = xml([
     { loc: `${SITE_URL}/`,        changefreq: 'daily',   priority: '1.0' },
@@ -66,6 +69,12 @@ function sitemapIndex(sitemaps) {
     { loc: `${SITE_URL}/artists`, changefreq: 'daily',   priority: '0.8' },
     { loc: `${SITE_URL}/venues`,  changefreq: 'weekly',  priority: '0.8' },
     { loc: `${SITE_URL}/discover`,changefreq: 'daily',   priority: '0.7' },
+    // City pages
+    ...CITIES.map(c => ({ loc: `${SITE_URL}/gigs/${c}`, changefreq: 'daily', priority: '0.85' })),
+    // Genre+city pages (top combinations)
+    ...CITIES.slice(0, 8).flatMap(c =>
+      GENRES.slice(0, 5).map(g => ({ loc: `${SITE_URL}/gigs/${c}/${g}`, changefreq: 'daily', priority: '0.75' }))
+    ),
   ]);
   fs.writeFileSync(path.join(OUT_DIR, 'sitemap-static.xml'), staticXml);
 

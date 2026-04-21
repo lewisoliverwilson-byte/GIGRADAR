@@ -1,0 +1,425 @@
+Loading venues…
+Total: 10130  Have wikiUrl or mbid, no website: 421
+[1/421] Hillsborough Castle and Gardens → not found
+[2/421] Shrewsbury Folk Festival → not found
+[3/421] Bullitt Belfast → not found
+[4/421] The Bristol Music Club → not found
+[5/421] The Old Dispensary → not found
+[6/421] The Powerhouse → not found
+[7/421] Great Hall → not found
+[8/421] Boucher Road Playing Fields → not found
+[9/421] Community Church Putney → not found
+[10/421] Six Trees Bar And Kitchen Manchester → not found
+[11/421] The Flying Duck → not found
+[12/421] Paloma → not found
+[13/421] Barn United Social Club → not found
+[14/421] The Crypt → ✓ https://www.thecryptbar.com/
+[15/421] Peckham Rye Park → not found
+[16/421] St Bride’s Scottish Episcopal Church → not found
+[17/421] All Saints Church → not found
+[18/421] Worksop College → not found
+[19/421] Reinstate → not found
+[20/421] Ivy Room → not found
+[21/421] Leazes Park → not found
+[22/421] Milton Court Concert Hall → not found
+[23/421] St Lawrence Parish Church, York → not found
+[24/421] Winchester Royal Hotel → not found
+[25/421] Make-Out Room → not found
+[26/421] Seaford Baptist Church → not found
+[27/421] The Timber Loft → not found
+[28/421] Kelvedon Hall → not found
+[29/421] 4 Mill Bank → not found
+[30/421] Riff Raffs → not found
+[31/421] Chapel Street & The Crescent, Salford → not found
+[32/421] Leicester Cathedral → ✓ https://leicestercathedral.org/
+[33/421] Moor Beer Co → ✓ https://www.moorbeer.co.uk/brewery-tap
+[34/421] Lower Deck → not found
+[35/421] OverDraught → not found
+[36/421] Mansfield Central Library → not found
+[37/421] Viva Blackpool - The Show & Party Venue → not found
+[38/421] Clock Factory → not found
+[39/421] District Atlanta → not found
+[40/421] Dewsbury Minster - Mother Church of West Yorkshire → not found
+[41/421] Portsmouth Cathedral → not found
+[42/421] St Peter's Church, Belper → not found
+[43/421] Queen's Park Arena → not found
+[44/421] Cathedral Quarter Arts Festival → not found
+[45/421] The Doghouse bar & Record Store → not found
+[46/421] Feast At The Mills → not found
+[47/421] The Civic Hall → not found
+[48/421] Millwall Football Club → not found
+[49/421] St Andrew's United Reformed Church → not found
+[50/421] Defected's The Basement → not found
+[51/421] Firth Park Working Men's Club → not found
+[52/421] Ten Green Bottles → not found
+[53/421] Saltburn Community Theatre → not found
+[54/421] Kilburn Library (Brent) → not found
+[55/421] Holding Patterns → not found
+[56/421] The Sunflower → not found
+[57/421] Manuka → not found
+[58/421] The Risley Park → not found
+[59/421] The Steam and Whistle → not found
+[60/421] These Things Happen → not found
+[61/421] Gaffe → not found
+[62/421] Darlington Market → not found
+[63/421] Battersea Barge → not found
+[64/421] Sketchy Beats Cafe → not found
+[65/421] Moe's Alley → not found
+[66/421] Quarters → not found
+[67/421] Festival Hall, Alderley Edge → not found
+[68/421] West Barns Village Hall → not found
+[69/421] Jacobs Car Park → not found
+[70/421] Victoria Hall → not found
+[71/421] The River Thames → not found
+[72/421] Shenley Brook End School → not found
+[73/421] House of Ora → not found
+[74/421] St Symphorian's Church, Durrington → not found
+[75/421] Turtle Bay → not found
+[76/421] Le Voyeur → not found
+[77/421] Port of Leith Distillery → not found
+[78/421] Freedom City Church → not found
+[79/421] The Brunswick → not found
+[80/421] The Old Market → ✓ http://www.theoldmarket.com
+[81/421] Rickshaw Stop → not found
+[82/421] Legends → not found
+[83/421] St Guthlac's Church : Market Deeping → ✓ http://www.mdtc.info/
+[84/421] D2 → not found
+[85/421] Blitz Venue & Nightclub → not found
+[86/421] The Empire → not found
+[87/421] EartH Kitchen → not found
+[88/421] Custom House, Exeter Quay → not found
+[89/421] The Alchemist → not found
+[90/421] SOUL Church → ✓ http://www.soulsurvivor.com/
+[91/421] The Joiners, Southampton → ✓ http://www.joinerslive.co.uk
+[92/421] Independent → not found
+[93/421] St. Gabriel's Church → ✓ http://www.stgeorgeshanoversquare.org/
+[94/421] Schloss Ritzebüttel → ✓ https://tourismus.cuxhaven.de/staticsite/staticsite.php?menuid=297&topmenu=124
+[95/421] The Masquerade → ✓ http://masqueradeatlanta.com/
+[96/421] Oxford Brookes University → not found
+[97/421] Victoria Gallery & Museum → ✓ https://vgm.liverpool.ac.uk/
+[98/421] Ventnor Arts Club → ✓ http://www.ventnor-iw.co.uk/
+[99/421] Amsterdam - Melkweg / Paradiso → ✓ http://www.paradiso.nl/
+[100/421] Exeter Phoenix → not found
+[101/421] Oxygenic → not found
+[102/421] Eden Venue → not found
+[103/421] Morgan's Bar → ✓ https://morganwallen.com/
+[104/421] Plaza Theatre → not found
+[105/421] The Boulevard → not found
+[106/421] Bannermans Edinburgh → not found
+[107/421] Borde Hill Garden Haywards Heath → not found
+[108/421] Museum of Archaeology and Anthropology → ✓ https://moa.ubc.ca/
+[109/421] Catholic Church of the Immaculate Conception, Mayfair → ✓ http://www.farmstreet.org.uk/home.htm
+[110/421] Big Penny Social → not found
+[111/421] The Piggott C of E School → ✓ http://www.piggott.wokingham.sch.uk
+[112/421] Waterperry Gardens → not found
+[113/421] Church of the Good Shepherd → not found
+[114/421] Theater Amsterdam → ✓ https://www.amsterdamsandalusischorkest.nl/
+[115/421] Other Space Arts → not found
+[116/421] Fitzwilliam College Chapel → ✓ http://www.fitz.cam.ac.uk/
+[117/421] The Cellar → not found
+[118/421] Port Of Leith Distillery Leith, Edinburgh → not found
+[119/421] St Ninian's Scottish Episcopal Church → ✓ http://www.st-cuthberts.net/
+[120/421] Maison Close → not found
+[121/421] St Anne's → ✓ http://www.saintanne-kew.org.uk/
+[122/421] Ilkeston Rugby Club → not found
+[123/421] Gas South Theater → ✓ https://www.gassouthdistrict.com/venues/detail/theater
+[124/421] Pulse Studios → not found
+[125/421] Big Top → not found
+[126/421] Waterfront Hall → ✓ http://www.waterfront.co.uk
+[127/421] Ashton Court Estate → ✓ http://www.ashtoncourtestate.co.uk/
+[128/421] The Red Lodge Museum → ✓ https://www.bristolmuseums.org.uk/red-lodge-museum/
+[129/421] St Michael & All Angels, Walthamstow → not found
+[130/421] Horsham Sports Club → not found
+[131/421] Supermax → not found
+[132/421] The Robin Hotel → not found
+[133/421] Kola → not found
+[134/421] Liquid Belfast → ✓ https://www.belfastairport.com/
+[135/421] The Dutch Master → not found
+[136/421] Sweetwater Music Hall → not found
+[137/421] (The Refuge) The Mermaid → not found
+[138/421] Wunderbar → not found
+[139/421] The Basement, Bristol Exchange → not found
+[140/421] The Windmill Clapham → not found
+[141/421] Lydney Rugby Football Club → not found
+[142/421] DNA Lounge → ✓ https://www.dnalounge.com/
+[143/421] Gut Level → not found
+[144/421] 229 London → ✓ http://www.londoncentral.com/
+[145/421] The Rainbow → not found
+[146/421] Dune Peninsula → ✓ http://www.dunenovels.com
+[147/421] Rochester Cathedral → ✓ http://www.rochestercathedral.org
+[148/421] Beat → not found
+[149/421] Space Talk → not found
+[150/421] Mu Mu → not found
+[151/421] Club 69 → not found
+[152/421] Broad Street West → not found
+[153/421] Pier 14 → not found
+[154/421] Kingswood Village Hall → not found
+[155/421] The Eagle → not found
+[156/421] Parish Church of St Augustine of Hippo → not found
+[157/421] Holiday Inn Norwich North → not found
+[158/421] Chapel of Royal Holloway → ✓ http://www.rhbnc.ac.uk/
+[159/421] Three Horseshoes → not found
+[160/421] Holy Trinity & St Jude's Church → ✓ https://htb.org
+[161/421] The Bag Factory → not found
+[162/421] Mrs Fitzherbert's → not found
+[163/421] Rae's → not found
+[164/421] Skiddle → not found
+[165/421] St James Church, New Barnet → ✓ http://www.barnetparishchurch.org.uk/home.php
+[166/421] Koninklijk Theater Carré → ✓ https://carre.nl/
+[167/421] Night & Day Café → not found
+[168/421] Pink Moon → not found
+[169/421] Oculist → not found
+[170/421] St. Lawrence Chapel → ✓ http://www.st-peters.york.sch.uk/
+[171/421] The CISWO, Glenrothes → not found
+[172/421] Tower Of Song Music Venue → not found
+[173/421] Exeter Cathedral → not found
+[174/421] The Arches → not found
+[175/421] Billingtons → not found
+[176/421] The Exhibit  → not found
+[177/421] Flav'r Country Ranch → not found
+[178/421] Royal Arcade → not found
+[179/421] TheCUT → not found
+[180/421] The Peer Hat → not found
+[181/421] The Alchemist → not found
+[182/421] Top Of The World → not found
+[183/421] The Hare & Hounds Birmingham → not found
+[184/421] The Beech House → not found
+[185/421] Neuadd Ogwen → not found
+[186/421] Fit'sIn → not found
+[187/421] Kremlin → not found
+[188/421] Impossible → not found
+[189/421] The Snug → not found
+[190/421] Bad Habitz → not found
+[191/421] The Park View → not found
+[192/421] AVCC → not found
+[193/421] Mississippi Country Music Club → not found
+[194/421] Temperance → not found
+[195/421] Black Horse → not found
+[196/421] Vibes → not found
+[197/421] The Music Room → not found
+[198/421] Shenanigans → not found
+[199/421] The Apex → not found
+[200/421] The Crown Tavern → not found
+[201/421] Kings Head Theatre → not found
+[202/421] Lord Hill → not found
+[203/421] The Awesome Studio → not found
+[204/421] Lanigan’s → not found
+[205/421] The Sands Centre → not found
+[206/421] Firewater → not found
+[207/421] The Camden → not found
+[208/421] LCCM → not found
+[209/421] McCann's Rock 'n' Ale Bar → not found
+[210/421] CONTENT → not found
+[211/421] Primrose → not found
+[212/421] The Little Theatre → not found
+[213/421] RedRoom → not found
+[214/421] Motif → not found
+[215/421] Hare And Hounds Birmingham → not found
+[216/421] The Roxy, London → not found
+[217/421] TEST → not found
+[218/421] Drygate → not found
+[219/421] The Country Day School: Performing Arts Centre → not found
+[220/421] Via → not found
+[221/421] THE DEPO → not found
+[222/421] Liberte → not found
+[223/421] The Blackie → not found
+[224/421] The DBA → not found
+[225/421] Dram! → not found
+[226/421] The Scotch → not found
+[227/421] The End → not found
+[228/421] LVLS → not found
+[229/421] The Cross Keys Inn → not found
+[230/421] KAMERA → not found
+[231/421] Blacksmith's Arms → not found
+[232/421] Big Top → not found
+[233/421] Network → not found
+[234/421] The Yard → not found
+[235/421] Victoria Hall → not found
+[236/421] Circuit → not found
+[237/421] The New Florence → not found
+[238/421] The Vault → not found
+[239/421] Red Admiral → not found
+[240/421] The Terrace → not found
+[241/421] Flock → not found
+[242/421] The Regent, England → not found
+[243/421] The Institute → not found
+[244/421] To Be Confirmed → not found
+[245/421] SADACCA → not found
+[246/421] Nethermoor Park → not found
+[247/421] Taunton Brewhouse Films → not found
+[248/421] Louis Marchesi → not found
+[249/421] The Adelphi Hotel → not found
+[250/421] Victoria Park → not found
+[251/421] Bugbrooke St Michaels Football Club   Northampton → not found
+[252/421] Y Guildford → not found
+[253/421] WWT London Wetland Centre → not found
+[254/421] Eden Experience → not found
+[255/421] 02 Academy In  Bristol → not found
+[256/421] Sunrooms 2 → not found
+[257/421] Not Open; Don't Come → not found
+[258/421] Bomba → not found
+[259/421] The Graham Norton Show → not found
+[260/421] Leith Depot Bar → not found
+[261/421] Reflex → not found
+[262/421] Romilly Park → not found
+[263/421] The Northern Market → not found
+[264/421] Rough Trade Denmark Street → not found
+[265/421] Chelmsford Central Park → not found
+[266/421] Thetford Farm Barn → not found
+[267/421] The Exhibit Bar → not found
+[268/421] The Welly Club → not found
+[269/421] Black Country Living Museum → not found
+[270/421] The Tower Theatre Folkestone → not found
+[271/421] Boat and Horses Pub → not found
+[272/421] Ditton Community Centre → not found
+[273/421] Elvaston Castle Country Park → not found
+[274/421] Grove House Tavern → not found
+[275/421] Open Door Community Centre → not found
+[276/421] No 12 → not found
+[277/421] Grand Hall. Dorking Halls Reigate Road Dorking → not found
+[278/421] Woodford Community Centre → not found
+[279/421] Banshee's Labyrinth → not found
+[280/421] The Rigger, UK → not found
+[281/421] The Womens Organisation 54 St. James Street Liverpool → not found
+[282/421] The Frimley Green Club → not found
+[283/421] DIECAST → not found
+[284/421] The Golden Lion Todmorden → not found
+[285/421] Onyx → not found
+[286/421] The South Street Bar And Coffee Lounge → not found
+[287/421] Brindley Theatre → not found
+[288/421] Totteridge Cricket Club   London → not found
+[289/421] The Spotted Dog → not found
+[290/421] Saint Judes After Dark → not found
+[291/421] Manahatta → not found
+[292/421] Society Leeds → not found
+[293/421] Bristol Lola Lo → not found
+[294/421] Barca → not found
+[295/421] The Harlequin → not found
+[296/421] Reference Point → not found
+[297/421] Lost Bournemouth → not found
+[298/421] The Winking Man → not found
+[299/421] Upcote Farm → not found
+[300/421] The Patti Swansea → not found
+[301/421] Crown Piers → not found
+[302/421] Glasgow Secret Venue → not found
+[303/421] Kings Park, Boscombe → not found
+[304/421] Fat Bird → not found
+[305/421] Patti Pavilion Swansea → not found
+[306/421] 90 Boldmere → not found
+[307/421] OSCARS → not found
+[308/421] Mr Shaw's House → not found
+[309/421] The Kingswood Tavern → not found
+[310/421] Orrell Park Ballroom → not found
+[311/421] St Peters Church → not found
+[312/421] Prince of Wales → not found
+[313/421] The Old Market Square, Warrington → not found
+[314/421] El Santo → not found
+[315/421] The Emporium → not found
+[316/421] Grosvenor Casino Didsbury → not found
+[317/421] The Clapham North → not found
+[318/421] Eden Bar Birmingham → not found
+[319/421] Grounded Bedminster → not found
+[320/421] Joss Bay → not found
+[321/421] The Abbey Centre → not found
+[322/421] The Barge Inn Honeystreet → not found
+[323/421] Revolution Bar → not found
+[324/421] Sutton United Football Club → not found
+[325/421] Lostwithiel Community Centre → not found
+[326/421] The Piano Works Farringdon, London, United Kingdom → not found
+[327/421] Ps & Gs (St Paul's & St George's) Church → not found
+[328/421] Night Train, Bradford → not found
+[329/421] THE ENT BAR → not found
+[330/421] Beacon Park Lichfield → not found
+[331/421] Stratford Town Football Club → not found
+[332/421] Bollard's → not found
+[333/421] The Pipeline Brighton → not found
+[334/421] BLACK MARKET → not found
+[335/421] St Mary's Chambers → not found
+[336/421] Troon Concert Hall → not found
+[337/421] Verwood Hub → not found
+[338/421] The Soho Revue Bar → not found
+[339/421] Stage And Radio Basement → not found
+[340/421] The Bread Shed → not found
+[341/421] The Viva Theatre → not found
+[342/421] Vivid → not found
+[343/421] Central Park Brighton Seafront → not found
+[344/421] 2 Funky Complex → not found
+[345/421] Parkinsons Books → not found
+[346/421] The Rat And Pigeon → not found
+[347/421] Audio Glasgow → not found
+[348/421] The Lawns Social Club → not found
+[349/421] The Grove Newcastle → not found
+[350/421] Stage And Radio → not found
+[351/421] Castle Leod, Strathpeffer → not found
+[352/421] Vincent's Club → not found
+[353/421] New Headingley Club → not found
+[354/421] Victoria Park → not found
+[355/421] The Milton Rooms → not found
+[356/421] Sobar → not found
+[357/421] TOSH → not found
+[358/421] St Margaret's Parish Church   Swinton → not found
+[359/421] Networks → not found
+[360/421] Shirehampton Social Club → not found
+[361/421] Hackney Marshes → not found
+[362/421] Beccles Public Hall And Theatre → not found
+[363/421] King's Lynn Minster → not found
+[364/421] The Yellow Sub Bar Liverpool → not found
+[365/421] Hawkinge Community Centre → not found
+[366/421] Dean Street Social Club → not found
+[367/421] The Grand Pavilion Matlock Bath → not found
+[368/421] Rolling Stock The Bunker → not found
+[369/421] Quinney Hall Canwell → not found
+[370/421] The New Sundial → not found
+[371/421] Sugar Cane → not found
+[372/421] Elms Park → not found
+[373/421] Billys Bar → not found
+[374/421] Kettle Black Co → not found
+[375/421] Later with Jools Holland, Alexandra Palace Theatre → not found
+[376/421] Raoul's → not found
+[377/421] Lighthouse, Poole's Centre For The Arts, UK → not found
+[378/421] Dance City → not found
+[379/421] Elford Village Hall → not found
+[380/421] The Kings, Kirkcaldy, Fife → not found
+[381/421] Sandwell Valley Country Park → not found
+[382/421] Belfast Secret Location → not found
+[383/421] Rough Trade West London → not found
+[384/421] Club Ocho Rios → not found
+[385/421] Artefact, Liverpool → not found
+[386/421] Hundreds Of Venues Across The UK → not found
+[387/421] Harvey's Bar → not found
+[388/421] Priory Social Club Middlesbrough → not found
+[389/421] The Mixer → not found
+[390/421] New Earswick Folk Hall → not found
+[391/421] St. Paul's Church and Community Centre → not found
+[392/421] The Three Legged Mare → not found
+[393/421] Risby Village Hall. → not found
+[394/421] The Downs Bristol → not found
+[395/421] Port Glasgow Bowling Club → not found
+[396/421] Blackfriars Basement → not found
+[397/421] Colwick Park → not found
+[398/421] Home Leeds → not found
+[399/421] Denby Dale Pie Hall → not found
+[400/421] Gillian Lynne Theatre, UK → not found
+[401/421] Sewell Group Craven Park Stadium → not found
+[402/421] Bailey's → not found
+[403/421] Gorilla Studio → not found
+[404/421] Crowborough Community Centre → not found
+[405/421] The Tramshed → not found
+[406/421] London Road Campus → not found
+[407/421] The Whitehouse Unique Social Club → not found
+[408/421] The Station Cannock → not found
+[409/421] The Royal Star And Garter Homes → not found
+[410/421] Hidden → not found
+[411/421] Little Lever Working Men Club → not found
+[412/421] FIRE Nightclub London → not found
+[413/421] The Bees Mouth → not found
+[414/421] Swansea Beach → not found
+[415/421] Grampian → not found
+[416/421] Rebelle → not found
+[417/421] Thieves Kitchen, Worthing → not found
+[418/421] The Stanley Club Burscough → not found
+[419/421] Eastern Bloc Records Manchester → not found
+[420/421] LIQUID LIBRARY → not found
+[421/421] Chobham Golf Club → not found
+
+Done. Found websites: 35/421

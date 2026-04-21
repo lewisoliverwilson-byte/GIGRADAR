@@ -52,7 +52,13 @@ export const api = {
   getArtistGigs:     (id)           => get(`/artists/${id}/gigs`),
   getSimilarArtists: (id)           => get(`/artists/${id}/similar`),
   getGigs:           (params)       => get(`/gigs${params ? '?' + new URLSearchParams(params) : ''}`),
+  getNearbyGigs:     (lat, lng, radius = 15, genre) =>
+    get(`/gigs/nearby?lat=${lat}&lng=${lng}&radius=${radius}${genre ? '&genre='+encodeURIComponent(genre) : ''}`),
+  getTrending:       ()             => get('/trending'),
+  getEmerging:       ()             => get('/emerging'),
+  getGrassroots:     (params)       => get(`/grassroots${params ? '?' + new URLSearchParams(params) : ''}`),
   getVenues:         ()             => get('/venues'),
+  getVenuesFiltered: (params)       => get(`/venues?${new URLSearchParams(params)}`),
   getVenue:          (slug)         => get(`/venues/${slug}`),
   getVenueGigs:      (slug)         => get(`/venues/${slug}/gigs`),
   search:            (q)            => get(`/search?q=${encodeURIComponent(q)}`),

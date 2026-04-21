@@ -1,0 +1,10 @@
+=== GigRadar Venue Enrichment — MusicBrainz ===
+
+Loading venues without website from DynamoDB...
+  0 venues without website
+
+
+
+=== Complete ===
+Venues enriched : 0
+Not found on MB : 0

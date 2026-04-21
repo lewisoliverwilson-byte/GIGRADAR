@@ -9,7 +9,8 @@ const SELLER_LABELS = {
   'Songkick': 'Songkick',
 };
 
-export default function GigCard({ gig, showArtist = false }) {
+export default function GigCard({ gig, showArtist = false, distanceMiles, isGrassroots, grassroots }) {
+  const showGrassroots = isGrassroots || grassroots || gig._isGrassroots;
   const tickets = gig.tickets || [];
   const today = new Date().toISOString().split('T')[0];
   const isPast = gig.date && gig.date < today;
@@ -59,7 +60,11 @@ export default function GigCard({ gig, showArtist = false }) {
           <p className={`truncate ${showArtist ? 'text-xs text-zinc-400' : 'text-sm font-semibold text-white'}`}>
             {gig.venueName || 'Venue TBC'}
           </p>
-          {gig.venueCity && <p className="text-xs text-zinc-500 truncate">{gig.venueCity}</p>}
+          <div className="flex items-center gap-2 flex-wrap">
+            {gig.venueCity && <p className="text-xs text-zinc-500 truncate">{gig.venueCity}</p>}
+            {distanceMiles != null && <span className="text-xs text-violet-400 font-medium">{distanceMiles} mi</span>}
+            {showGrassroots && <span className="text-xs text-emerald-400 font-medium">Grassroots</span>}
+          </div>
         </div>
 
         {isSoldOut ? (

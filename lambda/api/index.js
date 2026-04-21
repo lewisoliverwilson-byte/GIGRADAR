@@ -309,6 +309,170 @@ async function getSimilarArtists(artistId) {
   return ok(similar);
 }
 
+/* ---- GET /trending ---- */
+async function getTrending() {
+  const result = await ddb.send(new ScanCommand({
+    TableName: ARTISTS_TABLE,
+    FilterExpression: 'upcoming > :z',
+    ExpressionAttributeValues: { ':z': 0 },
+    ProjectionExpression: 'artistId, #n, imageUrl, genres, upcoming, spotifyPopularity, lastfmListeners',
+    ExpressionAttributeNames: { '#n': 'name' },
+  }));
+  const artists = (result.Items || [])
+    .filter(a => a.name && !a.artistId.startsWith('_'))
+    .sort((a, b) => {
+      const pop = (b.spotifyPopularity || 0) - (a.spotifyPopularity || 0);
+      if (pop !== 0) return pop;
+      return (b.lastfmListeners || 0) - (a.lastfmListeners || 0);
+    })
+    .slice(0, 20);
+  return ok(artists);
+}
+
+/* ---- GET /emerging ---- */
+async function getEmerging() {
+  const result = await ddb.send(new ScanCommand({
+    TableName: ARTISTS_TABLE,
+    FilterExpression: 'upcoming > :z AND (attribute_not_exists(spotifyPopularity) OR spotifyPopularity < :maxPop)',
+    ExpressionAttributeValues: { ':z': 0, ':maxPop': 40 },
+    ProjectionExpression: 'artistId, #n, imageUrl, genres, upcoming, spotifyPopularity',
+    ExpressionAttributeNames: { '#n': 'name' },
+  }));
+  const artists = (result.Items || [])
+    .filter(a => a.name && !a.artistId.startsWith('_') && (a.upcoming || 0) >= 2)
+    .sort((a, b) => (b.upcoming || 0) - (a.upcoming || 0))
+    .slice(0, 20);
+  return ok(artists);
+}
+
+/* ---- GET /grassroots ---- */
+async function getGrassrootsGigs(params) {
+  const today  = new Date().toISOString().split('T')[0];
+  const cutoff = new Date(Date.now() + 21 * 86400000).toISOString().split('T')[0];
+  const city   = (params?.city || '').trim();
+  const genre  = (params?.genre || '').trim().toLowerCase();
+
+  // Get grassroots venue IDs
+  const vFilter = city
+    ? 'isGrassroots = :t AND contains(#city, :city)'
+    : 'isGrassroots = :t';
+  const vNames  = city ? { '#city': 'city' } : undefined;
+  const vValues = city ? { ':t': true, ':city': city } : { ':t': true };
+
+  const vRes = await ddb.send(new ScanCommand({
+    TableName: VENUES_TABLE,
+    FilterExpression: vFilter,
+    ...(vNames ? { ExpressionAttributeNames: vNames } : {}),
+    ExpressionAttributeValues: vValues,
+    ProjectionExpression: 'venueId, #n, city, slug',
+    ExpressionAttributeNames: { ...(vNames || {}), '#n': 'name' },
+  }));
+  const grassrootsIds = new Set((vRes.Items || []).map(v => v.venueId));
+  const venueMap      = Object.fromEntries((vRes.Items || []).map(v => [v.venueId, v]));
+  if (!grassrootsIds.size) return ok([]);
+
+  const gFilter = genre
+    ? '#d >= :today AND #d <= :end AND contains(#genres, :genre)'
+    : '#d >= :today AND #d <= :end';
+  const gNames  = genre ? { '#d': 'date', '#genres': 'genres' } : { '#d': 'date' };
+  const gValues = genre
+    ? { ':today': today, ':end': cutoff, ':genre': genre }
+    : { ':today': today, ':end': cutoff };
+
+  const gRes = await ddb.send(new ScanCommand({
+    TableName: GIGS_TABLE,
+    FilterExpression: gFilter,
+    ExpressionAttributeNames: gNames,
+    ExpressionAttributeValues: gValues,
+  }));
+
+  const gigs = (gRes.Items || [])
+    .filter(g => g.canonicalVenueId && grassrootsIds.has(g.canonicalVenueId))
+    .map(g => ({ ...g, _venue: venueMap[g.canonicalVenueId] || null }))
+    .sort((a, b) => a.date.localeCompare(b.date))
+    .slice(0, 30);
+
+  return ok(gigs);
+}
+
+/* ---- GET /gigs/nearby?lat=&lng=&radius=&genre= ---- */
+async function getNearbyGigs(params) {
+  const lat    = parseFloat(params?.lat);
+  const lng    = parseFloat(params?.lng);
+  const radius = parseFloat(params?.radius || '15');
+  const genre  = (params?.genre || '').trim().toLowerCase();
+  if (isNaN(lat) || isNaN(lng)) return badRequest('lat and lng required');
+
+  const today  = new Date().toISOString().split('T')[0];
+  const cutoff = new Date(Date.now() + 60 * 86400000).toISOString().split('T')[0];
+
+  const toRad = d => d * Math.PI / 180;
+  function haversine(lat1, lon1, lat2, lon2) {
+    const R = 3958.8;
+    const dLat = toRad(lat2 - lat1), dLon = toRad(lon2 - lon1);
+    const a = Math.sin(dLat/2)**2 + Math.cos(toRad(lat1))*Math.cos(toRad(lat2))*Math.sin(dLon/2)**2;
+    return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+  }
+
+  const [vRes, gRes] = await Promise.all([
+    ddb.send(new ScanCommand({
+      TableName: VENUES_TABLE,
+      FilterExpression: 'attribute_exists(lat) AND attribute_exists(#lng) AND isActive = :a',
+      ExpressionAttributeNames: { '#lng': 'lng' },
+      ExpressionAttributeValues: { ':a': true },
+      ProjectionExpression: 'venueId, lat, #lng, isGrassroots',
+      ExpressionAttributeNames: { '#lng': 'lng' },
+    })),
+    ddb.send(new ScanCommand({
+      TableName: GIGS_TABLE,
+      FilterExpression: genre
+        ? '#d >= :today AND #d <= :end AND contains(#genres, :genre)'
+        : '#d >= :today AND #d <= :end',
+      ExpressionAttributeNames: genre ? { '#d': 'date', '#genres': 'genres' } : { '#d': 'date' },
+      ExpressionAttributeValues: genre
+        ? { ':today': today, ':end': cutoff, ':genre': genre }
+        : { ':today': today, ':end': cutoff },
+    })),
+  ]);
+
+  const nearbyVenues = new Map();
+  for (const v of (vRes.Items || [])) {
+    const dist = haversine(lat, lng, v.lat, v.lng);
+    if (dist <= radius) nearbyVenues.set(v.venueId, { dist, isGrassroots: v.isGrassroots || false });
+  }
+
+  const gigs = (gRes.Items || [])
+    .filter(g => g.canonicalVenueId && nearbyVenues.has(g.canonicalVenueId))
+    .map(g => ({ ...g, _distanceMiles: Math.round(nearbyVenues.get(g.canonicalVenueId).dist * 10) / 10, _isGrassroots: nearbyVenues.get(g.canonicalVenueId).isGrassroots }))
+    .sort((a, b) => a.date.localeCompare(b.date) || a._distanceMiles - b._distanceMiles)
+    .slice(0, 200);
+
+  return ok(gigs);
+}
+
+/* ---- GET /venues?city=&grassroots= ---- */
+async function getVenuesFiltered(params) {
+  const city       = (params?.city || '').trim();
+  const grassroots = params?.grassroots === 'true';
+  const filterParts = ['isActive = :a'];
+  const names = {}, values = { ':a': true };
+  if (city) { filterParts.push('contains(#city, :city)'); names['#city'] = 'city'; values[':city'] = city; }
+  if (grassroots) { filterParts.push('isGrassroots = :gr'); values[':gr'] = true; }
+  const result = await ddb.send(new ScanCommand({
+    TableName: VENUES_TABLE,
+    FilterExpression: filterParts.join(' AND '),
+    ...(Object.keys(names).length ? { ExpressionAttributeNames: names } : {}),
+    ExpressionAttributeValues: values,
+    ProjectionExpression: 'venueId, slug, #n, city, upcoming, isGrassroots, imageUrl, photoUrl, genres',
+    ExpressionAttributeNames: { ...names, '#n': 'name' },
+  }));
+  const venues = (result.Items || [])
+    .filter(v => v.name)
+    .sort((a, b) => (b.upcoming || 0) - (a.upcoming || 0))
+    .slice(0, 50);
+  return ok(venues);
+}
+
 /* ---- GET /gigs ---- */
 async function getGigs(params) {
   const today = new Date().toISOString().split('T')[0];
@@ -654,9 +818,13 @@ exports.handler = async (event) => {
 
     if (rawPath === '/search') return search(params);
 
-    if (rawPath === '/gigs') return getGigs(params);
+    if (rawPath === '/trending')     return getTrending();
+    if (rawPath === '/emerging')     return getEmerging();
+    if (rawPath === '/grassroots')   return getGrassrootsGigs(params);
+    if (rawPath === '/gigs/nearby')  return getNearbyGigs(params);
+    if (rawPath === '/gigs')         return getGigs(params);
 
-    if (rawPath === '/venues') return getVenues();
+    if (rawPath === '/venues') return (params?.city || params?.grassroots) ? getVenuesFiltered(params) : getVenues();
 
     const venueGigsMatch = rawPath.match(/^\/venues\/([^/]+)\/gigs$/);
     if (venueGigsMatch) return getVenueGigs(decodeURIComponent(venueGigsMatch[1]));

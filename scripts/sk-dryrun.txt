@@ -1,0 +1,4 @@
+=== GigRadar Songkick Scraper ===
+
+[DRY RUN — no DB writes]
+

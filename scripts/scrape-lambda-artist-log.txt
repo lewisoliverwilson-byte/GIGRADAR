@@ -1,0 +1,33 @@
+Running Lambda scraper locally...
+GigRadar scraper v2 starting…
+Last.fm: 999 artists
+Upserted 999 Last.fm artists
+DB artists loaded: 18862
+Name map: 18706 total artists
+Images: 0/999 artists need photos
+[+121s] TM bulk done
+Bandsintown: skipped (API blocked)
+No Skiddle key — skipping
+[+121s] Skiddle done
+Songkick: 0 gigs
+[+129s] Songkick done
+Dice: 0 gigs
+[+129s] Dice done
+Resident Advisor: 0 gigs
+[+130s] RA done
+Ticketweb: 68 gigs
+[+133s] Ticketweb done
+Songkick metro: 99 gigs
+[+134s] Songkick metro done
+WeGotTickets: skipped (site migrated)
+[+134s] WGT done
+Eventbrite: 386 gigs
+[+186s] Eventbrite done
+No Setlist.fm key — skipping past gigs from this source
+[+186s] Setlist.fm done
+Merged: 526 unique gigs
+Venues: upserted 88 venues
+Grassroots enrichment: 24 artists
+Grassroots enrichment: 24/24 done
+Done in 317s. Saved 526 gigs across 18706 artists (999 charting + 17707 grassroots).
+Lambda complete: {"artists":18706,"gigs":526,"elapsed":317}

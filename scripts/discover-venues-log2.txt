@@ -1,0 +1,39 @@
+Loading existing venue IDs…
+Existing venues: 6345
+
+=== MusicBrainz venue discovery ===
+  MB offset 0: 29 places
+MusicBrainz: 29 UK places found
+
+=== Skiddle venue discovery ===
+Skiddle: 1567 venues found
+
+=== Songkick venue discovery ===
+Songkick: 824 venues found
+
+New venues to add: 708
+  Added 100…
+  Added 200…
+  Added 300…
+  Added 400…
+  Added 500…
+  Added 600…
+  Added 700…
+
+Done. Added 708 new venues. Total now: 7053
+Loading existing venue IDs…
+Existing venues: 7080
+
+=== MusicBrainz venue discovery ===
+MB HTTP 503 at offset 0
+MusicBrainz: 0 UK places found
+
+=== Skiddle venue discovery ===
+Skiddle: 1566 venues found
+
+=== Songkick venue discovery ===
+Songkick: 824 venues found
+
+New venues to add: 0
+
+Done. Added 0 new venues. Total now: 7080

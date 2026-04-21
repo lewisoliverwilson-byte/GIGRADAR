@@ -1,0 +1,23 @@
+=== GigRadar Resident Advisor Scraper ===
+
+  Gig save error ra-2417615-vibrant-c: getaddrinfo ENOTFOUND dynamodb.us-east-1.amazonaws.  Gi  Gig save error ra-2414434-the-darrs: getaddrinfo ENOTFOUND dynamodb.us-east-1.amazonaws.com
+  Gig save error ra-2414434-jordan-masters: getaddrinfo ENOTFOUND dynamodb.us-east-1.amazonaws.com
+  Gig save error ra-2414434-sam-sullivan: getaddrinfo ENOTFOUND dynamodb.us-east-1.amazonaws.com
+  Gig save error ra-2242646-hybrid-minds: getaddrinfo ENOTFOUND dynamodb.us-east-1.amazonaws.com
+  Gig save error ra-2242646-camo-krooked: getaddrinfo ENOTFOUND dynamodb.us-east-1.amazonaws.com
+  Gig save error ra-2242646-etherwood: getaddrinfo ENOTFOUND dynamodb.us-east-1.amazonaws.com
+  Gig save error ra-2242646-hugh-hardie: getaddrinfo ENOTFOUND dynamodb.us-east-1.amazonaws.com
+  Gig save error ra-2242646-goddard: getaddrinfo ENOTFOUND dynamodb.us-east-1.amazonaws.com
+  Gig save error ra-2242646-lsb: getaddrinfo ENOTFOUND dynamodb.us-east-1.amazonaws.com
+  [1/17] London          — +4729 gigs | Total: 4729 gigs, 3475 artists     [2/17] Manchester      — +924 gigs | Total: 5653 gigs, 3962 artists     [3/17] Glasgow         — +412 gigs | Total: 6065 gigs, 4206 artists     [4/17] Edinburgh       — +199 gigs | Total: 6264 gigs, 4310 artists     [5/17] Newcastle       — +124 gigs | Total: 6388 gigs, 4368 artists     [6/17] Bristol         — +435 gigs | Total: 6823 gigs, 4553 artists     [7/17] Leeds           — +239 gigs | Total: 7062 gigs, 4640 artists     [8/17] Liverpool       — +136 gigs | Total: 7198 gigs, 4708 artists     [9/17] Sheffield       — +152 gigs | Total: 7350 gigs, 4774 artists     [10/17] Brighton        — +166 gigs | Total: 7516 gigs, 4854 artists     [11/17] Nottingham      — +61 gigs | Total: 7577 gigs, 4878 artists     [12/17] Belfast         — +142 gigs | Total: 7719 gigs, 4947 artists     [13/17] Birmingham      — +76 gigs | Total: 7795 gigs, 4982 artists     [14/17] Cardiff         — +20 gigs | Total: 7815 gigs, 4990 artists     [15/17] Aberdeen        — +20 gigs | Total: 7835 gigs, 4996 artists     [16/17] Dundee          — +31 gigs | Total: 7866 gigs, 5010 artists     [17/17] Southampton     — +19 gigs | Total: 7885 gigs, 5019 artists   
+
+=== Complete ===
+Gigs saved     : 7,885
+Artists seeded : 5,019
+Venues seeded  : 623
+igs | Total: 7813 gigs, 4989 artists     [15/17] Aberdeen        — +20 gigs | Total: 7833 gigs, 4995 artists     [16/17] Dundee          — +31 gigs | Total: 7864 gigs, 5009 artists     [17/17] Southampton     — +19 gigs | Total: 7883 gigs, 5018 artists   
+
+=== Complete ===
+Gigs saved     : 7,883
+Artists seeded : 5,018
+Venues seeded  : 622

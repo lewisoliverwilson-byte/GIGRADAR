@@ -1,0 +1,9 @@
+=== GigRadar See Tickets Scraper ===
+
+
+
+=== Complete ===
+Gigs saved     : 0
+Artists seeded : 0
+Venues seeded  : 0
+Errors         : 10

@@ -1,0 +1,23 @@
+=== GigRadar Venue Seeder — OpenStreetMap ===
+
+Querying OpenStreetMap Overpass API...
+Overpass returned 307 raw elements
+Parsed 301 unique venues
+Saved to C:\GIGSITE\scripts\venues-osm.json
+
+Venues with website URL : 176 / 301
+Venues with Facebook    : 54 / 301
+Venues with Instagram   : 40 / 301
+Venues with any contact : 200 / 301
+Venues with city        : 248 / 301
+Existing DynamoDB venues: 4679
+
+Writing to DynamoDB...
+
+✓ Done
+  New venues created  : 0
+  Existing updated    : 301
+  Already complete    : 0
+  Total OSM venues    : 301
+
+Venues with website URLs are now ready for Phase 2 (crawl URL discovery).

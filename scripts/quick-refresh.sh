@@ -81,6 +81,15 @@ node "$ROOT/scripts/scrape-venue-gigs.cjs" --quick $DRY \
 log "wave6" "done"
 
 # ════════════════════════════════════════════════════════════════
+# PHASE 1b — GIG ALERTS (send after all scrapers finish)
+# ════════════════════════════════════════════════════════════════
+echo ""
+echo "▶ Sending gig alerts to followers"
+node "$ROOT/scripts/send-gig-alerts.cjs" $DRY \
+  > "$LOG_DIR/${TS}-alerts.txt" 2>&1
+log "alerts" "done"
+
+# ════════════════════════════════════════════════════════════════
 # PHASE 2 — CLEANUP
 # ════════════════════════════════════════════════════════════════
 echo ""

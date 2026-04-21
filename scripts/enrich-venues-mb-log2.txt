@@ -1,0 +1,10 @@
+=== GigRadar Venue Enrichment — MusicBrainz ===
+
+Loading venues without website from DynamoDB...
+  4,356 venues without website
+
+  [12/4356] Enriched: 1 | Not found: 11     [798/4356] Enriched: 2 | Not found: 796     [856/4356] Enriched: 3 | Not found: 853     [860/4356] Enriched: 4 | Not found: 856     [1386/4356] Enriched: 5 | Not found: 1379     [1530/4356] Enriched: 6 | Not found: 1522     [1553/4356] Enriched: 7 | Not found: 1544     [1857/4356] Enriched: 8 | Not found: 1847     [1945/4356] Enriched: 9 | Not found: 1934     [2261/4356] Enriched: 10 | Not found: 2249     [2377/4356] Enriched: 11 | Not found: 2364     [2395/4356] Enriched: 12 | Not found: 2381     [2734/4356] Enriched: 13 | Not found: 2718     [3533/4356] Enriched: 14 | Not found: 3516     [3777/4356] Enriched: 15 | Not found: 3759   
+
+=== Complete ===
+Venues enriched : 15
+Not found on MB : 4338

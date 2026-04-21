@@ -7,6 +7,7 @@ import Footer from '../components/Footer.jsx';
 
 const CITIES = ['All','London','Manchester','Birmingham','Glasgow','Liverpool','Leeds','Bristol','Edinburgh','Newcastle','Sheffield','Nottingham','Cardiff','Brighton','Oxford','Leicester','Southampton','Belfast'];
 const GENRES = ['All','rock','indie','pop','electronic','dance','jazz','classical','hip-hop','folk','metal','punk','alternative','rnb','soul','country','reggae','blues','experimental'];
+const RADII  = [5, 10, 15, 25, 50];
 
 function todayStr() { return new Date().toISOString().split('T')[0]; }
 
@@ -24,6 +25,13 @@ export default function Gigs() {
   const [ready, setReady] = useState(false);
   const PER_PAGE = 24;
 
+  // Near me state
+  const [nearMode, setNearMode] = useState(false);
+  const [geoLoading, setGeoLoading] = useState(false);
+  const [geoError, setGeoError] = useState('');
+  const [userCoords, setUserCoords] = useState(null);
+  const [radius, setRadius] = useState(15);
+
   useEffect(() => {
     if (!router.isReady) return;
     setCity(router.query.city || 'All');
@@ -34,8 +42,16 @@ export default function Gigs() {
     setReady(true);
   }, [router.isReady]);
 
+  const fetchNearby = useCallback((coords, r, g) => {
+    setLoading(true);
+    api.getNearbyGigs(coords.lat, coords.lng, r, g !== 'All' ? g : undefined)
+      .then(setGigs)
+      .catch(() => setGigs([]))
+      .finally(() => setLoading(false));
+  }, []);
+
   const fetchGigs = useCallback(() => {
-    if (!ready) return;
+    if (!ready || nearMode) return;
     setLoading(true); setPage(1);
     const params = { limit: 500 };
     if (city !== 'All') params.city = city;
@@ -43,12 +59,20 @@ export default function Gigs() {
     if (from) params.from = from;
     if (to) params.to = to;
     api.getGigs(params).then(setGigs).catch(() => setGigs([])).finally(() => setLoading(false));
-  }, [city, genre, from, to, ready]);
+  }, [city, genre, from, to, ready, nearMode]);
 
   useEffect(() => { fetchGigs(); }, [fetchGigs]);
 
+  // Re-fetch nearby when radius or genre changes while in near mode
   useEffect(() => {
-    if (!ready) return;
+    if (nearMode && userCoords) {
+      setPage(1);
+      fetchNearby(userCoords, radius, genre);
+    }
+  }, [radius, nearMode, userCoords]);
+
+  useEffect(() => {
+    if (!ready || nearMode) return;
     const p = {};
     if (city !== 'All') p.city = city;
     if (genre !== 'All') p.genre = genre;
@@ -56,7 +80,40 @@ export default function Gigs() {
     if (to) p.to = to;
     if (filter !== 'all') p.filter = filter;
     router.replace({ pathname: '/gigs', query: p }, undefined, { shallow: true });
-  }, [city, genre, from, to, filter, ready]);
+  }, [city, genre, from, to, filter, ready, nearMode]);
+
+  function activateNearMe() {
+    if (!navigator.geolocation) {
+      setGeoError('Geolocation is not supported by your browser.');
+      return;
+    }
+    setGeoLoading(true);
+    setGeoError('');
+    navigator.geolocation.getCurrentPosition(
+      pos => {
+        const coords = { lat: pos.coords.latitude, lng: pos.coords.longitude };
+        setUserCoords(coords);
+        setNearMode(true);
+        setCity('All');
+        setPage(1);
+        setGeoLoading(false);
+        fetchNearby(coords, radius, genre);
+      },
+      err => {
+        setGeoLoading(false);
+        setGeoError(err.code === 1 ? 'Location access denied. Please allow location in your browser.' : 'Could not get your location. Try again.');
+      },
+      { timeout: 10000 }
+    );
+  }
+
+  function clearNearMe() {
+    setNearMode(false);
+    setUserCoords(null);
+    setGeoError('');
+    setPage(1);
+    fetchGigs();
+  }
 
   const filtered = useMemo(() => {
     let list = gigs;
@@ -74,11 +131,15 @@ export default function Gigs() {
         deduped.push(merged);
       }
     }
-    return deduped.sort((a, b) => a.date.localeCompare(b.date));
-  }, [gigs, filter, following]);
+    return deduped.sort((a, b) => {
+      if (nearMode) return (a._distanceMiles || 99) - (b._distanceMiles || 99) || a.date.localeCompare(b.date);
+      return a.date.localeCompare(b.date);
+    });
+  }, [gigs, filter, following, nearMode]);
 
   const paged = filtered.slice(0, page * PER_PAGE);
   const hasMore = paged.length < filtered.length;
+  const hasFilters = city !== 'All' || genre !== 'All' || from || to || filter !== 'all' || nearMode;
 
   return (
     <div className="min-h-screen bg-zinc-950">
@@ -86,7 +147,7 @@ export default function Gigs() {
         <div className="max-w-5xl mx-auto px-6 py-10">
           <p className="text-xs font-semibold text-violet-400 uppercase tracking-widest mb-2">Browse</p>
           <h1 className="text-4xl font-black text-white mb-2">Upcoming Gigs</h1>
-          <p className="text-zinc-400 text-sm">Every UK gig across 10+ ticket platforms, updated every 6 hours.</p>
+          <p className="text-zinc-400 text-sm">Every UK gig across 14 ticket platforms, updated weekly.</p>
         </div>
       </div>
 
@@ -104,31 +165,66 @@ export default function Gigs() {
               ))}
             </div>
 
-            <select value={city} onChange={e => { setCity(e.target.value); setPage(1); }}
-              className="bg-zinc-800 border border-zinc-700 text-white text-sm rounded-xl px-3 py-2 focus:outline-none focus:border-violet-500">
-              {CITIES.map(c => <option key={c} value={c}>{c === 'All' ? 'All cities' : c}</option>)}
-            </select>
+            {/* Near me button */}
+            {nearMode ? (
+              <div className="flex items-center gap-2">
+                <div className="flex items-center gap-1.5 bg-emerald-900/50 border border-emerald-700 rounded-xl px-3 py-2">
+                  <span className="w-2 h-2 rounded-full bg-emerald-400"></span>
+                  <span className="text-sm text-emerald-300 font-medium">Near me</span>
+                </div>
+                <select value={radius} onChange={e => { setRadius(Number(e.target.value)); setPage(1); }}
+                  className="bg-zinc-800 border border-zinc-700 text-white text-sm rounded-xl px-3 py-2 focus:outline-none focus:border-violet-500">
+                  {RADII.map(r => <option key={r} value={r}>{r} miles</option>)}
+                </select>
+                <button onClick={clearNearMe} className="text-sm text-zinc-500 hover:text-white transition-colors">
+                  ×
+                </button>
+              </div>
+            ) : (
+              <button
+                onClick={activateNearMe}
+                disabled={geoLoading}
+                className="flex items-center gap-1.5 bg-zinc-800 hover:bg-zinc-700 border border-zinc-700 hover:border-emerald-600 text-white text-sm font-medium px-3 py-2 rounded-xl transition-colors disabled:opacity-50">
+                {geoLoading
+                  ? <><span className="w-3 h-3 rounded-full border-2 border-white border-t-transparent animate-spin"></span> Locating…</>
+                  : <>📍 Near me</>
+                }
+              </button>
+            )}
 
-            <select value={genre} onChange={e => { setGenre(e.target.value); setPage(1); }}
+            {!nearMode && (
+              <select value={city} onChange={e => { setCity(e.target.value); setPage(1); }}
+                className="bg-zinc-800 border border-zinc-700 text-white text-sm rounded-xl px-3 py-2 focus:outline-none focus:border-violet-500">
+                {CITIES.map(c => <option key={c} value={c}>{c === 'All' ? 'All cities' : c}</option>)}
+              </select>
+            )}
+
+            <select value={genre} onChange={e => { setGenre(e.target.value); setPage(1); if (nearMode && userCoords) fetchNearby(userCoords, radius, e.target.value); }}
               className="bg-zinc-800 border border-zinc-700 text-white text-sm rounded-xl px-3 py-2 focus:outline-none focus:border-violet-500 capitalize">
               {GENRES.map(g => <option key={g} value={g}>{g === 'All' ? 'All genres' : g}</option>)}
             </select>
 
-            <div className="flex items-center gap-2">
-              <input type="date" value={from} min={todayStr()} onChange={e => { setFrom(e.target.value); setPage(1); }}
-                className="bg-zinc-800 border border-zinc-700 text-white text-sm rounded-xl px-3 py-2 focus:outline-none focus:border-violet-500 w-36" />
-              <span className="text-zinc-600">→</span>
-              <input type="date" value={to} min={from || todayStr()} onChange={e => { setTo(e.target.value); setPage(1); }}
-                className="bg-zinc-800 border border-zinc-700 text-white text-sm rounded-xl px-3 py-2 focus:outline-none focus:border-violet-500 w-36" />
-            </div>
+            {!nearMode && (
+              <div className="flex items-center gap-2">
+                <input type="date" value={from} min={todayStr()} onChange={e => { setFrom(e.target.value); setPage(1); }}
+                  className="bg-zinc-800 border border-zinc-700 text-white text-sm rounded-xl px-3 py-2 focus:outline-none focus:border-violet-500 w-36" />
+                <span className="text-zinc-600">→</span>
+                <input type="date" value={to} min={from || todayStr()} onChange={e => { setTo(e.target.value); setPage(1); }}
+                  className="bg-zinc-800 border border-zinc-700 text-white text-sm rounded-xl px-3 py-2 focus:outline-none focus:border-violet-500 w-36" />
+              </div>
+            )}
 
-            {(city !== 'All' || genre !== 'All' || from || to || filter !== 'all') && (
-              <button onClick={() => { setCity('All'); setGenre('All'); setFrom(''); setTo(''); setFilter('all'); setPage(1); }}
+            {hasFilters && (
+              <button onClick={() => { setCity('All'); setGenre('All'); setFrom(''); setTo(''); setFilter('all'); setPage(1); clearNearMe(); }}
                 className="text-sm text-zinc-500 hover:text-white transition-colors">
                 Clear ×
               </button>
             )}
           </div>
+
+          {geoError && (
+            <p className="text-xs text-red-400 mt-2">{geoError}</p>
+          )}
         </div>
       </div>
 
@@ -142,18 +238,25 @@ export default function Gigs() {
             <p className="text-5xl mb-4">🎵</p>
             <p className="text-white font-bold text-lg">No gigs found</p>
             <p className="text-zinc-400 text-sm mt-2">
-              {filter === 'following' ? 'None of your followed artists have upcoming shows.' : 'Try adjusting your filters.'}
+              {nearMode ? `No gigs found within ${radius} miles. Try increasing the radius.`
+                : filter === 'following' ? 'None of your followed artists have upcoming shows.'
+                : 'Try adjusting your filters.'}
             </p>
           </div>
         ) : (
           <>
             <p className="text-sm text-zinc-500 mb-5">
               {filtered.length.toLocaleString()} gigs
-              {genre !== 'All' ? ` · ${genre}` : ''}
-              {city !== 'All' ? ` in ${city}` : ''}
+              {nearMode ? ` within ${radius} miles` : ''}
+              {!nearMode && genre !== 'All' ? ` · ${genre}` : ''}
+              {!nearMode && city !== 'All' ? ` in ${city}` : ''}
             </p>
             <div className="space-y-2">
-              {paged.map(g => <GigCard key={g.gigId} gig={g} showArtist />)}
+              {paged.map(g => (
+                <GigCard key={g.gigId} gig={g} showArtist
+                  distanceMiles={nearMode ? g._distanceMiles : undefined}
+                  isGrassroots={g._isGrassroots} />
+              ))}
             </div>
             {hasMore && (
               <div className="text-center mt-10">

@@ -1,0 +1,8 @@
+=== GigRadar Ticketline Scraper ===
+
+  [1/22] london           — +24 gigs | Total: 24 gigs, 20 artists     [2/22] manchester       — +115 gigs | Total: 139 gigs, 132 artists     [3/22] birmingham       — +4 gigs | Total: 143 gigs, 135 artists     [4/22] bristol          — +6 gigs | Total: 149 gigs, 141 artists     [5/22] glasgow          — +7 gigs | Total: 156 gigs, 147 artists     [6/22] leeds            — +3 gigs | Total: 159 gigs, 150 artists     [7/22] edinburgh        — +11 gigs | Total: 170 gigs, 158 artists     [8/22] brighton         — +18 gigs | Total: 188 gigs, 163 artists     [9/22] newcastle        — +11 gigs | Total: 199 gigs, 172 artists     [10/22] liverpool        — +13 gigs | Total: 212 gigs, 184 artists     [11/22] sheffield        — +2 gigs | Total: 214 gigs, 186 artists     [12/22] nottingham       — +3 gigs | Total: 217 gigs, 189 artists     [13/22] belfast          — +0 gigs | Total: 217 gigs, 189 artists     [14/22] cardiff          — +4 gigs | Total: 221 gigs, 193 artists     [15/22] aberdeen         — +2 gigs | Total: 223 gigs, 194 artists     [16/22] dundee           — +1 gigs | Total: 224 gigs, 195 artists     [17/22] oxford           — +0 gigs | Total: 224 gigs, 195 artists     [18/22] norwich          — +1 gigs | Total: 225 gigs, 196 artists     [19/22] peterborough     — +2 gigs | Total: 227 gigs, 198 artists     [20/22] plymouth         — +1 gigs | Total: 228 gigs, 199 artists     [21/22] worcester        — +46 gigs | Total: 274 gigs, 208 artists     [22/22] bangor           — +1 gigs | Total: 275 gigs, 209 artists   
+
+=== Complete ===
+Gigs saved     : 275
+Artists seeded : 209
+Venues seeded  : 72
