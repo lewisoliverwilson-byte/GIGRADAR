@@ -1,6 +1,6 @@
 import Head from 'next/head';
-import CityGigsPage from '../../views/CityGigsPage.jsx';
-import { CONFIG } from '../../utils/config.js';
+import CityGigsPage from '../../../views/CityGigsPage.jsx';
+import { CONFIG } from '../../../utils/config.js';
 
 const CITIES = [
   'London','Manchester','Birmingham','Glasgow','Liverpool','Leeds',
