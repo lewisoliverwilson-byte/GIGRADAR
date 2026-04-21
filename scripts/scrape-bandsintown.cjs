@@ -39,6 +39,7 @@ function arg(flag, def = null) {
 
 const DRY_RUN = process.argv.includes('--dry-run');
 const RESUME  = process.argv.includes('--resume');
+const QUICK   = process.argv.includes('--quick');  // only artists with upcoming gigs
 const APP_ID  = process.env.BIT_APP_ID || arg('--app-id') || 'gigradar';
 const sleep   = ms => new Promise(r => setTimeout(r, ms));
 
@@ -69,11 +70,16 @@ function saveProgress(p) { fs.writeFileSync(PROGRESS_FILE, JSON.stringify(p)); }
 // ─── Load all seeded artists from DynamoDB ────────────────────────────────────
 
 async function loadArtists() {
-  console.log('Loading artists from DynamoDB...');
+  console.log(`Loading artists from DynamoDB${QUICK ? ' (quick: upcoming only)' : ''}...`);
   const artists = [];
   let lastKey;
   do {
     const params = { TableName: ARTISTS_TABLE };
+    // In quick mode only fetch artists that have upcoming gigs — far fewer to process
+    if (QUICK) {
+      params.FilterExpression = 'upcoming > :z';
+      params.ExpressionAttributeValues = { ':z': 0 };
+    }
     if (lastKey) params.ExclusiveStartKey = lastKey;
     const result = await ddb.send(new ScanCommand(params)).catch(() => ({ Items: [] }));
     artists.push(...(result.Items || []));

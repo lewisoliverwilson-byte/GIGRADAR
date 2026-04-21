@@ -33,8 +33,9 @@ const PROGRESS_FILE = path.join(__dirname, 'gigantic-progress.json');
 const LOG_FILE      = path.join(__dirname, 'scrape-gigantic-log.txt');
 const SITEMAP_URL   = 'https://www.gigantic.com/sitemaps/events.xml';
 
-const DRY_RUN = process.argv.includes('--dry-run');
-const RESUME  = process.argv.includes('--resume');
+const DRY_RUN  = process.argv.includes('--dry-run');
+const RESUME   = process.argv.includes('--resume');
+const QUICK    = process.argv.includes('--quick');  // skip events > 4 weeks out
 const sleep   = ms => new Promise(r => setTimeout(r, ms));
 
 const HEADERS = {
@@ -173,11 +174,13 @@ async function autoSeedArtist(name) {
 
 // ─── Process one event ────────────────────────────────────────────────────────
 
-const today = new Date().toISOString().split('T')[0];
+const today     = new Date().toISOString().split('T')[0];
+const quickCutoff = (() => { const d = new Date(); d.setDate(d.getDate() + 28); return d.toISOString().split('T')[0]; })();
 
 async function processEvent(ev, gigsSaved) {
   const date = (ev.startDate || '').split('T')[0];
   if (!date || date < today) return 0;
+  if (QUICK && date > quickCutoff) return 0;
 
   const performers = Array.isArray(ev.performer) ? ev.performer : (ev.performer ? [ev.performer] : []);
   const artists = performers

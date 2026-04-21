@@ -29,7 +29,8 @@ const LOG_FILE      = path.join(__dirname, 'scrape-ra-log.txt');
 
 const RA_URL   = 'https://ra.co/graphql';
 const PAGE_SZ  = 100;
-const DAYS     = parseInt(process.argv.find(a => a.startsWith('--days='))?.split('=')[1] || '180', 10);
+const QUICK    = process.argv.includes('--quick');  // 28 days instead of 180
+const DAYS     = parseInt(process.argv.find(a => a.startsWith('--days='))?.split('=')[1] || (QUICK ? '28' : '180'), 10);
 const DRY_RUN  = process.argv.includes('--dry-run');
 const sleep    = ms => new Promise(r => setTimeout(r, ms));
 

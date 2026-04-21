@@ -35,6 +35,7 @@ function arg(flag, def = null) {
 
 const DRY_RUN = process.argv.includes('--dry-run');
 const RESUME  = process.argv.includes('--resume');
+const QUICK   = process.argv.includes('--quick');  // limit to 5 pages per city
 const sleep   = ms => new Promise(r => setTimeout(r, ms));
 
 // UK city slugs — Eventbrite new URL format: /b/{location}/music/
@@ -255,13 +256,14 @@ async function main() {
     let hasMore    = true;
     let locGigs    = 0;
 
-    while (hasMore && page <= 200) {
+    while (hasMore && page <= (QUICK ? 5 : 50)) {
       const html = await fetchPage(location, page);
       if (!html) { errors++; break; }
 
       const { events, hasMore: more } = parseEvents(html);
       hasMore = more;
 
+      let pageNewGigs = 0;
       for (const ev of events) {
         if (!ev.date || ev.date < today) continue;
 
@@ -307,6 +309,7 @@ async function main() {
         }
         gigsSaved.add(gigId);
         locGigs++;
+        pageNewGigs++;
         totalGigs++;
         totalArtists = seededArtists.size;
         totalVenues  = seededVenues.size;
@@ -319,7 +322,7 @@ async function main() {
         `\r  [${li + 1}/${UK_LOCATIONS.length}] ${location.substring(0, 30).padEnd(30)} p${page} — +${locGigs} gigs | Total: ${totalGigs.toLocaleString()} gigs, ${totalArtists} artists   `
       );
 
-      if (events.length === 0) break;
+      if (events.length === 0 || pageNewGigs === 0) break;
       page++;
       await sleep(700);
     }

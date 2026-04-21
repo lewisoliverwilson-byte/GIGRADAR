@@ -34,6 +34,7 @@ function arg(flag, def = null) {
 
 const DRY_RUN = process.argv.includes('--dry-run');
 const RESUME  = process.argv.includes('--resume');
+const QUICK   = process.argv.includes('--quick');  // limit to 10 pages per genre
 const sleep   = ms => new Promise(r => setTimeout(r, ms));
 
 // See Tickets genre/category slugs that contain live music
@@ -269,7 +270,7 @@ async function main() {
     let hasMore = true;
     let genreGigs = 0;
 
-    while (hasMore && page <= 500) { // safety cap
+    while (hasMore && page <= (QUICK ? 10 : 500)) {
       const html = await fetchPage(genre, page);
       if (!html) { errors++; break; }
 

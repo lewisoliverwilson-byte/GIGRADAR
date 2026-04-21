@@ -244,6 +244,71 @@ async function getVenueGigs(slug) {
   return ok(gigs);
 }
 
+/* ---- GET /search?q= ---- */
+async function search(params) {
+  const q = (params?.q || '').trim();
+  if (q.length < 2) return ok({ artists: [], venues: [] });
+  const limit = Math.min(parseInt(params?.limit || '20', 10), 50);
+
+  const [aRes, vRes] = await Promise.all([
+    ddb.send(new ScanCommand({
+      TableName: ARTISTS_TABLE,
+      FilterExpression: 'contains(#n, :q)',
+      ExpressionAttributeNames: { '#n': 'name' },
+      ExpressionAttributeValues: { ':q': q },
+      ProjectionExpression: 'artistId, #n, imageUrl, genres, upcoming',
+    })),
+    ddb.send(new ScanCommand({
+      TableName: VENUES_TABLE,
+      FilterExpression: 'contains(#n, :q) AND isActive = :t',
+      ExpressionAttributeNames: { '#n': 'name' },
+      ExpressionAttributeValues: { ':q': q, ':t': true },
+      ProjectionExpression: 'venueId, slug, #n, city, upcoming',
+    })),
+  ]);
+
+  const artists = (aRes.Items || [])
+    .filter(a => a.name && !a.artistId.startsWith('_'))
+    .sort((a, b) => (b.upcoming || 0) - (a.upcoming || 0))
+    .slice(0, limit);
+
+  const venues = (vRes.Items || [])
+    .sort((a, b) => (b.upcoming || 0) - (a.upcoming || 0))
+    .slice(0, limit);
+
+  return ok({ artists, venues });
+}
+
+/* ---- GET /artists/:id/similar ---- */
+async function getSimilarArtists(artistId) {
+  const res = await ddb.send(new GetCommand({ TableName: ARTISTS_TABLE, Key: { artistId } }));
+  const artist = res.Item;
+  if (!artist) return notFound('Artist not found');
+
+  const genres = artist.genres || [];
+  if (genres.length === 0) return ok([]);
+
+  // Find artists sharing at least one genre, exclude self
+  const filterParts = genres.slice(0, 3).map((_, i) => `contains(#g, :g${i})`);
+  const exprValues  = Object.fromEntries(genres.slice(0, 3).map((g, i) => [`:g${i}`, g]));
+
+  const scan = await ddb.send(new ScanCommand({
+    TableName: ARTISTS_TABLE,
+    FilterExpression: `(${filterParts.join(' OR ')}) AND artistId <> :self`,
+    ExpressionAttributeNames: { '#g': 'genres' },
+    ExpressionAttributeValues: { ...exprValues, ':self': artistId },
+    ProjectionExpression: 'artistId, #n, imageUrl, genres, upcoming',
+    ExpressionAttributeNames: { '#g': 'genres', '#n': 'name' },
+  }));
+
+  const similar = (scan.Items || [])
+    .filter(a => a.name && !a.artistId.startsWith('_') && (a.upcoming || 0) > 0)
+    .sort((a, b) => (b.upcoming || 0) - (a.upcoming || 0))
+    .slice(0, 12);
+
+  return ok(similar);
+}
+
 /* ---- GET /gigs ---- */
 async function getGigs(params) {
   const today = new Date().toISOString().split('T')[0];
@@ -583,6 +648,11 @@ exports.handler = async (event) => {
 
     const artistGigsMatch = rawPath.match(/^\/artists\/([^/]+)\/gigs$/);
     if (artistGigsMatch) return getArtistGigs(decodeURIComponent(artistGigsMatch[1]));
+
+    const artistSimilarMatch = rawPath.match(/^\/artists\/([^/]+)\/similar$/);
+    if (artistSimilarMatch) return getSimilarArtists(decodeURIComponent(artistSimilarMatch[1]));
+
+    if (rawPath === '/search') return search(params);
 
     if (rawPath === '/gigs') return getGigs(params);
 

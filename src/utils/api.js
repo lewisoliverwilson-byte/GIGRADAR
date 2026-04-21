@@ -47,13 +47,15 @@ async function adminPost(path, body, adminKey) {
 }
 
 export const api = {
-  getArtists:    ()             => get('/artists'),
-  getArtist:     (id)           => get(`/artists/${id}`),
-  getArtistGigs: (id)           => get(`/artists/${id}/gigs`),
-  getGigs:       (params)       => get(`/gigs${params ? '?' + new URLSearchParams(params) : ''}`),
-  getVenues:     ()             => get('/venues'),
-  getVenue:      (slug)         => get(`/venues/${slug}`),
-  getVenueGigs:  (slug)         => get(`/venues/${slug}/gigs`),
+  getArtists:        ()             => get('/artists'),
+  getArtist:         (id)           => get(`/artists/${id}`),
+  getArtistGigs:     (id)           => get(`/artists/${id}/gigs`),
+  getSimilarArtists: (id)           => get(`/artists/${id}/similar`),
+  getGigs:           (params)       => get(`/gigs${params ? '?' + new URLSearchParams(params) : ''}`),
+  getVenues:         ()             => get('/venues'),
+  getVenue:          (slug)         => get(`/venues/${slug}`),
+  getVenueGigs:      (slug)         => get(`/venues/${slug}/gigs`),
+  search:            (q)            => get(`/search?q=${encodeURIComponent(q)}`),
 
   // Artist claiming & editing (requires Cognito JWT)
   claimArtist:   (id, body, token) => post(`/artists/${id}/claim`, body, token),

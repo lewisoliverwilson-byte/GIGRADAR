@@ -41,6 +41,7 @@ function arg(flag, def = null) {
 }
 
 const DRY_RUN     = process.argv.includes('--dry-run');
+const QUICK       = process.argv.includes('--quick');  // only venues with upcoming gigs
 const ONLY_SOURCE = arg('--source');
 const FB_TOKEN    = arg('--fb-token') || process.env.FB_TOKEN || null;
 const BATCH_SIZE  = parseInt(arg('--batch', '200'));
@@ -98,21 +99,21 @@ async function loadVenues() {
     return venues;
   }
 
-  console.log('Loading active venues from DynamoDB (isActive=true)...');
+  console.log(`Loading ${QUICK ? 'venues with upcoming gigs' : 'active venues'} from DynamoDB...`);
   const venues = [];
   let lastKey;
   do {
     const params = {
       TableName: VENUES_TABLE,
-      FilterExpression: 'isActive = :a',
-      ExpressionAttributeValues: { ':a': true },
+      FilterExpression: QUICK ? 'isActive = :a AND upcoming > :z' : 'isActive = :a',
+      ExpressionAttributeValues: QUICK ? { ':a': true, ':z': 0 } : { ':a': true },
     };
     if (lastKey) params.ExclusiveStartKey = lastKey;
     const result = await ddb.send(new ScanCommand(params)).catch(() => ({ Items: [] }));
     venues.push(...(result.Items || []));
     lastKey = result.LastEvaluatedKey;
   } while (lastKey);
-  console.log(`  ${venues.length} active venues loaded from DynamoDB`);
+  console.log(`  ${venues.length} venues loaded`);
   return venues;
 }
 

@@ -41,6 +41,7 @@ function arg(flag, def = null) {
 
 const DRY_RUN = process.argv.includes('--dry-run');
 const RESUME  = process.argv.includes('--resume');
+const QUICK   = process.argv.includes('--quick');  // only fetch next 4 weeks
 const TM_KEY  = process.env.TM_API_KEY || arg('--api-key');
 const sleep   = ms => new Promise(r => setTimeout(r, ms));
 
@@ -324,13 +325,12 @@ async function main() {
   const artistsSaved = new Set();
   const venuesSaved  = new Set();
 
-  // Fetch past 1 month + next 13 months
+  // Quick mode: next 4 weeks only. Full mode: past 1 month + next 13 months.
   const start = new Date();
-  start.setMonth(start.getMonth() - 1);
-  start.setDate(1);
+  if (!QUICK) { start.setMonth(start.getMonth() - 1); start.setDate(1); }
   const end = new Date();
-  end.setMonth(end.getMonth() + 13);
-  end.setDate(1);
+  end.setDate(end.getDate() + (QUICK ? 28 : 0));
+  if (!QUICK) { end.setMonth(end.getMonth() + 13); end.setDate(1); }
 
   const weeks = weeklyRanges(start.toISOString(), end.toISOString());
   console.log(`Date range: ${start.toISOString().split('T')[0]} → ${end.toISOString().split('T')[0]}`);

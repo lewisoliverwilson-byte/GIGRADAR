@@ -38,6 +38,7 @@ function arg(flag, def = null) {
 
 const DRY_RUN = process.argv.includes('--dry-run');
 const RESUME  = process.argv.includes('--resume');
+const QUICK   = process.argv.includes('--quick');  // limit to 3 pages per city/filter
 const sleep   = ms => new Promise(r => setTimeout(r, ms));
 
 // UK cities available on DICE — slug format is {perm_name}-{hex_id}
@@ -310,7 +311,7 @@ async function main() {
 
         if (events.length === 0) break;
         await sleep(500);
-      } while (cursor && page < 20);
+      } while (cursor && page < (QUICK ? 3 : 20));
 
       await sleep(300);
     }

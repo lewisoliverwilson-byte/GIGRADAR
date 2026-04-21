@@ -34,8 +34,9 @@ const PROGRESS_FILE = path.join(__dirname, 'ents24-progress.json');
 const LOG_FILE      = path.join(__dirname, 'scrape-ents24-log.txt');
 const SITEMAP_URL   = 'https://www.ents24.com/sitemaps/ents24-events-0.xml';
 
-const DRY_RUN = process.argv.includes('--dry-run');
-const RESUME  = process.argv.includes('--resume');
+const DRY_RUN  = process.argv.includes('--dry-run');
+const RESUME   = process.argv.includes('--resume');
+const QUICK    = process.argv.includes('--quick');  // skip events > 4 weeks out
 const sleep   = ms => new Promise(r => setTimeout(r, ms));
 
 const MUSIC_GENRES = new Set([
@@ -178,7 +179,8 @@ async function autoSeedArtist(name) {
 
 // ─── Process one Ents24 event page ───────────────────────────────────────────
 
-const today = new Date().toISOString().split('T')[0];
+const today       = new Date().toISOString().split('T')[0];
+const quickCutoff = (() => { const d = new Date(); d.setDate(d.getDate() + 28); return d.toISOString().split('T')[0]; })();
 
 async function processPage(html, eventId, gigsSaved) {
   const nuxt = parseNuxtState(html);
@@ -196,6 +198,7 @@ async function processPage(html, eventId, gigsSaved) {
   const dateMatch = html.match(/<time[^>]*datetime="(\d{4}-\d{2}-\d{2})"/);
   const date = dateMatch?.[1] || ev.startDate || null;
   if (!date || date < today) return 0;
+  if (QUICK && date > quickCutoff) return 0;
 
   // Get lineup
   const lineup = ev.lineup || [];

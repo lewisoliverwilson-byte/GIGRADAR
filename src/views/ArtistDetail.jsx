@@ -30,6 +30,7 @@ export default function ArtistDetail() {
 
   const [artist, setArtist] = useState(null);
   const [gigs, setGigs] = useState([]);
+  const [similar, setSimilar] = useState([]);
   const [imgUrl, setImgUrl] = useState(null);
   const [tab, setTab] = useState('upcoming');
   const [loading, setLoading] = useState(true);
@@ -45,7 +46,11 @@ export default function ArtistDetail() {
     if (!id) return;
     setLoading(true); setError(false);
     Promise.all([api.getArtist(id), api.getArtistGigs(id)])
-      .then(([a, g]) => { setArtist(a); setGigs(g); })
+      .then(([a, g]) => {
+        setArtist(a);
+        setGigs(g);
+        api.getSimilarArtists(id).then(setSimilar).catch(() => {});
+      })
       .catch(() => setError(true))
       .finally(() => setLoading(false));
   }, [id]);
@@ -160,9 +165,15 @@ export default function ArtistDetail() {
                 </div>
 
                 <div className="flex flex-wrap items-center gap-2 mb-3">
-                  {artist.genres?.slice(0, 3).map(g => (
-                    <span key={g} className="bg-zinc-800 text-zinc-300 text-xs px-2 py-0.5 rounded-md">{g}</span>
+                  {artist.genres?.slice(0, 4).map(g => (
+                    <Link key={g} href={`/gigs?genre=${encodeURIComponent(g)}`}
+                      className="bg-zinc-800 hover:bg-zinc-700 text-zinc-300 text-xs px-2 py-0.5 rounded-md transition-colors">
+                      {g}
+                    </Link>
                   ))}
+                  {artist.mbCountry && (
+                    <span className="text-xs text-zinc-500">{artist.mbCountry}</span>
+                  )}
                   {artist.monthlyListeners > 0 && (
                     <span className="text-xs text-zinc-500">{artist.monthlyListeners.toLocaleString()} monthly listeners</span>
                   )}
@@ -323,6 +334,18 @@ export default function ArtistDetail() {
         )}
       </div>
 
+      {similar.length > 0 && (
+        <div className="max-w-5xl mx-auto px-6 pb-10">
+          <div className="border-t border-zinc-800 mb-6" />
+          <h2 className="text-lg font-bold text-white mb-4">Similar artists</h2>
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-3">
+            {similar.slice(0, 12).map(a => (
+              <SimilarArtistCard key={a.artistId} artist={a} />
+            ))}
+          </div>
+        </div>
+      )}
+
       {showClaim && (
         <ClaimModal
           artist={artist}
@@ -333,6 +356,29 @@ export default function ArtistDetail() {
 
       <Footer />
     </div>
+  );
+}
+
+function SimilarArtistCard({ artist }) {
+  const color = artist.color || artistColor(artist.artistId);
+  return (
+    <Link href={`/artists/${artist.artistId}`}
+      className="group flex flex-col items-center gap-2 bg-zinc-900 hover:bg-zinc-800 border border-zinc-800 hover:border-zinc-700 rounded-xl p-3 transition-colors text-center">
+      <div className="w-14 h-14 rounded-xl overflow-hidden flex-shrink-0" style={{ background: color + '33' }}>
+        {artist.imageUrl
+          ? <img src={artist.imageUrl} alt={artist.name} className="w-full h-full object-cover object-top" />
+          : <div className="w-full h-full flex items-center justify-center text-lg font-black" style={{ color }}>
+              {artistInitials(artist.name)}
+            </div>
+        }
+      </div>
+      <div className="min-w-0 w-full">
+        <p className="text-xs font-semibold text-white truncate group-hover:text-violet-300 transition-colors">{artist.name}</p>
+        {artist.upcoming > 0 && (
+          <p className="text-xs text-zinc-500">{artist.upcoming} gig{artist.upcoming !== 1 ? 's' : ''}</p>
+        )}
+      </div>
+    </Link>
   );
 }
 

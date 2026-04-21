@@ -30,6 +30,7 @@ const LOG_FILE      = path.join(__dirname, 'scrape-fatsoma-log.txt');
 
 const DRY_RUN = process.argv.includes('--dry-run');
 const RESUME  = process.argv.includes('--resume');
+const QUICK   = process.argv.includes('--quick');  // only first 20 pages (~1000 events)
 const sleep   = ms => new Promise(r => setTimeout(r, ms));
 
 const API_KEY  = 'fk_ui_cust_aff50532-bbb5-45ed-9d0a-4ad144814b9f';
@@ -310,7 +311,8 @@ async function main() {
     completedSet.add(1);
   }
 
-  for (let page = 2; page <= totalPages; page++) {
+  const maxPage = QUICK ? Math.min(totalPages, 20) : totalPages;
+  for (let page = 2; page <= maxPage; page++) {
     if (RESUME && completedSet.has(page)) {
       process.stdout.write(`\r  [${page}/${totalPages}] skipped   `);
       continue;

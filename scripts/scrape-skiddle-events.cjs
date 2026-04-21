@@ -39,6 +39,7 @@ function arg(flag, def = null) {
 
 const DRY_RUN    = process.argv.includes('--dry-run');
 const RESUME     = process.argv.includes('--resume');
+const QUICK      = process.argv.includes('--quick');  // limit to 3 pages per city
 const CITY_ONLY  = arg('--city');
 const sleep      = ms => new Promise(r => setTimeout(r, ms));
 
@@ -333,7 +334,8 @@ async function main() {
     }
 
     let cityGigs = 0, page = 1, total = Infinity;
-    while ((page - 1) * PAGE_SZ < total) {
+    const maxPages = QUICK ? 3 : Infinity;
+    while ((page - 1) * PAGE_SZ < total && page <= maxPages) {
       const { events, total: tot } = await fetchPage(city, page);
       total = tot;
       if (events.length === 0) break;

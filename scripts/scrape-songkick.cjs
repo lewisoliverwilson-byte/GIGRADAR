@@ -28,9 +28,11 @@ const GIGS_TABLE    = 'gigradar-gigs';
 const PROGRESS_FILE = path.join(__dirname, 'songkick-progress.json');
 const LOG_FILE      = path.join(__dirname, 'scrape-songkick-log.txt');
 
-const DRY_RUN = process.argv.includes('--dry-run');
-const RESUME  = process.argv.includes('--resume');
-const sleep   = ms => new Promise(r => setTimeout(r, ms));
+const DRY_RUN   = process.argv.includes('--dry-run');
+const RESUME    = process.argv.includes('--resume');
+const QUICK     = process.argv.includes('--quick');  // limit to 3 pages per metro
+const QUICK_PGS = 3;
+const sleep     = ms => new Promise(r => setTimeout(r, ms));
 
 // UK metro areas — Songkick IDs (verified via redirect scan)
 const UK_METROS = [
@@ -329,7 +331,7 @@ async function main() {
         totalArtists += newArtists;
         totalVenues  += newVenues;
       }
-      if (lastPage) break;
+      if (lastPage || (QUICK && page >= QUICK_PGS)) break;
       page++;
       await sleep(500);
     }

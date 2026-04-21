@@ -6,6 +6,7 @@ import GigCard from '../components/GigCard.jsx';
 import Footer from '../components/Footer.jsx';
 
 const CITIES = ['All','London','Manchester','Birmingham','Glasgow','Liverpool','Leeds','Bristol','Edinburgh','Newcastle','Sheffield','Nottingham','Cardiff','Brighton','Oxford','Leicester','Southampton','Belfast'];
+const GENRES = ['All','rock','indie','pop','electronic','dance','jazz','classical','hip-hop','folk','metal','punk','alternative','rnb','soul','country','reggae','blues','experimental'];
 
 function todayStr() { return new Date().toISOString().split('T')[0]; }
 
@@ -16,6 +17,7 @@ export default function Gigs() {
   const [loading, setLoading] = useState(true);
   const [page, setPage] = useState(1);
   const [city, setCity] = useState('All');
+  const [genre, setGenre] = useState('All');
   const [from, setFrom] = useState('');
   const [to, setTo] = useState('');
   const [filter, setFilter] = useState('all');
@@ -25,6 +27,7 @@ export default function Gigs() {
   useEffect(() => {
     if (!router.isReady) return;
     setCity(router.query.city || 'All');
+    setGenre(router.query.genre || 'All');
     setFrom(router.query.from || '');
     setTo(router.query.to || '');
     setFilter(router.query.filter || 'all');
@@ -36,10 +39,11 @@ export default function Gigs() {
     setLoading(true); setPage(1);
     const params = { limit: 500 };
     if (city !== 'All') params.city = city;
+    if (genre !== 'All') params.genre = genre;
     if (from) params.from = from;
     if (to) params.to = to;
     api.getGigs(params).then(setGigs).catch(() => setGigs([])).finally(() => setLoading(false));
-  }, [city, from, to, ready]);
+  }, [city, genre, from, to, ready]);
 
   useEffect(() => { fetchGigs(); }, [fetchGigs]);
 
@@ -47,11 +51,12 @@ export default function Gigs() {
     if (!ready) return;
     const p = {};
     if (city !== 'All') p.city = city;
+    if (genre !== 'All') p.genre = genre;
     if (from) p.from = from;
     if (to) p.to = to;
     if (filter !== 'all') p.filter = filter;
     router.replace({ pathname: '/gigs', query: p }, undefined, { shallow: true });
-  }, [city, from, to, filter, ready]);
+  }, [city, genre, from, to, filter, ready]);
 
   const filtered = useMemo(() => {
     let list = gigs;
@@ -104,6 +109,11 @@ export default function Gigs() {
               {CITIES.map(c => <option key={c} value={c}>{c === 'All' ? 'All cities' : c}</option>)}
             </select>
 
+            <select value={genre} onChange={e => { setGenre(e.target.value); setPage(1); }}
+              className="bg-zinc-800 border border-zinc-700 text-white text-sm rounded-xl px-3 py-2 focus:outline-none focus:border-violet-500 capitalize">
+              {GENRES.map(g => <option key={g} value={g}>{g === 'All' ? 'All genres' : g}</option>)}
+            </select>
+
             <div className="flex items-center gap-2">
               <input type="date" value={from} min={todayStr()} onChange={e => { setFrom(e.target.value); setPage(1); }}
                 className="bg-zinc-800 border border-zinc-700 text-white text-sm rounded-xl px-3 py-2 focus:outline-none focus:border-violet-500 w-36" />
@@ -112,8 +122,8 @@ export default function Gigs() {
                 className="bg-zinc-800 border border-zinc-700 text-white text-sm rounded-xl px-3 py-2 focus:outline-none focus:border-violet-500 w-36" />
             </div>
 
-            {(city !== 'All' || from || to || filter !== 'all') && (
-              <button onClick={() => { setCity('All'); setFrom(''); setTo(''); setFilter('all'); setPage(1); }}
+            {(city !== 'All' || genre !== 'All' || from || to || filter !== 'all') && (
+              <button onClick={() => { setCity('All'); setGenre('All'); setFrom(''); setTo(''); setFilter('all'); setPage(1); }}
                 className="text-sm text-zinc-500 hover:text-white transition-colors">
                 Clear ×
               </button>
@@ -138,7 +148,9 @@ export default function Gigs() {
         ) : (
           <>
             <p className="text-sm text-zinc-500 mb-5">
-              {filtered.length.toLocaleString()} gigs{city !== 'All' ? ` in ${city}` : ''}
+              {filtered.length.toLocaleString()} gigs
+              {genre !== 'All' ? ` · ${genre}` : ''}
+              {city !== 'All' ? ` in ${city}` : ''}
             </p>
             <div className="space-y-2">
               {paged.map(g => <GigCard key={g.gigId} gig={g} showArtist />)}

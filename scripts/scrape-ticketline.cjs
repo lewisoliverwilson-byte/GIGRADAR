@@ -32,6 +32,7 @@ const LOG_FILE      = path.join(__dirname, 'scrape-ticketline-log.txt');
 
 const DRY_RUN   = process.argv.includes('--dry-run');
 const RESUME    = process.argv.includes('--resume');
+const QUICK     = process.argv.includes('--quick');  // stop after 4 weeks
 const CITY_ONLY = process.argv.find(a => a.startsWith('--city='))?.split('=')[1];
 const sleep     = ms => new Promise(r => setTimeout(r, ms));
 
@@ -350,10 +351,12 @@ async function scrapeRegion(region, progress) {
     next.setDate(next.getDate() + 1);
     const nextStr = next.toISOString().split('T')[0];
 
-    // Stop if we've gone more than 6 months out
-    const sixMonths = new Date();
-    sixMonths.setMonth(sixMonths.getMonth() + 6);
-    if (next > sixMonths) break;
+    // Stop based on date horizon
+    const horizon = new Date();
+    horizon.setMonth(horizon.getMonth() + (QUICK ? 0 : 6));
+    if (!QUICK) horizon.setMonth(horizon.getMonth()); // 6 months full
+    if (QUICK) horizon.setDate(horizon.getDate() + 28); // 4 weeks quick
+    if (next > horizon) break;
 
     // Stop if this page had no new gigs (all already saved / past)
     if (pageGigs === 0 && events.length < 50) break;

@@ -140,6 +140,17 @@ export default function VenuePage() {
               </div>
             </div>
 
+            {venue.genres?.length > 0 && (
+              <div className="flex flex-wrap gap-1.5 mt-3">
+                {venue.genres.slice(0, 5).map(g => (
+                  <Link key={g} href={`/gigs?genre=${encodeURIComponent(g)}`}
+                    className="bg-zinc-800 hover:bg-zinc-700 text-zinc-300 text-xs px-2 py-0.5 rounded-md transition-colors capitalize">
+                    {g}
+                  </Link>
+                ))}
+              </div>
+            )}
+
             {venue.bio && (
               <p className="text-zinc-400 text-sm leading-relaxed max-w-2xl mt-3">{venue.bio}</p>
             )}
