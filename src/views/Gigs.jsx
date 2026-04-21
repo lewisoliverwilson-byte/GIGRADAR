@@ -32,6 +32,7 @@ export default function Gigs() {
   const [userCoords, setUserCoords] = useState(null);
   const [radius, setRadius] = useState(15);
   const [maxPrice, setMaxPrice] = useState('');
+  const [grassroots, setGrassroots] = useState(false);
 
   useEffect(() => {
     if (!router.isReady) return;
@@ -40,6 +41,20 @@ export default function Gigs() {
     setFrom(router.query.from || '');
     setTo(router.query.to || '');
     setFilter(router.query.filter || 'all');
+    setGrassroots(router.query.grassroots === 'true');
+    // Auto-activate near me if redirected from homepage
+    if (router.query.nearme === '1') {
+      try {
+        const stored = sessionStorage.getItem('nearme_coords');
+        if (stored) {
+          const coords = JSON.parse(stored);
+          sessionStorage.removeItem('nearme_coords');
+          setUserCoords(coords);
+          setNearMode(true);
+          fetchNearby(coords, 15, 'All');
+        }
+      } catch {}
+    }
     setReady(true);
   }, [router.isReady]);
 
@@ -119,6 +134,7 @@ export default function Gigs() {
   const filtered = useMemo(() => {
     let list = gigs;
     if (filter === 'following') list = list.filter(g => following.has(g.artistId));
+    if (grassroots) list = list.filter(g => g._isGrassroots);
     if (maxPrice !== '') {
       const cap = parseFloat(maxPrice);
       if (!isNaN(cap)) list = list.filter(g => g.minPrice != null && g.minPrice <= cap);
@@ -144,7 +160,7 @@ export default function Gigs() {
 
   const paged = filtered.slice(0, page * PER_PAGE);
   const hasMore = paged.length < filtered.length;
-  const hasFilters = city !== 'All' || genre !== 'All' || from || to || filter !== 'all' || nearMode || maxPrice !== '';
+  const hasFilters = city !== 'All' || genre !== 'All' || from || to || filter !== 'all' || nearMode || maxPrice !== '' || grassroots;
 
   return (
     <div className="min-h-screen bg-zinc-950">
@@ -157,12 +173,14 @@ export default function Gigs() {
       </div>
 
       <div className="bg-zinc-900 border-b border-zinc-800">
-        <div className="max-w-5xl mx-auto px-6 py-4">
-          <div className="flex flex-wrap gap-3 items-center">
-            <div className="flex gap-1 bg-zinc-800 rounded-xl p-1">
-              {[['all', 'All gigs'], ['following', 'Following']].map(([val, label]) => (
+        <div className="max-w-5xl mx-auto px-4 sm:px-6 py-3">
+
+          {/* Row 1: mode toggles + near me + city + genre */}
+          <div className="flex flex-wrap gap-2 items-center">
+            <div className="flex gap-1 bg-zinc-800 rounded-xl p-1 shrink-0">
+              {[['all', 'All'], ['following', 'Following']].map(([val, label]) => (
                 <button key={val} onClick={() => { setFilter(val); setPage(1); }}
-                  className={`text-sm px-4 py-1.5 rounded-lg font-medium transition-colors ${
+                  className={`text-sm px-3 py-1.5 rounded-lg font-medium transition-colors ${
                     filter === val ? 'bg-violet-600 text-white' : 'text-zinc-400 hover:text-white'
                   }`}>
                   {label}
@@ -170,7 +188,6 @@ export default function Gigs() {
               ))}
             </div>
 
-            {/* Near me button */}
             {nearMode ? (
               <div className="flex items-center gap-2">
                 <div className="flex items-center gap-1.5 bg-emerald-900/50 border border-emerald-700 rounded-xl px-3 py-2">
@@ -179,67 +196,75 @@ export default function Gigs() {
                 </div>
                 <select value={radius} onChange={e => { setRadius(Number(e.target.value)); setPage(1); }}
                   className="bg-zinc-800 border border-zinc-700 text-white text-sm rounded-xl px-3 py-2 focus:outline-none focus:border-violet-500">
-                  {RADII.map(r => <option key={r} value={r}>{r} miles</option>)}
+                  {RADII.map(r => <option key={r} value={r}>{r} mi</option>)}
                 </select>
-                <button onClick={clearNearMe} className="text-sm text-zinc-500 hover:text-white transition-colors">
-                  ×
-                </button>
+                <button onClick={clearNearMe} className="text-zinc-500 hover:text-white transition-colors text-lg leading-none">×</button>
               </div>
             ) : (
-              <button
-                onClick={activateNearMe}
-                disabled={geoLoading}
-                className="flex items-center gap-1.5 bg-zinc-800 hover:bg-zinc-700 border border-zinc-700 hover:border-emerald-600 text-white text-sm font-medium px-3 py-2 rounded-xl transition-colors disabled:opacity-50">
+              <button onClick={activateNearMe} disabled={geoLoading}
+                className="flex items-center gap-1.5 bg-zinc-800 hover:bg-zinc-700 border border-zinc-700 hover:border-emerald-600 text-white text-sm font-medium px-3 py-2 rounded-xl transition-colors disabled:opacity-50 shrink-0">
                 {geoLoading
                   ? <><span className="w-3 h-3 rounded-full border-2 border-white border-t-transparent animate-spin"></span> Locating…</>
-                  : <>📍 Near me</>
-                }
+                  : <>📍 Near me</>}
               </button>
             )}
 
             {!nearMode && (
               <select value={city} onChange={e => { setCity(e.target.value); setPage(1); }}
-                className="bg-zinc-800 border border-zinc-700 text-white text-sm rounded-xl px-3 py-2 focus:outline-none focus:border-violet-500">
+                className="bg-zinc-800 border border-zinc-700 text-white text-sm rounded-xl px-3 py-2 focus:outline-none focus:border-violet-500 min-w-0">
                 {CITIES.map(c => <option key={c} value={c}>{c === 'All' ? 'All cities' : c}</option>)}
               </select>
             )}
 
             <select value={genre} onChange={e => { setGenre(e.target.value); setPage(1); if (nearMode && userCoords) fetchNearby(userCoords, radius, e.target.value); }}
-              className="bg-zinc-800 border border-zinc-700 text-white text-sm rounded-xl px-3 py-2 focus:outline-none focus:border-violet-500 capitalize">
+              className="bg-zinc-800 border border-zinc-700 text-white text-sm rounded-xl px-3 py-2 focus:outline-none focus:border-violet-500 capitalize min-w-0">
               {GENRES.map(g => <option key={g} value={g}>{g === 'All' ? 'All genres' : g}</option>)}
             </select>
 
-            {!nearMode && (
-              <div className="flex items-center gap-2">
-                <input type="date" value={from} min={todayStr()} onChange={e => { setFrom(e.target.value); setPage(1); }}
-                  className="bg-zinc-800 border border-zinc-700 text-white text-sm rounded-xl px-3 py-2 focus:outline-none focus:border-violet-500 w-36" />
-                <span className="text-zinc-600">→</span>
-                <input type="date" value={to} min={from || todayStr()} onChange={e => { setTo(e.target.value); setPage(1); }}
-                  className="bg-zinc-800 border border-zinc-700 text-white text-sm rounded-xl px-3 py-2 focus:outline-none focus:border-violet-500 w-36" />
-              </div>
-            )}
-
-            <select value={maxPrice} onChange={e => { setMaxPrice(e.target.value); setPage(1); }}
-              className="bg-zinc-800 border border-zinc-700 text-white text-sm rounded-xl px-3 py-2 focus:outline-none focus:border-violet-500">
-              <option value="">Any price</option>
-              <option value="0">Free</option>
-              <option value="10">Under £10</option>
-              <option value="20">Under £20</option>
-              <option value="30">Under £30</option>
-              <option value="50">Under £50</option>
-            </select>
-
             {hasFilters && (
-              <button onClick={() => { setCity('All'); setGenre('All'); setFrom(''); setTo(''); setFilter('all'); setMaxPrice(''); setPage(1); clearNearMe(); }}
-                className="text-sm text-zinc-500 hover:text-white transition-colors">
+              <button onClick={() => { setCity('All'); setGenre('All'); setFrom(''); setTo(''); setFilter('all'); setMaxPrice(''); setGrassroots(false); setPage(1); clearNearMe(); }}
+                className="text-sm text-zinc-500 hover:text-white transition-colors ml-auto">
                 Clear ×
               </button>
             )}
           </div>
 
-          {geoError && (
-            <p className="text-xs text-red-400 mt-2">{geoError}</p>
-          )}
+          {/* Row 2: price pills + grassroots + date range */}
+          <div className="flex flex-wrap gap-2 items-center mt-2">
+            <div className="flex gap-1 flex-wrap">
+              {[['', 'Any price'], ['0', 'Free'], ['10', '£10'], ['20', '£20'], ['30', '£30'], ['50', '£50']].map(([val, label]) => (
+                <button key={val} onClick={() => { setMaxPrice(val); setPage(1); }}
+                  className={`text-xs px-3 py-1.5 rounded-lg font-medium border transition-colors ${
+                    maxPrice === val
+                      ? 'bg-violet-600 border-violet-500 text-white'
+                      : 'bg-zinc-800 border-zinc-700 text-zinc-400 hover:text-white hover:border-zinc-500'
+                  }`}>
+                  {label}
+                </button>
+              ))}
+            </div>
+
+            <button onClick={() => { setGrassroots(g => !g); setPage(1); }}
+              className={`text-xs px-3 py-1.5 rounded-lg font-medium border transition-colors ${
+                grassroots
+                  ? 'bg-emerald-900/60 border-emerald-700 text-emerald-300'
+                  : 'bg-zinc-800 border-zinc-700 text-zinc-400 hover:text-white hover:border-zinc-500'
+              }`}>
+              🎸 Grassroots
+            </button>
+
+            {!nearMode && (
+              <div className="flex items-center gap-1.5 ml-auto">
+                <input type="date" value={from} min={todayStr()} onChange={e => { setFrom(e.target.value); setPage(1); }}
+                  className="bg-zinc-800 border border-zinc-700 text-white text-xs rounded-lg px-2 py-1.5 focus:outline-none focus:border-violet-500 w-32" />
+                <span className="text-zinc-600 text-xs">→</span>
+                <input type="date" value={to} min={from || todayStr()} onChange={e => { setTo(e.target.value); setPage(1); }}
+                  className="bg-zinc-800 border border-zinc-700 text-white text-xs rounded-lg px-2 py-1.5 focus:outline-none focus:border-violet-500 w-32" />
+              </div>
+            )}
+          </div>
+
+          {geoError && <p className="text-xs text-red-400 mt-2">{geoError}</p>}
         </div>
       </div>
 
@@ -265,7 +290,8 @@ export default function Gigs() {
               {nearMode ? ` within ${radius} miles` : ''}
               {!nearMode && genre !== 'All' ? ` · ${genre}` : ''}
               {!nearMode && city !== 'All' ? ` in ${city}` : ''}
-              {maxPrice !== '' ? ` · under £${maxPrice}` : ''}
+              {maxPrice === '0' ? ' · free' : maxPrice !== '' ? ` · under £${maxPrice}` : ''}
+              {grassroots ? ' · grassroots venues' : ''}
             </p>
             <div className="space-y-2">
               {paged.map(g => (

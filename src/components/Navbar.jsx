@@ -87,7 +87,7 @@ export default function Navbar() {
             </div>
           ) : (
             <>
-              <button onClick={() => openAuth('login')} className="text-sm text-zinc-400 hover:text-white px-3 py-2 rounded-lg hover:bg-zinc-800 transition-colors">
+              <button onClick={() => openAuth('login')} className="hidden sm:block text-sm text-zinc-400 hover:text-white px-3 py-2 rounded-lg hover:bg-zinc-800 transition-colors">
                 Log in
               </button>
               <button onClick={() => openAuth('signup')} className="text-sm bg-violet-600 hover:bg-violet-500 text-white font-semibold px-4 py-2 rounded-lg transition-colors">
@@ -115,6 +115,18 @@ export default function Navbar() {
               {label}
             </Link>
           ))}
+          {!user && (
+            <div className="pt-2 border-t border-zinc-800 flex gap-2">
+              <button onClick={() => { openAuth('login'); setMenuOpen(false); }}
+                className="flex-1 text-sm text-zinc-300 bg-zinc-800 hover:bg-zinc-700 px-3 py-2.5 rounded-lg font-medium transition-colors">
+                Log in
+              </button>
+              <button onClick={() => { openAuth('signup'); setMenuOpen(false); }}
+                className="flex-1 text-sm bg-violet-600 hover:bg-violet-500 text-white px-3 py-2.5 rounded-lg font-semibold transition-colors">
+                Sign up free
+              </button>
+            </div>
+          )}
         </div>
       )}
     </nav>

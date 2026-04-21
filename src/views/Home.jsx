@@ -50,6 +50,17 @@ export default function Home() {
 
   const today = new Date().toISOString().split('T')[0];
 
+  function handleNearMe() {
+    if (!navigator.geolocation) { router.push('/gigs'); return; }
+    navigator.geolocation.getCurrentPosition(
+      pos => {
+        sessionStorage.setItem('nearme_coords', JSON.stringify({ lat: pos.coords.latitude, lng: pos.coords.longitude }));
+        router.push('/gigs?nearme=1');
+      },
+      () => router.push('/gigs')
+    );
+  }
+
   const featuredArtists = [...artists]
     .filter(a => a.upcoming > 0)
     .sort((a, b) => (b.upcoming - a.upcoming) || ((a.lastfmRank || 999999) - (b.lastfmRank || 999999)))
@@ -102,11 +113,14 @@ export default function Home() {
             <Link href="/gigs" className="bg-violet-600 hover:bg-violet-500 text-white font-semibold px-7 py-3 rounded-xl transition-colors">
               Browse gigs
             </Link>
-            <Link href="/artists" className="bg-zinc-800 hover:bg-zinc-700 border border-zinc-700 text-white font-semibold px-7 py-3 rounded-xl transition-colors">
+            <button onClick={handleNearMe} className="bg-zinc-800 hover:bg-zinc-700 border border-zinc-700 hover:border-emerald-600 text-white font-semibold px-7 py-3 rounded-xl transition-colors flex items-center gap-2">
+              📍 Near me
+            </button>
+            <Link href="/artists" className="bg-zinc-800 hover:bg-zinc-700 border border-zinc-700 text-white font-semibold px-7 py-3 rounded-xl transition-colors hidden sm:inline-flex">
               Find artists
             </Link>
             {!user && (
-              <button onClick={() => openAuth('signup')} className="text-zinc-400 hover:text-white font-medium px-5 py-3 transition-colors">
+              <button onClick={() => openAuth('signup')} className="text-zinc-400 hover:text-white font-medium px-5 py-3 transition-colors hidden sm:block">
                 Sign up free →
               </button>
             )}
@@ -134,10 +148,10 @@ export default function Home() {
                 {city}
               </Link>
             ))}
-            <Link href="/gigs"
-              className="bg-zinc-900 hover:bg-zinc-800 border border-zinc-700 hover:border-violet-600 text-violet-400 text-sm font-medium px-4 py-2 rounded-xl transition-colors">
-              Near me →
-            </Link>
+            <button onClick={handleNearMe}
+              className="bg-zinc-900 hover:bg-zinc-800 border border-zinc-700 hover:border-emerald-600 text-emerald-400 text-sm font-medium px-4 py-2 rounded-xl transition-colors flex items-center gap-1.5">
+              📍 Near me
+            </button>
           </div>
         </div>
       </section>
