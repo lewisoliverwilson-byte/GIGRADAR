@@ -140,9 +140,9 @@ async function main() {
         // Always update listener count (changes over time)
         if (listeners) { sets.push('lastfmListeners = :l'); values[':l'] = listeners; }
         if (mbid)      { sets.push('lastfmMbid = if_not_exists(lastfmMbid, :m)'); values[':m'] = mbid; }
-        // Only set bio/genres if not already present
         if (bio)       { sets.push('bio = if_not_exists(bio, :b)'); values[':b'] = bio; }
-        if (genres.length) { sets.push('genres = if_not_exists(genres, :g)'); values[':g'] = genres; }
+        // Always overwrite genres when Last.fm returns real tags (fixes empty [] never updating)
+        if (genres.length) { sets.push('genres = :g'); values[':g'] = genres; }
 
         await ddb.send(new UpdateCommand({
           TableName: ARTISTS_TABLE,

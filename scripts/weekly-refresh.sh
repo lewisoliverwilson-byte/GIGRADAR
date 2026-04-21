@@ -136,6 +136,11 @@ log "enrich-venue-genres" "done"
 # PHASE 4 — GENRE PROPAGATION
 # ════════════════════════════════════════════════════════════════
 echo ""
+echo "▶ Grassroots venue classification"
+node "$ROOT/scripts/classify-grassroots-venues.cjs" $DRY \
+  > "$LOG_DIR/${TS}-grassroots.txt" 2>&1
+log "grassroots" "done"
+
 echo "▶ Genre propagation — artist → gigs + co-performer inference"
 node "$ROOT/scripts/update-gig-genres.cjs" $DRY \
   > "$LOG_DIR/${TS}-update-gig-genres.txt" 2>&1
