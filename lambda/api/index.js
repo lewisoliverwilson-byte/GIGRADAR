@@ -473,14 +473,205 @@ async function getVenuesFiltered(params) {
   return ok(venues);
 }
 
+/* ---- GET /on-sale — gigs going on sale in the next 7 days ---- */
+async function getOnSaleGigs(params) {
+  const today  = new Date().toISOString().split('T')[0];
+  const cutoff = new Date(Date.now() + 7 * 86400000).toISOString().split('T')[0];
+  const genre  = (params?.genre || '').trim().toLowerCase();
+  const city   = (params?.city  || '').trim();
+
+  const filterParts = ['onSaleDate >= :today AND onSaleDate <= :end AND #d > :today'];
+  const names  = { '#d': 'date' };
+  const values = { ':today': today, ':end': cutoff };
+  if (genre) { filterParts.push('contains(#genres, :genre)'); names['#genres'] = 'genres'; values[':genre'] = genre; }
+  if (city)  { filterParts.push('contains(#city, :city)');   names['#city']   = 'venueCity'; values[':city'] = city; }
+
+  const result = await ddb.send(new ScanCommand({
+    TableName: GIGS_TABLE,
+    FilterExpression: filterParts.join(' AND '),
+    ExpressionAttributeNames: names,
+    ExpressionAttributeValues: values,
+  })).catch(() => ({ Items: [] }));
+
+  const gigs = (result.Items || [])
+    .sort((a, b) => (a.onSaleDate || '').localeCompare(b.onSaleDate || ''))
+    .slice(0, 50);
+  return ok(gigs);
+}
+
+/* ---- GET /coming-soon — recently announced gigs (last 14 days) ---- */
+async function getComingSoonGigs(params) {
+  const today    = new Date().toISOString().split('T')[0];
+  const cutoff   = new Date(Date.now() - 14 * 86400000).toISOString();
+  const genre    = (params?.genre || '').trim().toLowerCase();
+  const city     = (params?.city  || '').trim();
+
+  const filterParts = ['#d > :today AND lastUpdated >= :cutoff'];
+  const names  = { '#d': 'date' };
+  const values = { ':today': today, ':cutoff': cutoff };
+  if (genre) { filterParts.push('contains(#genres, :genre)'); names['#genres'] = 'genres'; values[':genre'] = genre; }
+  if (city)  { filterParts.push('contains(#city, :city)');   names['#city']   = 'venueCity'; values[':city'] = city; }
+
+  const result = await ddb.send(new ScanCommand({
+    TableName: GIGS_TABLE,
+    FilterExpression: filterParts.join(' AND '),
+    ExpressionAttributeNames: names,
+    ExpressionAttributeValues: values,
+  })).catch(() => ({ Items: [] }));
+
+  const gigs = (result.Items || [])
+    .sort((a, b) => (b.lastUpdated || '').localeCompare(a.lastUpdated || ''))
+    .slice(0, 50);
+  return ok(gigs);
+}
+
+/* ---- GET /artists/:id/setlists — proxy Setlist.fm ---- */
+async function getArtistSetlists(artistId) {
+  const SETLISTFM_KEY = process.env.SETLISTFM_KEY || '';
+  if (!SETLISTFM_KEY) return ok([]);
+
+  const res = await ddb.send(new GetCommand({ TableName: ARTISTS_TABLE, Key: { artistId } }));
+  const artist = res.Item;
+  if (!artist) return notFound('Artist not found');
+
+  const mbid = artist.mbid || artist.musicBrainzId || null;
+  if (!mbid) return ok([]);
+
+  try {
+    const r = await fetch(
+      `https://api.setlist.fm/rest/1.0/artist/${mbid}/setlists?p=1`,
+      { headers: { 'x-api-key': SETLISTFM_KEY, 'Accept': 'application/json' } }
+    );
+    if (!r.ok) return ok([]);
+    const data = await r.json();
+
+    const setlists = (data.setlist || []).slice(0, 10).map(s => ({
+      id:        s.id,
+      date:      s.eventDate,
+      venueName: s.venue?.name || '',
+      venueCity: s.venue?.city?.name || '',
+      country:   s.venue?.city?.country?.name || '',
+      tourName:  s.tour?.name || null,
+      sets:      (s.sets?.set || []).map(set => ({
+        name:  set.name || null,
+        songs: (set.song || []).map(sg => ({
+          name:    sg.name,
+          cover:   sg.cover ? { artist: sg.cover.name } : null,
+          tape:    sg.tape || false,
+        })),
+      })),
+    }));
+    return ok(setlists);
+  } catch { return ok([]); }
+}
+
+/* ---- POST /venues/:slug/claim ---- */
+async function submitVenueClaim(slug, event) {
+  const sub = getJwtSub(event);
+  if (!sub) return unauthorized();
+
+  const { email, role, note } = parseBody(event);
+  if (!email || !role) return badRequest('email and role required');
+
+  const vRes = await ddb.send(new ScanCommand({
+    TableName: VENUES_TABLE,
+    FilterExpression: 'slug = :s',
+    ExpressionAttributeValues: { ':s': slug },
+  }));
+  const venue = (vRes.Items || [])[0];
+  if (!venue) return notFound('Venue not found');
+  if (venue.claimedBy) return { statusCode: 409, headers: CORS, body: JSON.stringify({ error: 'Venue already claimed' }) };
+
+  await ddb.send(new UpdateCommand({
+    TableName: VENUES_TABLE,
+    Key: { venueId: venue.venueId },
+    UpdateExpression: 'SET pendingClaim = :c',
+    ExpressionAttributeValues: {
+      ':c': { sub, email, role, note: note || '', timestamp: new Date().toISOString() }
+    },
+  }));
+  return ok({ ok: true });
+}
+
+/* ---- PATCH /venues/:slug — update venue profile (claimed only) ---- */
+async function updateVenueProfile(slug, event) {
+  const sub = getJwtSub(event);
+  if (!sub) return unauthorized();
+
+  const vRes = await ddb.send(new ScanCommand({
+    TableName: VENUES_TABLE,
+    FilterExpression: 'slug = :s',
+    ExpressionAttributeValues: { ':s': slug },
+  }));
+  const venue = (vRes.Items || [])[0];
+  if (!venue) return notFound('Venue not found');
+  if (venue.claimedBy !== sub) return forbidden();
+
+  const allowed = ['bio', 'website', 'instagram', 'facebook', 'twitter', 'imageUrl', 'photoUrl', 'email', 'phone', 'bookingEmail', 'capacity', 'isGrassroots'];
+  const data = parseBody(event);
+  const updates = Object.entries(data).filter(([k]) => allowed.includes(k));
+  if (updates.length === 0) return badRequest('No valid fields');
+
+  const sets   = updates.map(([, ], i) => `#f${i} = :v${i}`).join(', ');
+  const names  = Object.fromEntries(updates.map(([k], i) => [`#f${i}`, k]));
+  const values = Object.fromEntries(updates.map(([, v], i) => [`:v${i}`, v]));
+
+  await ddb.send(new UpdateCommand({
+    TableName: VENUES_TABLE,
+    Key: { venueId: venue.venueId },
+    UpdateExpression: `SET ${sets}`,
+    ExpressionAttributeNames: names,
+    ExpressionAttributeValues: values,
+  }));
+  return ok({ ok: true });
+}
+
+/* ---- GET /admin/venue-claims ---- */
+async function adminGetVenueClaims(event) {
+  if (!isAdmin(event)) return forbidden();
+  const result = await ddb.send(new ScanCommand({
+    TableName: VENUES_TABLE,
+    FilterExpression: 'attribute_exists(pendingClaim)',
+  }));
+  return ok(result.Items || []);
+}
+
+/* ---- POST /admin/venue-claims/:venueId/approve ---- */
+async function adminApproveVenueClaim(venueId, event) {
+  if (!isAdmin(event)) return forbidden();
+  const existing = await ddb.send(new GetCommand({ TableName: VENUES_TABLE, Key: { venueId } }));
+  const venue = existing.Item;
+  if (!venue?.pendingClaim) return notFound('No pending claim');
+
+  await ddb.send(new UpdateCommand({
+    TableName: VENUES_TABLE,
+    Key: { venueId },
+    UpdateExpression: 'SET claimedBy = :sub, verified = :v REMOVE pendingClaim',
+    ExpressionAttributeValues: { ':sub': venue.pendingClaim.sub, ':v': true },
+  }));
+  return ok({ ok: true });
+}
+
+/* ---- POST /admin/venue-claims/:venueId/reject ---- */
+async function adminRejectVenueClaim(venueId, event) {
+  if (!isAdmin(event)) return forbidden();
+  await ddb.send(new UpdateCommand({
+    TableName: VENUES_TABLE,
+    Key: { venueId },
+    UpdateExpression: 'REMOVE pendingClaim',
+  }));
+  return ok({ ok: true });
+}
+
 /* ---- GET /gigs ---- */
 async function getGigs(params) {
-  const today = new Date().toISOString().split('T')[0];
-  const limit = Math.min(parseInt(params?.limit || '200', 10), 500);
-  const city  = (params?.city  || '').trim().split(/\s+/).map(w => w ? w[0].toUpperCase() + w.slice(1).toLowerCase() : '').join(' ');
-  const genre = (params?.genre || '').trim().toLowerCase();
-  const from  = params?.from  || today;
-  const to    = params?.to    || (() => { const d = new Date(); d.setDate(d.getDate() + 90); return d.toISOString().split('T')[0]; })();
+  const today    = new Date().toISOString().split('T')[0];
+  const limit    = Math.min(parseInt(params?.limit || '200', 10), 500);
+  const city     = (params?.city  || '').trim().split(/\s+/).map(w => w ? w[0].toUpperCase() + w.slice(1).toLowerCase() : '').join(' ');
+  const genre    = (params?.genre || '').trim().toLowerCase();
+  const maxPrice = params?.maxPrice ? parseFloat(params.maxPrice) : null;
+  const from     = params?.from  || today;
+  const to       = params?.to    || (() => { const d = new Date(); d.setDate(d.getDate() + 90); return d.toISOString().split('T')[0]; })();
 
   // Build list of dates in range (capped at 90 days to avoid runaway queries)
   const dates = [];
@@ -525,11 +716,9 @@ async function getGigs(params) {
     for (const items of batchResults) allGigs.push(...items);
   }
 
-  return ok(
-    allGigs
-      .sort((a, b) => a.date.localeCompare(b.date))
-      .slice(0, limit)
-  );
+  let sorted = allGigs.sort((a, b) => a.date.localeCompare(b.date));
+  if (maxPrice !== null) sorted = sorted.filter(g => g.minPrice != null && g.minPrice <= maxPrice);
+  return ok(sorted.slice(0, limit));
 }
 
 /* ---- Spotify helpers ---- */
@@ -818,11 +1007,16 @@ exports.handler = async (event) => {
 
     if (rawPath === '/search') return search(params);
 
-    if (rawPath === '/trending')     return getTrending();
-    if (rawPath === '/emerging')     return getEmerging();
-    if (rawPath === '/grassroots')   return getGrassrootsGigs(params);
-    if (rawPath === '/gigs/nearby')  return getNearbyGigs(params);
-    if (rawPath === '/gigs')         return getGigs(params);
+    if (rawPath === '/trending')      return getTrending();
+    if (rawPath === '/emerging')      return getEmerging();
+    if (rawPath === '/grassroots')    return getGrassrootsGigs(params);
+    if (rawPath === '/on-sale')       return getOnSaleGigs(params);
+    if (rawPath === '/coming-soon')   return getComingSoonGigs(params);
+    if (rawPath === '/gigs/nearby')   return getNearbyGigs(params);
+    if (rawPath === '/gigs')          return getGigs(params);
+
+    const artistSetlistsMatch = rawPath.match(/^\/artists\/([^/]+)\/setlists$/);
+    if (artistSetlistsMatch) return getArtistSetlists(decodeURIComponent(artistSetlistsMatch[1]));
 
     if (rawPath === '/venues') return (params?.city || params?.grassroots) ? getVenuesFiltered(params) : getVenues();
 
@@ -832,8 +1026,9 @@ exports.handler = async (event) => {
     const venueMatch = rawPath.match(/^\/venues\/([^/]+)$/);
     if (venueMatch) return getVenue(decodeURIComponent(venueMatch[1]));
 
-    if (rawPath === '/admin/artists') return adminGetArtists(event);
-    if (rawPath === '/admin/claims')  return adminGetClaims(event);
+    if (rawPath === '/admin/artists')       return adminGetArtists(event);
+    if (rawPath === '/admin/claims')        return adminGetClaims(event);
+    if (rawPath === '/admin/venue-claims')  return adminGetVenueClaims(event);
     if (rawPath === '/follows/check') return checkFollow(params);
     if (rawPath === '/unsubscribe')   return unsubscribeByToken(params);
 
@@ -848,6 +1043,15 @@ exports.handler = async (event) => {
 
     const claimMatch = rawPath.match(/^\/artists\/([^/]+)\/claim$/);
     if (claimMatch) return submitClaim(decodeURIComponent(claimMatch[1]), event);
+
+    const venueClaimMatch = rawPath.match(/^\/venues\/([^/]+)\/claim$/);
+    if (venueClaimMatch) return submitVenueClaim(decodeURIComponent(venueClaimMatch[1]), event);
+
+    const approveVenueClaimMatch = rawPath.match(/^\/admin\/venue-claims\/([^/]+)\/approve$/);
+    if (approveVenueClaimMatch) return adminApproveVenueClaim(decodeURIComponent(approveVenueClaimMatch[1]), event);
+
+    const rejectVenueClaimMatch = rawPath.match(/^\/admin\/venue-claims\/([^/]+)\/reject$/);
+    if (rejectVenueClaimMatch) return adminRejectVenueClaim(decodeURIComponent(rejectVenueClaimMatch[1]), event);
 
     const genresMatch = rawPath.match(/^\/admin\/artists\/([^/]+)\/genres$/);
     if (genresMatch) return adminSetGenres(decodeURIComponent(genresMatch[1]), event);
@@ -873,6 +1077,9 @@ exports.handler = async (event) => {
   if (method === 'PATCH') {
     const artistPatchMatch = rawPath.match(/^\/artists\/([^/]+)$/);
     if (artistPatchMatch) return updateArtistProfile(decodeURIComponent(artistPatchMatch[1]), event);
+
+    const venuePatchMatch = rawPath.match(/^\/venues\/([^/]+)$/);
+    if (venuePatchMatch) return updateVenueProfile(decodeURIComponent(venuePatchMatch[1]), event);
 
     return notFound();
   }

@@ -19,6 +19,8 @@ export default function Home() {
   const [trending, setTrending] = useState([]);
   const [emerging, setEmerging] = useState([]);
   const [grassroots, setGrassroots] = useState([]);
+  const [onSale, setOnSale] = useState([]);
+  const [comingSoon, setComingSoon] = useState([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
   const router = useRouter();
@@ -30,13 +32,17 @@ export default function Home() {
       api.getTrending(),
       api.getEmerging(),
       api.getGrassroots(),
+      api.getOnSale().catch(() => []),
+      api.getComingSoon().catch(() => []),
     ])
-      .then(([a, g, t, e, gr]) => {
+      .then(([a, g, t, e, gr, os, cs]) => {
         setArtists(a);
         setGigs(g);
         setTrending(t);
         setEmerging(e);
         setGrassroots(gr);
+        setOnSale(os);
+        setComingSoon(cs);
       })
       .catch(() => {})
       .finally(() => setLoading(false));
@@ -186,6 +192,66 @@ export default function Home() {
           </div>
         )}
       </section>
+
+      {/* On sale this week */}
+      {(loading || onSale.length > 0) && (
+        <section className="border-t border-zinc-800">
+          <div className="max-w-5xl mx-auto px-6 py-12">
+            <div className="flex items-center justify-between mb-6">
+              <div>
+                <div className="flex items-center gap-2 mb-1">
+                  <span className="inline-block w-2 h-2 rounded-full bg-amber-400 animate-pulse"></span>
+                  <span className="text-xs font-bold text-amber-400 uppercase tracking-widest">On sale now</span>
+                </div>
+                <h2 className="text-2xl font-bold text-white">Tickets on sale this week</h2>
+                <p className="text-sm text-zinc-500 mt-1">Newly released tickets — grab them before they sell out</p>
+              </div>
+              <Link href="/gigs" className="text-sm text-amber-400 hover:text-amber-300 font-medium transition-colors hidden sm:block">
+                Browse all gigs →
+              </Link>
+            </div>
+            {loading ? (
+              <div className="space-y-2">
+                {Array.from({ length: 4 }).map((_, i) => <div key={i} className="h-20 rounded-xl bg-zinc-800 animate-pulse" />)}
+              </div>
+            ) : (
+              <div className="space-y-2">
+                {onSale.slice(0, 8).map(g => <GigCard key={g.gigId} gig={g} showArtist />)}
+              </div>
+            )}
+          </div>
+        </section>
+      )}
+
+      {/* Recently announced */}
+      {(loading || comingSoon.length > 0) && (
+        <section className="border-t border-zinc-800">
+          <div className="max-w-5xl mx-auto px-6 py-12">
+            <div className="flex items-center justify-between mb-6">
+              <div>
+                <div className="flex items-center gap-2 mb-1">
+                  <span className="inline-block w-2 h-2 rounded-full bg-sky-400"></span>
+                  <span className="text-xs font-bold text-sky-400 uppercase tracking-widest">Just announced</span>
+                </div>
+                <h2 className="text-2xl font-bold text-white">Recently announced shows</h2>
+                <p className="text-sm text-zinc-500 mt-1">New gigs added in the last two weeks</p>
+              </div>
+              <Link href="/gigs" className="text-sm text-sky-400 hover:text-sky-300 font-medium transition-colors hidden sm:block">
+                See all gigs →
+              </Link>
+            </div>
+            {loading ? (
+              <div className="space-y-2">
+                {Array.from({ length: 4 }).map((_, i) => <div key={i} className="h-20 rounded-xl bg-zinc-800 animate-pulse" />)}
+              </div>
+            ) : (
+              <div className="space-y-2">
+                {comingSoon.slice(0, 8).map(g => <GigCard key={g.gigId} gig={g} showArtist />)}
+              </div>
+            )}
+          </div>
+        </section>
+      )}
 
       {/* Grassroots picks */}
       <section className="border-t border-zinc-800 bg-zinc-900/30">

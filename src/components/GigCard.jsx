@@ -76,7 +76,11 @@ export default function GigCard({ gig, showArtist = false, distanceMiles, isGras
         ) : gig.ticketType === 'door' ? (
           <span className="text-xs font-semibold text-amber-400">Pay on door</span>
         ) : buyLinks.length > 0 ? (
-          <div className="flex flex-wrap gap-1.5">
+          <div className="flex flex-wrap gap-1.5 items-center">
+            {gig.minPrice != null && gig.minPrice > 0 && !buyLinks.some(t => t.price && t.price !== 'See site') && (
+              <span className="text-xs text-zinc-400 font-medium">from £{gig.minPrice % 1 === 0 ? gig.minPrice : gig.minPrice.toFixed(2)}</span>
+            )}
+            {gig.minPrice === 0 && <span className="text-xs font-semibold text-emerald-400">Free</span>}
             {buyLinks.slice(0, 4).map((t, i) => (
               <a key={i} href={t.url} target="_blank" rel="noopener noreferrer"
                 className="inline-flex items-center gap-1 text-xs font-semibold bg-violet-900 text-violet-300 border border-violet-700 hover:bg-violet-600 hover:text-white hover:border-violet-600 rounded-lg px-2.5 py-1 transition-all whitespace-nowrap">

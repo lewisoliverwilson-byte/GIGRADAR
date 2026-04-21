@@ -291,6 +291,7 @@ async function main() {
           venueCountry:     'GB',
           canonicalVenueId: canonicalVenueId || null,
           isSoldOut:        false,
+          minPrice:         ev.isFree ? 0 : null,
           minAge:           null,
           supportActs:      [],
           tickets: [{

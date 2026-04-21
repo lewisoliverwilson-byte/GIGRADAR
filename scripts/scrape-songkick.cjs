@@ -274,6 +274,7 @@ async function processEvent(ev, metroName, gigsSaved, artistsSaved, venuesSaved)
       venueCountry:     'GB',
       canonicalVenueId,
       isSoldOut:        ev.eventStatus === 'https://schema.org/EventCancelled',
+      minPrice:         null,
       minAge:           null,
       supportActs:      artists.filter(a => a !== artistName),
       tickets: [{

@@ -200,6 +200,7 @@ async function processArtistEvents(artist, events, gigsSaved, venuesSaved) {
       venueCountry:     'GB',
       canonicalVenueId,
       isSoldOut:        false,
+      minPrice:         isFree ? 0 : null,
       minAge:           null,
       supportActs,
       tickets: [{

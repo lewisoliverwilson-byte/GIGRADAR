@@ -240,6 +240,7 @@ async function processEvent(ev, gigsSaved, artistsSaved, venuesSaved) {
     venueCountry:     'GB',
     canonicalVenueId,
     isSoldOut:        isSoldOut,
+    minPrice:         priceRaw != null ? priceRaw / 100 : null,
     minAge:           null,
     supportActs:      [],
     tickets: [{

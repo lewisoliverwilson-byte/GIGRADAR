@@ -232,11 +232,13 @@ async function processPage(html, eventId, gigsSaved) {
     if (gigsSaved.has(gigId)) continue;
 
     const otherArtists = allArtists.filter(a => a !== artistName);
+    const priceNum = priceMatch ? parseFloat(priceMatch[0].replace('£', '').replace(',', '')) || null : null;
     const gig = {
       gigId, artistId, artistName, date,
       doorsTime:        null,
       venueName, venueCity, venueCountry: 'GB', canonicalVenueId,
       isSoldOut,
+      minPrice:  priceNum,
       supportActs: otherArtists,
       tickets: [{ seller: 'Ents24', url: ticketUrl, available: !isSoldOut, price }],
       sources:     ['ents24'],

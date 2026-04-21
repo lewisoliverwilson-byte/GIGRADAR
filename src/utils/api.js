@@ -51,12 +51,15 @@ export const api = {
   getArtist:         (id)           => get(`/artists/${id}`),
   getArtistGigs:     (id)           => get(`/artists/${id}/gigs`),
   getSimilarArtists: (id)           => get(`/artists/${id}/similar`),
+  getArtistSetlists: (id)           => get(`/artists/${id}/setlists`),
   getGigs:           (params)       => get(`/gigs${params ? '?' + new URLSearchParams(params) : ''}`),
   getNearbyGigs:     (lat, lng, radius = 15, genre) =>
     get(`/gigs/nearby?lat=${lat}&lng=${lng}&radius=${radius}${genre ? '&genre='+encodeURIComponent(genre) : ''}`),
   getTrending:       ()             => get('/trending'),
   getEmerging:       ()             => get('/emerging'),
   getGrassroots:     (params)       => get(`/grassroots${params ? '?' + new URLSearchParams(params) : ''}`),
+  getOnSale:         (params)       => get(`/on-sale${params ? '?' + new URLSearchParams(params) : ''}`),
+  getComingSoon:     (params)       => get(`/coming-soon${params ? '?' + new URLSearchParams(params) : ''}`),
   getVenues:         ()             => get('/venues'),
   getVenuesFiltered: (params)       => get(`/venues?${new URLSearchParams(params)}`),
   getVenue:          (slug)         => get(`/venues/${slug}`),
@@ -64,8 +67,12 @@ export const api = {
   search:            (q)            => get(`/search?q=${encodeURIComponent(q)}`),
 
   // Artist claiming & editing (requires Cognito JWT)
-  claimArtist:   (id, body, token) => post(`/artists/${id}/claim`, body, token),
-  updateArtist:  (id, body, token) => patch(`/artists/${id}`, body, token),
+  claimArtist:   (id, body, token)        => post(`/artists/${id}/claim`, body, token),
+  updateArtist:  (id, body, token)        => patch(`/artists/${id}`, body, token),
+
+  // Venue claiming & editing (requires Cognito JWT)
+  claimVenue:    (slug, body, token)      => post(`/venues/${slug}/claim`, body, token),
+  updateVenue:   (slug, body, token)      => patch(`/venues/${slug}`, body, token),
 
   // Follows / email alerts
   followTarget:  (email, targetId, targetType, targetName) =>
@@ -76,9 +83,12 @@ export const api = {
     get(`/follows/check?${new URLSearchParams({ email, targetId })}`),
 
   // Admin endpoints (requires admin key)
-  adminGetArtists:   (key)       => adminGet('/admin/artists', key),
-  adminSetGenres:    (id, genres, key) => adminPost(`/admin/artists/${id}/genres`, { genres }, key),
-  adminGetClaims:    (key)       => adminGet('/admin/claims', key),
-  adminApproveClaim: (id, key)   => adminPost(`/admin/claims/${id}/approve`, {}, key),
-  adminRejectClaim:  (id, key)   => adminPost(`/admin/claims/${id}/reject`, {}, key),
+  adminGetArtists:        (key)             => adminGet('/admin/artists', key),
+  adminSetGenres:         (id, genres, key) => adminPost(`/admin/artists/${id}/genres`, { genres }, key),
+  adminGetClaims:         (key)             => adminGet('/admin/claims', key),
+  adminApproveClaim:      (id, key)         => adminPost(`/admin/claims/${id}/approve`, {}, key),
+  adminRejectClaim:       (id, key)         => adminPost(`/admin/claims/${id}/reject`, {}, key),
+  adminGetVenueClaims:    (key)             => adminGet('/admin/venue-claims', key),
+  adminApproveVenueClaim: (id, key)         => adminPost(`/admin/venue-claims/${id}/approve`, {}, key),
+  adminRejectVenueClaim:  (id, key)         => adminPost(`/admin/venue-claims/${id}/reject`, {}, key),
 };

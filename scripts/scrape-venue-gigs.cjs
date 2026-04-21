@@ -216,6 +216,7 @@ async function fetchSkiddleVenueEvents(venue) {
           venueCountry:     'GB',
           canonicalVenueId: toVenueId(venue.name, venue.city),
           isSoldOut:        !ev.tickets,
+          minPrice:         ev.ticketpricing?.minPrice != null ? Number(ev.ticketpricing.minPrice) : null,
           minAge:           ev.minage ? parseInt(ev.minage) : null,
           supportActs:      [],
           tickets: [{
@@ -344,6 +345,7 @@ async function fetchSongkickVenueEvents(venue, progress) {
               venueCountry:     'GB',
               canonicalVenueId: toVenueId(venue.name, venue.city),
               isSoldOut:        false,
+              minPrice:         null,
               minAge:           null,
               supportActs:      parsed.supportActs,
               tickets: [{
@@ -514,6 +516,7 @@ async function fetchWebsiteEvents(venue) {
           venueCountry:     'GB',
           canonicalVenueId: toVenueId(venue.name, venue.city),
           isSoldOut:        false,
+          minPrice:         price != null ? Number(price) : null,
           minAge:           null,
           supportActs:      support,
           tickets: [{
@@ -567,6 +570,7 @@ async function fetchFacebookEvents(venue) {
         venueCountry:     'GB',
         canonicalVenueId: toVenueId(venue.name, venue.city),
         isSoldOut:        false,
+        minPrice:         null,
         minAge:           null,
         supportActs:      [],
         tickets: [{

@@ -237,6 +237,7 @@ async function processEvent(ev, gigsSaved, wgtId) {
       doorsTime:        ev.doorTime || null,
       venueName, venueCity, venueCountry: 'GB', canonicalVenueId,
       isSoldOut,
+      minPrice:  availOffers.length ? Math.min(...availOffers.map(o => o.price)) : null,
       supportActs: artists.filter(a => a !== artistName),
       tickets: [{ seller: 'WeGotTickets', url: ticketUrl, available, price: minPrice }],
       sources:     ['wegottickets'],

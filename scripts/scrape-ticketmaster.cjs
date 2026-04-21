@@ -271,6 +271,8 @@ async function parseEvents(events, gigsSaved, artistsSaved, venuesSaved) {
       await autoSeedArtist(a.name);
     }
 
+    const onSaleDate = ev.sales?.public?.startDateTime || null;
+
     const gig = {
       gigId:            `tm-${ev.id}`,
       artistId:         artist.artistId,
@@ -284,6 +286,8 @@ async function parseEvents(events, gigsSaved, artistsSaved, venuesSaved) {
       isSoldOut,
       minAge:           null,
       supportActs,
+      minPrice:         priceMin != null ? priceMin : null,
+      onSaleDate,
       tickets: [{
         seller:    'Ticketmaster',
         url:       ev.url || 'https://www.ticketmaster.co.uk',

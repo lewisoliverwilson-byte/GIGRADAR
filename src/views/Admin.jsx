@@ -23,9 +23,13 @@ export default function Admin() {
   const [genreFilter, setGenreFilter]     = useState('all'); // 'all' | 'untagged'
 
   // Claims state
-  const [claims, setClaims]       = useState([]);
+  const [claims, setClaims]         = useState([]);
   const [loadingClaims, setLoadingClaims] = useState(false);
-  const [actioning, setActioning] = useState('');
+  const [actioning, setActioning]   = useState('');
+
+  // Venue claims state
+  const [venueClaims, setVenueClaims]       = useState([]);
+  const [loadingVenueClaims, setLoadingVenueClaims] = useState(false);
 
   async function tryAuth() {
     setAuthErr('');
@@ -57,11 +61,21 @@ export default function Admin() {
     finally { setLoadingClaims(false); }
   }, [adminKey]);
 
+  const loadVenueClaims = useCallback(async () => {
+    setLoadingVenueClaims(true);
+    try {
+      const data = await api.adminGetVenueClaims(adminKey);
+      setVenueClaims(data);
+    } catch { /* ignore */ }
+    finally { setLoadingVenueClaims(false); }
+  }, [adminKey]);
+
   useEffect(() => {
     if (!authed) return;
     loadArtists();
     loadClaims();
-  }, [authed, loadArtists, loadClaims]);
+    loadVenueClaims();
+  }, [authed, loadArtists, loadClaims, loadVenueClaims]);
 
   // Auto-auth if key is already in sessionStorage
   useEffect(() => {
@@ -147,7 +161,8 @@ export default function Admin() {
       <div className="flex gap-1 bg-surface-2 rounded-lg p-1 w-fit mb-6">
         {[
           ['genres', `Genre Queue (${untaggedCount} untagged)`],
-          ['claims', `Claims (${claims.length})`],
+          ['claims', `Artist Claims (${claims.length})`],
+          ['venue-claims', `Venue Claims (${venueClaims.length})`],
         ].map(([key, label]) => (
           <button key={key} onClick={() => setTab(key)}
             className={`px-4 py-1.5 rounded-md text-sm font-medium transition-colors ${
@@ -268,6 +283,58 @@ export default function Admin() {
                         disabled={!!actioning}
                         className="btn-primary text-sm py-1.5 px-3">
                         {actioning === artist.artistId + 'approve' ? '…' : 'Approve'}
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* Venue claims tab */}
+      {tab === 'venue-claims' && (
+        <div className="space-y-4">
+          <div className="flex items-center justify-between">
+            <span className="text-sm text-gray-400">{venueClaims.length} pending claim{venueClaims.length !== 1 ? 's' : ''}</span>
+            <button onClick={loadVenueClaims} className="text-xs text-gray-500 hover:text-white transition-colors">Refresh</button>
+          </div>
+          {loadingVenueClaims ? (
+            <div className="space-y-2 animate-pulse">{[1,2].map(i => <div key={i} className="h-28 bg-surface-2 rounded-xl" />)}</div>
+          ) : venueClaims.length === 0 ? (
+            <div className="text-center text-gray-500 text-sm py-12">No pending venue claims.</div>
+          ) : (
+            <div className="space-y-3">
+              {venueClaims.map(venue => (
+                <div key={venue.venueId} className="card p-5">
+                  <div className="flex items-start justify-between gap-4 flex-wrap">
+                    <div className="flex-1 min-w-0">
+                      <p className="font-semibold">{venue.name} <span className="text-sm text-gray-500">{venue.city}</span></p>
+                      <p className="text-sm text-gray-400 mt-0.5">
+                        <span className="text-white">{venue.pendingClaim?.email}</span>
+                        {' · '}{venue.pendingClaim?.role}
+                        {' · '}
+                        {venue.pendingClaim?.timestamp
+                          ? new Date(venue.pendingClaim.timestamp).toLocaleDateString('en-GB', { day:'numeric', month:'short', year:'numeric' })
+                          : 'Unknown date'}
+                      </p>
+                      {venue.pendingClaim?.note && (
+                        <p className="text-sm text-gray-400 mt-2 italic">"{venue.pendingClaim.note}"</p>
+                      )}
+                    </div>
+                    <div className="flex items-center gap-2 flex-shrink-0">
+                      <button
+                        onClick={async () => { setActioning(venue.venueId+'reject'); try { await api.adminRejectVenueClaim(venue.venueId, adminKey); setVenueClaims(prev => prev.filter(v => v.venueId !== venue.venueId)); } catch {} finally { setActioning(''); } }}
+                        disabled={!!actioning}
+                        className="btn-ghost text-sm py-1.5 px-3 text-red-400 hover:text-red-300">
+                        {actioning === venue.venueId+'reject' ? '…' : 'Reject'}
+                      </button>
+                      <button
+                        onClick={async () => { setActioning(venue.venueId+'approve'); try { await api.adminApproveVenueClaim(venue.venueId, adminKey); setVenueClaims(prev => prev.filter(v => v.venueId !== venue.venueId)); } catch {} finally { setActioning(''); } }}
+                        disabled={!!actioning}
+                        className="btn-primary text-sm py-1.5 px-3">
+                        {actioning === venue.venueId+'approve' ? '…' : 'Approve'}
                       </button>
                     </div>
                   </div>

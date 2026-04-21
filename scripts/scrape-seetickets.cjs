@@ -304,6 +304,7 @@ async function main() {
           venueCountry:     'GB',
           canonicalVenueId: canonicalVenueId || null,
           isSoldOut:        ev.isSoldOut || false,
+          minPrice:         ev.price != null ? Number(ev.price) : null,
           minAge:           null,
           supportActs:      [],
           tickets: [{

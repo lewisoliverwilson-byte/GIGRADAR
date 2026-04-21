@@ -31,6 +31,7 @@ export default function Gigs() {
   const [geoError, setGeoError] = useState('');
   const [userCoords, setUserCoords] = useState(null);
   const [radius, setRadius] = useState(15);
+  const [maxPrice, setMaxPrice] = useState('');
 
   useEffect(() => {
     if (!router.isReady) return;
@@ -118,6 +119,10 @@ export default function Gigs() {
   const filtered = useMemo(() => {
     let list = gigs;
     if (filter === 'following') list = list.filter(g => following.has(g.artistId));
+    if (maxPrice !== '') {
+      const cap = parseFloat(maxPrice);
+      if (!isNaN(cap)) list = list.filter(g => g.minPrice != null && g.minPrice <= cap);
+    }
     const norm = s => (s || '').toLowerCase().replace(/[^a-z0-9]/g, '').slice(0, 20);
     const seen = new Map();
     const deduped = [];
@@ -139,7 +144,7 @@ export default function Gigs() {
 
   const paged = filtered.slice(0, page * PER_PAGE);
   const hasMore = paged.length < filtered.length;
-  const hasFilters = city !== 'All' || genre !== 'All' || from || to || filter !== 'all' || nearMode;
+  const hasFilters = city !== 'All' || genre !== 'All' || from || to || filter !== 'all' || nearMode || maxPrice !== '';
 
   return (
     <div className="min-h-screen bg-zinc-950">
@@ -214,8 +219,18 @@ export default function Gigs() {
               </div>
             )}
 
+            <select value={maxPrice} onChange={e => { setMaxPrice(e.target.value); setPage(1); }}
+              className="bg-zinc-800 border border-zinc-700 text-white text-sm rounded-xl px-3 py-2 focus:outline-none focus:border-violet-500">
+              <option value="">Any price</option>
+              <option value="0">Free</option>
+              <option value="10">Under £10</option>
+              <option value="20">Under £20</option>
+              <option value="30">Under £30</option>
+              <option value="50">Under £50</option>
+            </select>
+
             {hasFilters && (
-              <button onClick={() => { setCity('All'); setGenre('All'); setFrom(''); setTo(''); setFilter('all'); setPage(1); clearNearMe(); }}
+              <button onClick={() => { setCity('All'); setGenre('All'); setFrom(''); setTo(''); setFilter('all'); setMaxPrice(''); setPage(1); clearNearMe(); }}
                 className="text-sm text-zinc-500 hover:text-white transition-colors">
                 Clear ×
               </button>
@@ -250,6 +265,7 @@ export default function Gigs() {
               {nearMode ? ` within ${radius} miles` : ''}
               {!nearMode && genre !== 'All' ? ` · ${genre}` : ''}
               {!nearMode && city !== 'All' ? ` in ${city}` : ''}
+              {maxPrice !== '' ? ` · under £${maxPrice}` : ''}
             </p>
             <div className="space-y-2">
               {paged.map(g => (

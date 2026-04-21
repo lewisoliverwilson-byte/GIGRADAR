@@ -282,6 +282,7 @@ async function processEvent(ev, regionName, gigsSaved, artistsSaved, venuesSaved
       venueCountry:     'GB',
       canonicalVenueId,
       isSoldOut,
+      minPrice:         price != null ? Number(price) : null,
       minAge:           null,
       supportActs:      artists.filter(a => a !== artistName),
       tickets: [{

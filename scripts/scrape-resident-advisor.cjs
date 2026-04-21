@@ -227,6 +227,7 @@ async function processListing(listing, areaName, gigsSaved, artistsSaved, venues
       venueCountry:     'GB',
       canonicalVenueId,
       isSoldOut:        false,
+      minPrice:         null,
       minAge:           null,
       supportActs:      artists.filter(a => a !== artistName),
       tickets: [{

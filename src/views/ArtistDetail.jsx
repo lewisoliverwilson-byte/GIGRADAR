@@ -31,6 +31,8 @@ export default function ArtistDetail({ initialArtist = null }) {
   const [artist, setArtist] = useState(initialArtist);
   const [gigs, setGigs] = useState([]);
   const [similar, setSimilar] = useState([]);
+  const [setlists, setSetlists] = useState(null);
+  const [setlistsLoading, setSetlistsLoading] = useState(false);
   const [imgUrl, setImgUrl] = useState(null);
   const [tab, setTab] = useState('upcoming');
   const [loading, setLoading] = useState(!initialArtist);
@@ -114,7 +116,16 @@ export default function ArtistDetail({ initialArtist = null }) {
   const today = new Date().toISOString().split('T')[0];
   const upcoming = gigs.filter(g => g.date >= today).sort((a, b) => a.date.localeCompare(b.date));
   const past = gigs.filter(g => g.date < today).sort((a, b) => b.date.localeCompare(a.date));
-  const shown = tab === 'upcoming' ? upcoming : past;
+  const shown = (tab === 'upcoming' || tab === 'setlists') ? upcoming : past;
+
+  function loadSetlists() {
+    if (setlists !== null || setlistsLoading) return;
+    setSetlistsLoading(true);
+    api.getArtistSetlists(artist.artistId)
+      .then(data => setSetlists(Array.isArray(data) ? data : []))
+      .catch(() => setSetlists([]))
+      .finally(() => setSetlistsLoading(false));
+  }
   const color = artist.color || artistColor(artist.artistId);
   const isClaimed = !!artist.claimedBy;
   const isOwner = user && artist.claimedBy === user.sub;
@@ -307,8 +318,8 @@ export default function ArtistDetail({ initialArtist = null }) {
 
         {/* Tabs */}
         <div className="flex gap-1 bg-zinc-900 border border-zinc-800 rounded-xl p-1 w-fit mb-6">
-          {[['upcoming', `Upcoming (${upcoming.length})`], ['past', `Past (${past.length})`]].map(([key, label]) => (
-            <button key={key} onClick={() => setTab(key)}
+          {[['upcoming', `Upcoming (${upcoming.length})`], ['past', `Past (${past.length})`], ['setlists', 'Setlists']].map(([key, label]) => (
+            <button key={key} onClick={() => { setTab(key); if (key === 'setlists') loadSetlists(); }}
               className={`px-5 py-2 rounded-lg text-sm font-medium transition-colors ${
                 tab === key ? 'bg-zinc-800 text-white' : 'text-zinc-400 hover:text-white'
               }`}>
@@ -317,7 +328,9 @@ export default function ArtistDetail({ initialArtist = null }) {
           ))}
         </div>
 
-        {shown.length > 0 ? (
+        {tab === 'setlists' ? (
+          <SetlistsPanel setlists={setlists} loading={setlistsLoading} artist={artist} />
+        ) : shown.length > 0 ? (
           <div className="space-y-2">
             {shown.map(g => <GigCard key={g.gigId} gig={g} />)}
           </div>
@@ -357,6 +370,63 @@ export default function ArtistDetail({ initialArtist = null }) {
       )}
 
       <Footer />
+    </div>
+  );
+}
+
+function SetlistsPanel({ setlists, loading, artist }) {
+  if (loading) return (
+    <div className="space-y-3">
+      {Array.from({ length: 3 }).map((_, i) => <div key={i} className="h-32 rounded-2xl bg-zinc-800 animate-pulse" />)}
+    </div>
+  );
+
+  if (!setlists) return (
+    <div className="bg-zinc-900 border border-zinc-800 rounded-2xl p-12 text-center">
+      <p className="text-zinc-400 text-sm">Setlists not available.</p>
+      <p className="text-zinc-600 text-xs mt-1">We use MusicBrainz ID to fetch setlists from Setlist.fm</p>
+    </div>
+  );
+
+  if (setlists.length === 0) return (
+    <div className="bg-zinc-900 border border-zinc-800 rounded-2xl p-12 text-center">
+      <p className="text-5xl mb-4">🎵</p>
+      <p className="text-white font-bold">No setlists found</p>
+      <p className="text-zinc-500 text-sm mt-1">No setlists on record via Setlist.fm.</p>
+    </div>
+  );
+
+  return (
+    <div className="space-y-4">
+      {setlists.map((sl, i) => (
+        <div key={sl.id || i} className="bg-zinc-900 border border-zinc-800 rounded-2xl p-5 hover:border-zinc-700 transition-colors">
+          <div className="flex items-start justify-between mb-3">
+            <div>
+              <p className="font-bold text-white text-base">{sl.venueName}</p>
+              <p className="text-sm text-zinc-400">{sl.venueCity}{sl.country ? `, ${sl.country}` : ''}</p>
+              {sl.tourName && <p className="text-xs text-violet-400 mt-0.5">{sl.tourName}</p>}
+            </div>
+            <div className="text-right flex-shrink-0 ml-4">
+              <p className="text-sm text-zinc-400 font-medium">{sl.date}</p>
+            </div>
+          </div>
+          {sl.sets?.map((set, si) => set.songs.length > 0 && (
+            <div key={si}>
+              {set.name && <p className="text-xs text-zinc-500 font-semibold uppercase tracking-widest mb-1.5 mt-2">{set.name}</p>}
+              <ol className="space-y-1">
+                {set.songs.map((song, idx) => (
+                  <li key={idx} className="flex items-baseline gap-2">
+                    <span className="text-xs text-zinc-600 w-5 text-right flex-shrink-0">{idx + 1}</span>
+                    <span className="text-sm text-zinc-200">{song.name}</span>
+                    {song.cover && <span className="text-xs text-zinc-500">(cover: {song.cover.artist})</span>}
+                    {song.tape && <span className="text-xs text-zinc-600 italic">tape</span>}
+                  </li>
+                ))}
+              </ol>
+            </div>
+          ))}
+        </div>
+      ))}
     </div>
   );
 }

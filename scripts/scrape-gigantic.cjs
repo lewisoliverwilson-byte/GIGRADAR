@@ -217,7 +217,7 @@ async function processEvent(ev, gigsSaved) {
       gigId, artistId, artistName, date,
       doorsTime:        ev.doorTime || null,
       venueName, venueCity, venueCountry: 'GB', canonicalVenueId,
-      isSoldOut, minAge,
+      isSoldOut, minPrice: null, minAge,
       supportActs: artists.filter(a => a !== artistName),
       tickets: [{ seller: 'Gigantic', url: ticketUrl, available, price: 'See site' }],
       sources:     ['gigantic'],

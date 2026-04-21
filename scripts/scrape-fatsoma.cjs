@@ -258,6 +258,7 @@ async function processPage(data, gigsSaved, artistsSaved, venuesSaved) {
         venueCountry: 'GB',
         canonicalVenueId,
         isSoldOut: false,
+        minPrice:  attrs['price-min'] ? attrs['price-min'] / 100 : null,
         minAge: attrs['age-restrictions'] ? parseInt(attrs['age-restrictions']) || null : null,
         supportActs: artists.filter(a => a !== artistName),
         tickets: [{
