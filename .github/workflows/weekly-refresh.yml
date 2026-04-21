@@ -1,0 +1,44 @@
+name: Weekly Refresh (Full)
+
+on:
+  schedule:
+    - cron: '0 23 * * 0'  # Every Sunday at 11pm UTC
+  workflow_dispatch:        # Allow manual trigger from GitHub UI
+
+jobs:
+  refresh:
+    runs-on: ubuntu-latest
+    timeout-minutes: 480   # 8 hours max
+
+    env:
+      AWS_ACCESS_KEY_ID:     ${{ secrets.AWS_ACCESS_KEY_ID }}
+      AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+      AWS_REGION:            us-east-1
+      TM_API_KEY:            ${{ secrets.TM_API_KEY }}
+      SPOTIFY_CLIENT_ID:     ${{ secrets.SPOTIFY_CLIENT_ID }}
+      SPOTIFY_CLIENT_SECRET: ${{ secrets.SPOTIFY_CLIENT_SECRET }}
+      LASTFM_API_KEY:        ${{ secrets.LASTFM_API_KEY }}
+      SETLISTFM_KEY:         ${{ secrets.SETLISTFM_KEY }}
+      RESEND_API_KEY:        ${{ secrets.RESEND_API_KEY }}
+      BIT_APP_ID:            gigradar
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - run: npm ci
+
+      - name: Run weekly refresh
+        run: bash scripts/weekly-refresh.sh
+
+      - name: Upload logs
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: weekly-refresh-logs-${{ github.run_id }}
+          path: scripts/logs/
+          retention-days: 14

@@ -3,6 +3,16 @@ const { DynamoDBDocumentClient, ScanCommand, QueryCommand, GetCommand, UpdateCom
 
 const ddb = DynamoDBDocumentClient.from(new DynamoDBClient({ region: process.env.AWS_REGION || 'us-east-1' }));
 
+// In-memory cache for expensive scan endpoints (survives across warm invocations)
+const _cache = new Map();
+function withCache(key, ttlMs, fn) {
+  const hit = _cache.get(key);
+  if (hit && Date.now() < hit.exp) return hit.val;
+  const val = fn();
+  val.then(r => _cache.set(key, { val: Promise.resolve(r), exp: Date.now() + ttlMs })).catch(() => {});
+  return val;
+}
+
 const ARTISTS_TABLE        = 'gigradar-artists';
 const GIGS_TABLE           = 'gigradar-gigs';
 const VENUES_TABLE         = 'gigradar-venues';
@@ -1044,11 +1054,11 @@ exports.handler = async (event) => {
 
     if (rawPath === '/search') return search(params);
 
-    if (rawPath === '/trending')      return getTrending();
-    if (rawPath === '/emerging')      return getEmerging();
-    if (rawPath === '/grassroots')    return getGrassrootsGigs(params);
-    if (rawPath === '/on-sale')       return getOnSaleGigs(params);
-    if (rawPath === '/coming-soon')   return getComingSoonGigs(params);
+    if (rawPath === '/trending')      return withCache('trending',    30*60000, () => getTrending());
+    if (rawPath === '/emerging')      return withCache('emerging',    30*60000, () => getEmerging());
+    if (rawPath === '/grassroots')    return withCache('grassroots',  30*60000, () => getGrassrootsGigs(params));
+    if (rawPath === '/on-sale')       return withCache('on-sale',     15*60000, () => getOnSaleGigs(params));
+    if (rawPath === '/coming-soon')   return withCache('coming-soon', 15*60000, () => getComingSoonGigs(params));
     if (rawPath === '/gigs/nearby')   return getNearbyGigs(params);
     if (rawPath === '/gigs')          return getGigs(params);
 
