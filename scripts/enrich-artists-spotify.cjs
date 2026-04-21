@@ -28,9 +28,10 @@ const ddb = DynamoDBDocumentClient.from(new DynamoDBClient({ region: 'us-east-1'
 const ARTISTS_TABLE  = 'gigradar-artists';
 const PROGRESS_FILE  = path.join(__dirname, 'spotify-enrich-progress.json');
 const CLIENT_ID      = process.env.SPOTIFY_CLIENT_ID     || '9f4abb0eac5a45019b8d9a492daa41fc';
-const CLIENT_SECRET  = process.env.SPOTIFY_CLIENT_SECRET || '';
+const CLIENT_SECRET  = process.env.SPOTIFY_CLIENT_SECRET || '130c12d419064803bec3126cb3d4e411';
 const DRY_RUN        = process.argv.includes('--dry-run');
 const RESUME         = process.argv.includes('--resume');
+const QUICK          = process.argv.includes('--quick'); // only artists with upcoming gigs
 const sleep          = ms => new Promise(r => setTimeout(r, ms));
 
 function loadProgress() {
@@ -67,7 +68,7 @@ async function getSpotifyToken() {
 // ─── Load artists ─────────────────────────────────────────────────────────────
 
 async function loadArtists() {
-  console.log('Loading artists from DynamoDB...');
+  console.log(`Loading artists${QUICK ? ' with upcoming gigs' : ''} from DynamoDB...`);
   const artists = [];
   let lastKey;
   do {
@@ -76,6 +77,7 @@ async function loadArtists() {
       ProjectionExpression: 'artistId, #n, genres',
       ExpressionAttributeNames: { '#n': 'name' },
     };
+    if (QUICK) { p.FilterExpression = 'upcoming > :z'; p.ExpressionAttributeValues = { ':z': 0 }; }
     if (lastKey) p.ExclusiveStartKey = lastKey;
     const r = await ddb.send(new ScanCommand(p)).catch(() => ({ Items: [] }));
     artists.push(...(r.Items || []));

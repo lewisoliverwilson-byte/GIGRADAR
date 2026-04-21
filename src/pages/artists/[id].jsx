@@ -18,18 +18,22 @@ export default function ArtistPage({ artist }) {
         {artist?.imageUrl && <meta property="og:image" content={artist.imageUrl} />}
         <meta property="og:type" content="profile" />
       </Head>
-      <ArtistDetail />
+      <ArtistDetail initialArtist={artist} />
     </>
   );
 }
 
-export async function getServerSideProps({ params }) {
+export async function getStaticPaths() {
+  return { paths: [], fallback: 'blocking' };
+}
+
+export async function getStaticProps({ params }) {
   try {
     const res = await fetch(`${CONFIG.apiBaseUrl}/artists/${encodeURIComponent(params.id)}`);
-    if (!res.ok) return { props: { artist: null } };
+    if (!res.ok) return { props: { artist: null }, revalidate: 3600 };
     const artist = await res.json();
-    return { props: { artist } };
+    return { props: { artist }, revalidate: 3600 };
   } catch {
-    return { props: { artist: null } };
+    return { props: { artist: null }, revalidate: 3600 };
   }
 }

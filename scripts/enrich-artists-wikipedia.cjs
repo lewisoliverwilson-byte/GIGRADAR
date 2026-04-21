@@ -24,6 +24,7 @@ const ARTISTS_TABLE = 'gigradar-artists';
 const PROGRESS_FILE = path.join(__dirname, 'wiki-artists-progress.json');
 const DRY_RUN       = process.argv.includes('--dry-run');
 const RESUME        = process.argv.includes('--resume');
+const QUICK         = process.argv.includes('--quick'); // only artists with upcoming gigs (already default)
 const sleep         = ms => new Promise(r => setTimeout(r, ms));
 
 const WIKI_HEADERS = { 'User-Agent': 'GigRadar/1.0 (lewis.oliver.wilson@googlemail.com)' };

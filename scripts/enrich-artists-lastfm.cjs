@@ -33,6 +33,7 @@ const PROGRESS_FILE  = path.join(__dirname, 'lastfm-enrich-progress.json');
 const LASTFM_KEY     = process.env.LASTFM_API_KEY || 'e2c0791c809dd2a81adde0158dd70c41';
 const DRY_RUN        = process.argv.includes('--dry-run');
 const RESUME         = process.argv.includes('--resume');
+const QUICK          = process.argv.includes('--quick'); // only artists with upcoming gigs
 const sleep          = ms => new Promise(r => setTimeout(r, ms));
 
 function loadProgress() {
@@ -48,11 +49,12 @@ function saveProgress(done) {
 // ─── Load all artists ─────────────────────────────────────────────────────────
 
 async function loadArtists() {
-  console.log('Loading artists from DynamoDB...');
+  console.log(`Loading artists${QUICK ? ' with upcoming gigs' : ''} from DynamoDB...`);
   const artists = [];
   let lastKey;
   do {
     const p = { TableName: ARTISTS_TABLE, ProjectionExpression: 'artistId, #n', ExpressionAttributeNames: { '#n': 'name' } };
+    if (QUICK) { p.FilterExpression = 'upcoming > :z'; p.ExpressionAttributeValues = { ':z': 0 }; }
     if (lastKey) p.ExclusiveStartKey = lastKey;
     const r = await ddb.send(new ScanCommand(p)).catch(() => ({ Items: [] }));
     artists.push(...(r.Items || []));

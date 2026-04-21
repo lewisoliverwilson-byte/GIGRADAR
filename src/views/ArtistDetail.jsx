@@ -24,16 +24,16 @@ async function fetchWikiImage(wikipedia) {
   } catch { imageCache[wikipedia] = null; return null; }
 }
 
-export default function ArtistDetail() {
+export default function ArtistDetail({ initialArtist = null }) {
   const { query: { id } } = useRouter();
   const { user, openAuth } = useAuth();
 
-  const [artist, setArtist] = useState(null);
+  const [artist, setArtist] = useState(initialArtist);
   const [gigs, setGigs] = useState([]);
   const [similar, setSimilar] = useState([]);
   const [imgUrl, setImgUrl] = useState(null);
   const [tab, setTab] = useState('upcoming');
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(!initialArtist);
   const [error, setError] = useState(false);
   const [showClaim, setShowClaim] = useState(false);
   const [claimDone, setClaimDone] = useState(false);
@@ -44,8 +44,10 @@ export default function ArtistDetail() {
 
   useEffect(() => {
     if (!id) return;
-    setLoading(true); setError(false);
-    Promise.all([api.getArtist(id), api.getArtistGigs(id)])
+    if (!initialArtist) setLoading(true);
+    setError(false);
+    const artistFetch = initialArtist ? Promise.resolve(initialArtist) : api.getArtist(id);
+    Promise.all([artistFetch, api.getArtistGigs(id)])
       .then(([a, g]) => {
         setArtist(a);
         setGigs(g);

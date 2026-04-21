@@ -24,20 +24,21 @@ const TYPE_LABELS = {
   arena: 'Arena', 'arts-centre': 'Arts Centre', other: 'Venue',
 };
 
-export default function VenuePage() {
+export default function VenuePage({ initialVenue = null }) {
   const { query: { slug } } = useRouter();
   const { user } = useAuth();
   const { isFollowingVenue, followVenue, unfollowVenue } = useFollow();
 
-  const [venue, setVenue] = useState(null);
+  const [venue, setVenue] = useState(initialVenue);
   const [gigs, setGigs] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(!initialVenue);
   const [tab, setTab] = useState('upcoming');
 
   useEffect(() => {
     if (!slug) return;
-    setLoading(true);
-    Promise.all([api.getVenue(slug), api.getVenueGigs(slug)])
+    if (!initialVenue) setLoading(true);
+    const venueFetch = initialVenue ? Promise.resolve(initialVenue) : api.getVenue(slug);
+    Promise.all([venueFetch, api.getVenueGigs(slug)])
       .then(([v, g]) => { setVenue(v); setGigs(g); })
       .catch(() => {})
       .finally(() => setLoading(false));

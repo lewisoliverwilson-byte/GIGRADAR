@@ -1,7 +1,12 @@
 #!/usr/bin/env bash
 # GigRadar Weekly Refresh
-# Run from the GIGSITE root: bash scripts/weekly-refresh.sh
-# Runs all scrapers sequentially, then cleans + refreshes counts/genres.
+#
+# Runs all 14 scrapers (full date range), full enrichment pass, genre propagation,
+# dedup and stats. Designed for Sunday nights — typical runtime: 4-8 hours.
+#
+# Usage:
+#   bash scripts/weekly-refresh.sh
+#   bash scripts/weekly-refresh.sh --dry-run
 
 set -e
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
@@ -9,85 +14,173 @@ LOG_DIR="$ROOT/scripts/logs"
 mkdir -p "$LOG_DIR"
 TS=$(date +%Y%m%d-%H%M)
 
-run() {
-  local name="$1"; shift
-  echo ""
-  echo "━━━ [$name] starting at $(date +%H:%M:%S) ━━━"
-  node "$@" 2>&1 | tee "$LOG_DIR/${TS}-${name}.txt"
-  echo "━━━ [$name] done ━━━"
-}
+DRY=""
+[[ "$1" == "--dry-run" ]] && DRY="--dry-run"
 
-echo "=== GigRadar Weekly Refresh ==="
+export TM_API_KEY="${TM_API_KEY:-ttdbtKPP936EBCBNnBPOwxvzIzYDoi8I}"
+export SPOTIFY_CLIENT_ID="${SPOTIFY_CLIENT_ID:-9f4abb0eac5a45019b8d9a492daa41fc}"
+export SPOTIFY_CLIENT_SECRET="${SPOTIFY_CLIENT_SECRET:-130c12d419064803bec3126cb3d4e411}"
+export LASTFM_API_KEY="${LASTFM_API_KEY:-e2c0791c809dd2a81adde0158dd70c41}"
+
+log() { echo "  [$1] $(date +%H:%M:%S) — $2"; }
+
+echo "=== GigRadar Weekly Refresh (Full) ==="
 echo "Started: $(date)"
 echo "Logs: $LOG_DIR"
-
-# ── Scrapers (parallelised in 3 waves) ───────────────────────────────────────
-
 echo ""
-echo "▶ Wave 1: Ticketmaster + Songkick + Skiddle (parallel)"
-TM_API_KEY=${TM_API_KEY:-ttdbtKPP936EBCBNnBPOwxvzIzYDoi8I}
-node "$ROOT/scripts/scrape-ticketmaster.cjs"   > "$LOG_DIR/${TS}-ticketmaster.txt"   2>&1 &
-node "$ROOT/scripts/scrape-songkick.cjs"        > "$LOG_DIR/${TS}-songkick.txt"        2>&1 &
-node "$ROOT/scripts/scrape-skiddle-events.cjs"  > "$LOG_DIR/${TS}-skiddle.txt"         2>&1 &
-wait
-echo "  Wave 1 done"
 
+# ════════════════════════════════════════════════════════════════
+# PHASE 1 — SCRAPING (full date range, all sources)
+# ════════════════════════════════════════════════════════════════
+
+echo "▶ Wave 1 — TM + Songkick + Skiddle"
+TM_API_KEY=$TM_API_KEY node "$ROOT/scripts/scrape-ticketmaster.cjs" $DRY \
+  > "$LOG_DIR/${TS}-ticketmaster.txt" 2>&1 &
+node "$ROOT/scripts/scrape-songkick.cjs" $DRY \
+  > "$LOG_DIR/${TS}-songkick.txt" 2>&1 &
+node "$ROOT/scripts/scrape-skiddle-events.cjs" $DRY \
+  > "$LOG_DIR/${TS}-skiddle.txt" 2>&1 &
+wait; log "wave1" "done"
+
+echo "▶ Wave 2 — DICE + Ticketline + RA + SeeTickets"
+node "$ROOT/scripts/scrape-dice.cjs" $DRY \
+  > "$LOG_DIR/${TS}-dice.txt" 2>&1 &
+node "$ROOT/scripts/scrape-ticketline.cjs" $DRY \
+  > "$LOG_DIR/${TS}-ticketline.txt" 2>&1 &
+node "$ROOT/scripts/scrape-resident-advisor.cjs" $DRY \
+  > "$LOG_DIR/${TS}-ra.txt" 2>&1 &
+node "$ROOT/scripts/scrape-seetickets.cjs" $DRY \
+  > "$LOG_DIR/${TS}-seetickets.txt" 2>&1 &
+wait; log "wave2" "done"
+
+echo "▶ Wave 3 — Gigantic + WGT + Fatsoma + Eventbrite"
+node "$ROOT/scripts/scrape-gigantic.cjs" $DRY \
+  > "$LOG_DIR/${TS}-gigantic.txt" 2>&1 &
+node "$ROOT/scripts/scrape-wegottickets.cjs" $DRY \
+  > "$LOG_DIR/${TS}-wgt.txt" 2>&1 &
+node "$ROOT/scripts/scrape-fatsoma.cjs" $DRY \
+  > "$LOG_DIR/${TS}-fatsoma.txt" 2>&1 &
+node "$ROOT/scripts/scrape-eventbrite.cjs" $DRY \
+  > "$LOG_DIR/${TS}-eventbrite.txt" 2>&1 &
+wait; log "wave3" "done"
+
+echo "▶ Wave 4 — Ents24 (URL-based, alone)"
+node "$ROOT/scripts/scrape-ents24.cjs" $DRY \
+  > "$LOG_DIR/${TS}-ents24.txt" 2>&1
+log "wave4" "done"
+
+echo "▶ Wave 5 — Bandsintown (artists with upcoming gigs)"
+BIT_APP_ID=gigradar node "$ROOT/scripts/scrape-bandsintown.cjs" --resume $DRY \
+  > "$LOG_DIR/${TS}-bandsintown.txt" 2>&1
+log "wave5" "done"
+
+echo "▶ Wave 6 — Venue-centric (Skiddle + Songkick per active venue)"
+node "$ROOT/scripts/scrape-venue-gigs.cjs" $DRY \
+  > "$LOG_DIR/${TS}-venue-gigs.txt" 2>&1
+log "wave6" "done"
+
+# ════════════════════════════════════════════════════════════════
+# PHASE 2 — CLEANUP
+# ════════════════════════════════════════════════════════════════
 echo ""
-echo "▶ Wave 2: DICE + Gigantic + Ticketline (parallel)"
-node "$ROOT/scripts/scrape-dice.cjs"            > "$LOG_DIR/${TS}-dice.txt"            2>&1 &
-node "$ROOT/scripts/scrape-gigantic.cjs"        > "$LOG_DIR/${TS}-gigantic.txt"        2>&1 &
-node "$ROOT/scripts/scrape-ticketline.cjs"      > "$LOG_DIR/${TS}-ticketline.txt"      2>&1 &
-wait
-echo "  Wave 2 done"
+echo "▶ Cleanup — purge old gigs + update upcoming counts"
+node "$ROOT/scripts/purge-old-gigs.cjs" $DRY \
+  > "$LOG_DIR/${TS}-purge.txt" 2>&1
+log "purge" "done"
 
+node "$ROOT/scripts/update-upcoming-counts.cjs" $DRY \
+  > "$LOG_DIR/${TS}-upcoming.txt" 2>&1
+log "upcoming-counts" "done"
+
+# ════════════════════════════════════════════════════════════════
+# PHASE 3 — ENRICHMENT (full pass — all artists, not just upcoming)
+# ════════════════════════════════════════════════════════════════
 echo ""
-echo "▶ Wave 3: WeGotTickets + Resident Advisor + Fatsoma (parallel)"
-node "$ROOT/scripts/scrape-wegottickets.cjs"    > "$LOG_DIR/${TS}-wgt.txt"             2>&1 &
-node "$ROOT/scripts/scrape-resident-advisor.cjs" > "$LOG_DIR/${TS}-ra.txt"             2>&1 &
-node "$ROOT/scripts/scrape-fatsoma.cjs"         > "$LOG_DIR/${TS}-fatsoma.txt"        2>&1 &
-wait
-echo "  Wave 3 done"
+echo "▶ Enrichment — Spotify + Last.fm (parallel, full pass)"
+SPOTIFY_CLIENT_ID=$SPOTIFY_CLIENT_ID SPOTIFY_CLIENT_SECRET=$SPOTIFY_CLIENT_SECRET \
+  node "$ROOT/scripts/enrich-artists-spotify.cjs" --resume $DRY \
+  > "$LOG_DIR/${TS}-enrich-spotify.txt" 2>&1 &
+LASTFM_API_KEY=$LASTFM_API_KEY \
+  node "$ROOT/scripts/enrich-artists-lastfm.cjs" --resume $DRY \
+  > "$LOG_DIR/${TS}-enrich-lastfm.txt" 2>&1 &
+wait; log "enrich-spotify+lastfm" "done"
 
+echo "▶ Enrichment — MusicBrainz (1 req/sec — runs in background)"
+node "$ROOT/scripts/enrich-artists-musicbrainz.cjs" --resume $DRY \
+  > "$LOG_DIR/${TS}-enrich-mb.txt" 2>&1 &
+MB_PID=$!
+log "enrich-mb" "started PID $MB_PID (will complete in background)"
+
+echo "▶ Enrichment — Wikipedia bios (full pass)"
+node "$ROOT/scripts/enrich-artists-wikipedia.cjs" --resume $DRY \
+  > "$LOG_DIR/${TS}-enrich-wiki.txt" 2>&1
+log "enrich-wiki" "done"
+
+echo "▶ Enrichment — Venue genres (full pass)"
+node "$ROOT/scripts/enrich-venues-genres.cjs" $DRY \
+  > "$LOG_DIR/${TS}-enrich-venue-genres.txt" 2>&1
+log "enrich-venue-genres" "done"
+
+# ════════════════════════════════════════════════════════════════
+# PHASE 4 — GENRE PROPAGATION
+# ════════════════════════════════════════════════════════════════
 echo ""
-echo "▶ Wave 4: Ents24 (slow — runs alone)"
-node "$ROOT/scripts/scrape-ents24.cjs"          > "$LOG_DIR/${TS}-ents24.txt"          2>&1
-echo "  Wave 4 done"
+echo "▶ Genre propagation — artist → gigs + co-performer inference"
+node "$ROOT/scripts/update-gig-genres.cjs" $DRY \
+  > "$LOG_DIR/${TS}-update-gig-genres.txt" 2>&1
+log "update-gig-genres" "done"
 
+node "$ROOT/scripts/infer-gig-genres-from-coperformers.cjs" $DRY \
+  > "$LOG_DIR/${TS}-infer-genres.txt" 2>&1
+log "infer-genres" "done"
+
+# ════════════════════════════════════════════════════════════════
+# PHASE 5 — DEDUP + STATS
+# ════════════════════════════════════════════════════════════════
 echo ""
-echo "▶ Wave 5: SeeTickets + Eventbrite (parallel)"
-node "$ROOT/scripts/scrape-seetickets.cjs"      > "$LOG_DIR/${TS}-seetickets.txt"      2>&1 &
-node "$ROOT/scripts/scrape-eventbrite.cjs"      > "$LOG_DIR/${TS}-eventbrite.txt"      2>&1 &
-wait
-echo "  Wave 5 done"
+echo "▶ Deduplication"
+node "$ROOT/scripts/deduplicate-gigs.cjs" $DRY \
+  > "$LOG_DIR/${TS}-dedup.txt" 2>&1
+log "dedup" "done"
 
-echo ""
-echo "▶ Wave 6: Bandsintown (artist-centric — runs after all others)"
-BIT_APP_ID=gigradar node "$ROOT/scripts/scrape-bandsintown.cjs" > "$LOG_DIR/${TS}-bandsintown.txt" 2>&1
-echo "  Wave 6 done"
+echo "▶ Stats snapshot"
+node "$ROOT/scripts/live-stats.cjs" --once \
+  > "$LOG_DIR/${TS}-stats.txt" 2>&1
+log "stats" "done"
 
-echo ""
-echo "▶ Wave 7: Venue-centric gig scraper"
-node "$ROOT/scripts/scrape-venue-gigs.cjs"      > "$LOG_DIR/${TS}-venue-gigs.txt"      2>&1
-echo "  Wave 7 done"
+echo "▶ Sitemap regeneration"
+node "$ROOT/scripts/generate-sitemap.cjs" \
+  > "$LOG_DIR/${TS}-sitemap.txt" 2>&1
+log "sitemap" "done"
 
-# ── Post-scrape cleanup & enrichment ─────────────────────────────────────────
+# Wait for MusicBrainz to finish (if still running)
+if kill -0 $MB_PID 2>/dev/null; then
+  echo "  [mb] still running — waiting..."
+  wait $MB_PID
+  log "enrich-mb" "done"
+fi
 
-run "purge-old-gigs"          "$ROOT/scripts/purge-old-gigs.cjs"
-run "update-upcoming"         "$ROOT/scripts/update-upcoming-counts.cjs"
-run "update-gig-genres"       "$ROOT/scripts/update-gig-genres.cjs"
-run "infer-gig-genres"        "$ROOT/scripts/infer-gig-genres-from-coperformers.cjs"
-run "deduplicate"             "$ROOT/scripts/deduplicate-gigs.cjs"
-run "stats"                   "$ROOT/scripts/live-stats.cjs" --once
-
-# ── Print summary ─────────────────────────────────────────────────────────────
-
+# ── Summary ───────────────────────────────────────────────────────────────────
 echo ""
 echo "=== Weekly Refresh Complete ==="
 echo "Finished: $(date)"
 echo ""
-echo "Gig counts by scraper:"
-for f in "$LOG_DIR/${TS}"-*.txt; do
-  name=$(basename "$f" | sed "s/${TS}-//" | sed 's/\.txt//')
+echo "New gigs by source:"
+for name in ticketmaster songkick skiddle dice ticketline ra seetickets gigantic wgt fatsoma eventbrite ents24 bandsintown venue-gigs; do
+  f="$LOG_DIR/${TS}-${name}.txt"
+  [ -f "$f" ] || continue
   saved=$(grep -oP 'Gigs saved\s*:\s*\K[\d,]+' "$f" 2>/dev/null | tail -1)
-  [ -n "$saved" ] && echo "  $name: $saved gigs"
+  new=$(grep -oP '\+\d+ gigs' "$f" 2>/dev/null | grep -oP '\d+' | tail -1)
+  count="${saved:-${new:-(no data)}}"
+  printf "  %-15s %s\n" "$name" "$count"
 done
+echo ""
+echo "Enrichment:"
+for name in enrich-spotify enrich-lastfm enrich-mb enrich-wiki enrich-venue-genres; do
+  f="$LOG_DIR/${TS}-${name}.txt"
+  [ -f "$f" ] || continue
+  enriched=$(grep -oP 'Enriched\s*:\s*\K[\d,]+' "$f" 2>/dev/null | tail -1)
+  [ -n "$enriched" ] && printf "  %-25s %s artists\n" "$name" "$enriched"
+done
+echo ""
+cat "$LOG_DIR/${TS}-stats.txt" 2>/dev/null | grep -E 'Future|genres|Artists|With genres' | head -8

@@ -20,18 +20,22 @@ export default function VenueRoute({ venue }) {
         )}
         <meta property="og:type" content="place" />
       </Head>
-      <VenuePage />
+      <VenuePage initialVenue={venue} />
     </>
   );
 }
 
-export async function getServerSideProps({ params }) {
+export async function getStaticPaths() {
+  return { paths: [], fallback: 'blocking' };
+}
+
+export async function getStaticProps({ params }) {
   try {
     const res = await fetch(`${CONFIG.apiBaseUrl}/venues/${encodeURIComponent(params.slug)}`);
-    if (!res.ok) return { props: { venue: null } };
+    if (!res.ok) return { props: { venue: null }, revalidate: 3600 };
     const venue = await res.json();
-    return { props: { venue } };
+    return { props: { venue }, revalidate: 3600 };
   } catch {
-    return { props: { venue: null } };
+    return { props: { venue: null }, revalidate: 3600 };
   }
 }
