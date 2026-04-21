@@ -54,39 +54,59 @@ const GRASSROOTS_KEYWORDS = [
   'nine bar', '1865',
 ];
 
-// Keywords that strongly indicate NOT grassroots (arenas, stadiums, etc.)
+// Keywords that indicate NOT grassroots — large/commercial venues
 const NOT_GRASSROOTS_KEYWORDS = [
+  // Generic large venue types
   'arena', 'stadium', 'amphitheatre', 'amphitheater',
-  'national bowl', 'crystal palace park',
-  'o2 arena', 'utilita arena', 'co-op live', 'ao arena',
-  'wembley', 'hyde park', 'victoria park',
-  'racecourse', 'cricket ground', 'football ground',
-  'motorpoint', 'first direct arena',
-  'sse arena', 'sse hydro', 'ovo hydro',
-  'glasgow sse', 'manchester arena', 'genting arena',
-  'resorts world arena', 'bp summer stage',
+  'racecourse', 'cricket ground', 'football ground', 'rugby ground',
+  'showground', 'festival site', 'fairground',
+  // Named arenas & stadia
+  'wembley', 'o2 arena', 'utilita arena', 'co-op live', 'ao arena',
+  'ovo hydro', 'sse hydro', 'sse arena', 'ovo arena',
+  'first direct arena', 'motorpoint arena', 'resorts world arena',
+  'genting arena', 'manchester arena', 'leeds arena',
+  'utilita arena', 'vitality stadium', 'tottenham hotspur',
+  'emirates stadium', 'old trafford', 'anfield', 'elland road',
+  'hampden park', 'celtic park', 'ibrox', 'murrayfield',
+  'principality stadium', 'cardiff city stadium',
+  // Large parks & outdoor
+  'hyde park', 'victoria park', 'crystal palace park',
+  'finsbury park', 'heaton park', 'bellahouston park',
+  'national bowl', 'milton keynes bowl',
+  // Large theatres & concert halls
+  'royal albert hall', 'royal festival hall', 'barbican centre',
+  'bridgewater hall', 'symphony hall', 'philharmonic hall',
+  'usher hall', 'concert hall', 'opera house',
+  // O2 Academies (medium-large, not grassroots)
+  'o2 academy brixton', 'o2 academy glasgow', 'o2 apollo',
+  'o2 forum', 'o2 institute',
+  // Other large venues
+  'alexandra palace', 'earls court', 'excel london',
+  'eventim apollo', 'hammersmith apollo',
+  'nia birmingham', 'nia arena',
+  'belfast waterfront', 'edinburgh playhouse',
+  'london palladium', 'royal opera house',
 ];
 
 // Capacity thresholds
-const GRASSROOTS_MAX_CAPACITY  = 1500;
-const DEFINITELY_NOT_GRASSROOTS = 5000;
+const GRASSROOTS_MAX_CAPACITY     = 1500;
+const NOT_GRASSROOTS_MIN_CAPACITY = 2000;
 
 function isGrassrootsVenue(venue) {
   const name = (venue.name || '').toLowerCase();
   const cap  = venue.capacity;
 
-  // Explicit exclusions — large venues
+  // Hard exclusions — clearly large venues
   if (NOT_GRASSROOTS_KEYWORDS.some(k => name.includes(k))) return false;
-  if (cap && cap >= DEFINITELY_NOT_GRASSROOTS) return false;
+  if (cap && cap >= NOT_GRASSROOTS_MIN_CAPACITY) return false;
 
-  // Capacity-based classification (most reliable)
+  // Capacity confirms grassroots
   if (cap && cap <= GRASSROOTS_MAX_CAPACITY) return true;
-  if (cap && cap > GRASSROOTS_MAX_CAPACITY) return false;
 
-  // Keyword-based (no capacity data)
-  if (GRASSROOTS_KEYWORDS.some(k => name.includes(k))) return true;
-
-  return false;
+  // DEFAULT: assume grassroots unless proven otherwise.
+  // Most UK live music venues are small. Large venues are well-known
+  // and caught by the exclusion list above.
+  return true;
 }
 
 async function scanAll(params) {
