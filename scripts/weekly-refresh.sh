@@ -22,6 +22,7 @@ export RESEND_API_KEY="${RESEND_API_KEY:-}"   # set this once you have a Resend 
 export SPOTIFY_CLIENT_ID="${SPOTIFY_CLIENT_ID:-9f4abb0eac5a45019b8d9a492daa41fc}"
 export SPOTIFY_CLIENT_SECRET="${SPOTIFY_CLIENT_SECRET:-130c12d419064803bec3126cb3d4e411}"
 export LASTFM_API_KEY="${LASTFM_API_KEY:-e2c0791c809dd2a81adde0158dd70c41}"
+export SETLISTFM_KEY="${SETLISTFM_KEY:-LLwRhC7w4JhTvH-8tqOmnGz5SV18W-8wurAw}"  # 1440 req/day — cached 7d in DynamoDB
 
 log() { echo "  [$1] $(date +%H:%M:%S) — $2"; }
 

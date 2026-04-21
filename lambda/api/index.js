@@ -74,6 +74,23 @@ async function getArtist(artistId) {
 }
 
 /* ---- GET /artists/:id/gigs ---- */
+function mergeGigTickets(items) {
+  const normKey = s => (s || '').toLowerCase().replace(/[^a-z0-9]/g, '').slice(0, 20);
+  const seen = new Map();
+  for (const g of items) {
+    const key = `${g.artistId}|${g.date}|${normKey(g.venueName)}`;
+    if (seen.has(key)) {
+      const ex = seen.get(key);
+      ex.tickets = [...(ex.tickets || []), ...(g.tickets || [])];
+      if (g.minPrice != null && (ex.minPrice == null || g.minPrice < ex.minPrice)) ex.minPrice = g.minPrice;
+      if (g.onSaleDate && !ex.onSaleDate) ex.onSaleDate = g.onSaleDate;
+    } else {
+      seen.set(key, { ...g, tickets: [...(g.tickets || [])] });
+    }
+  }
+  return [...seen.values()];
+}
+
 async function getArtistGigs(artistId) {
   const yearAgo = new Date(Date.now() - 365 * 864e5).toISOString().split('T')[0];
   const result = await ddb.send(new QueryCommand({
@@ -84,7 +101,7 @@ async function getArtistGigs(artistId) {
     ExpressionAttributeValues: { ':id': artistId, ':yearAgo': yearAgo },
     ScanIndexForward:          true
   }));
-  return ok(result.Items || []);
+  return ok(mergeGigTickets(result.Items || []).sort((a, b) => a.date.localeCompare(b.date)));
 }
 
 /* ---- POST /artists/:id/claim ---- */
@@ -240,7 +257,7 @@ async function getVenueGigs(slug) {
     ExpressionAttributeNames:  { '#d': 'date' },
     ExpressionAttributeValues: { ':vid': venue.venueId, ':vname': venue.name, ':yearAgo': yearAgo },
   }));
-  const gigs = (result.Items || []).sort((a, b) => a.date.localeCompare(b.date));
+  const gigs = mergeGigTickets(result.Items || []).sort((a, b) => a.date.localeCompare(b.date));
   return ok(gigs);
 }
 
@@ -537,12 +554,22 @@ async function getArtistSetlists(artistId) {
   const mbid = artist.mbid || artist.musicBrainzId || null;
   if (!mbid) return ok([]);
 
+  // Return cached setlists if < 7 days old (preserves 1440/day rate limit)
+  const cacheAgeMs = 7 * 86400000;
+  if (artist.setlistsCachedAt && Date.now() - new Date(artist.setlistsCachedAt).getTime() < cacheAgeMs) {
+    return ok(artist.setlists || []);
+  }
+
   try {
     const r = await fetch(
       `https://api.setlist.fm/rest/1.0/artist/${mbid}/setlists?p=1`,
       { headers: { 'x-api-key': SETLISTFM_KEY, 'Accept': 'application/json' } }
     );
-    if (!r.ok) return ok([]);
+    if (!r.ok) {
+      // On rate limit (429), return cached if available rather than error
+      if (r.status === 429 && artist.setlists) return ok(artist.setlists);
+      return ok([]);
+    }
     const data = await r.json();
 
     const setlists = (data.setlist || []).slice(0, 10).map(s => ({
@@ -555,14 +582,24 @@ async function getArtistSetlists(artistId) {
       sets:      (s.sets?.set || []).map(set => ({
         name:  set.name || null,
         songs: (set.song || []).map(sg => ({
-          name:    sg.name,
-          cover:   sg.cover ? { artist: sg.cover.name } : null,
-          tape:    sg.tape || false,
+          name:  sg.name,
+          cover: sg.cover ? { artist: sg.cover.name } : null,
+          tape:  sg.tape || false,
         })),
       })),
     }));
+
+    // Cache on artist record — fire and forget
+    ddb.send(new UpdateCommand({
+      TableName: ARTISTS_TABLE,
+      Key: { artistId },
+      UpdateExpression: 'SET #sl = :s, setlistsCachedAt = :t',
+      ExpressionAttributeNames: { '#sl': 'setlists' },
+      ExpressionAttributeValues: { ':s': setlists, ':t': new Date().toISOString() },
+    })).catch(() => {});
+
     return ok(setlists);
-  } catch { return ok([]); }
+  } catch { return ok(artist.setlists || []); }
 }
 
 /* ---- POST /venues/:slug/claim ---- */
