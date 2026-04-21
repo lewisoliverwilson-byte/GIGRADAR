@@ -16,18 +16,18 @@
 const path = require('path');
 const fs   = require('fs');
 
-const SDK_PATH = path.join(__dirname, '../lambda/scraper/node_modules');
-const { DynamoDBClient }           = require(path.join(SDK_PATH, '@aws-sdk/client-dynamodb'));
-const { DynamoDBDocumentClient, ScanCommand, QueryCommand, UpdateCommand } = require(path.join(SDK_PATH, '@aws-sdk/lib-dynamodb'));
-const { SESClient, SendEmailCommand } = require(path.join(SDK_PATH, '@aws-sdk/client-ses'));
+const DDB_SDK = path.join(__dirname, '../lambda/scraper/node_modules');
+const { DynamoDBClient }           = require(path.join(DDB_SDK, '@aws-sdk/client-dynamodb'));
+const { DynamoDBDocumentClient, ScanCommand, QueryCommand, UpdateCommand } = require(path.join(DDB_SDK, '@aws-sdk/lib-dynamodb'));
 
 const ddb = DynamoDBDocumentClient.from(new DynamoDBClient({ region: 'us-east-1' }));
-const ses = new SESClient({ region: 'us-east-1' });
 
 const GIGS_TABLE    = 'gigradar-gigs';
 const FOLLOWS_TABLE = 'gigradar-follows';
 const PROGRESS_FILE = path.join(__dirname, 'alerts-progress.json');
-const FROM_EMAIL    = 'noreply@gigradar.co.uk';
+// FROM_EMAIL: once domain is owned + SES verified, switch to 'noreply@gigradar.co.uk'
+const FROM_EMAIL    = process.env.FROM_EMAIL    || 'GigRadar <onboarding@resend.dev>';
+const RESEND_KEY    = process.env.RESEND_API_KEY || '';
 const SITE_URL      = 'https://gigradar.co.uk';
 const DRY_RUN       = process.argv.includes('--dry-run');
 const sleep         = ms => new Promise(r => setTimeout(r, ms));
@@ -107,6 +107,10 @@ function buildEmail(recipientGigs, isGrassroots) {
 async function main() {
   console.log('=== GigRadar Gig Alerts ===');
   if (DRY_RUN) console.log('[DRY RUN]\n');
+  if (!RESEND_KEY && !DRY_RUN) {
+    console.log('RESEND_API_KEY not set — skipping. Set it in quick-refresh.sh to enable alerts.');
+    return;
+  }
 
   const today = new Date().toISOString().split('T')[0];
   const alreadyAlerted = loadAlertedIds();
@@ -176,18 +180,21 @@ async function main() {
 
     if (!DRY_RUN) {
       try {
-        await ses.send(new SendEmailCommand({
-          Source: `GigRadar <${FROM_EMAIL}>`,
-          Destination: { ToAddresses: [email] },
-          Message: {
-            Subject: { Data: subject, Charset: 'UTF-8' },
-            Body: { Html: { Data: fullHtml, Charset: 'UTF-8' } },
-          },
-        }));
-        sent++;
-        await sleep(100); // SES rate limit: 14/sec by default
+        const res = await fetch('https://api.resend.com/emails', {
+          method: 'POST',
+          headers: { 'Authorization': `Bearer ${RESEND_KEY}`, 'Content-Type': 'application/json' },
+          body: JSON.stringify({ from: FROM_EMAIL, to: [email], subject, html: fullHtml }),
+        });
+        if (!res.ok) {
+          const err = await res.text();
+          console.error(`  Resend error for ${email}: ${err}`);
+          errors++;
+        } else {
+          sent++;
+        }
+        await sleep(100);
       } catch (e) {
-        console.error(`  SES error for ${email}: ${e.message}`);
+        console.error(`  Send error for ${email}: ${e.message}`);
         errors++;
       }
     } else {
