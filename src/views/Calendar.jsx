@@ -1,6 +1,8 @@
-import React, { useEffect, useState, useMemo, useCallback } from 'react';
+import React, { useEffect, useState, useMemo } from 'react';
 import Link from 'next/link';
 import { api } from '../utils/api.js';
+import { useAuth } from '../context/AuthContext.jsx';
+import { useFollow } from '../context/FollowContext.jsx';
 import Footer from '../components/Footer.jsx';
 
 const CITIES = ['All', 'London', 'Manchester', 'Birmingham', 'Glasgow', 'Liverpool', 'Leeds', 'Bristol', 'Edinburgh', 'Newcastle', 'Brighton'];
@@ -43,11 +45,15 @@ function isPast(date) {
 
 export default function Calendar() {
   const today = new Date();
-  const [viewMode, setViewMode]     = useState('month'); // 'month' | 'week'
+  const { user } = useAuth();
+  const { following } = useFollow();
+  const personalised = following.size > 0;
+
+  const [viewMode, setViewMode]       = useState('month');
   const [currentDate, setCurrentDate] = useState(today);
-  const [city, setCity]             = useState('All');
-  const [gigs, setGigs]             = useState([]);
-  const [loading, setLoading]       = useState(true);
+  const [city, setCity]               = useState('All');
+  const [gigs, setGigs]               = useState([]);
+  const [loading, setLoading]         = useState(true);
   const [selectedDay, setSelectedDay] = useState(null);
 
   // Derive date range for current view
@@ -75,11 +81,23 @@ export default function Calendar() {
     return { rangeFrom: toISO(gridStart), rangeTo: toISO(gridEnd), weeks: ws };
   }, [viewMode, currentDate]);
 
-  // Fetch gigs when range or city changes.
-  // Week view: one request. Month view: one request per week (parallel) so each
-  // week gets its own 500-gig budget rather than early days exhausting the total.
+  // Fetch gigs when range, city, or followed artists change.
+  // Personalised (user has follows): fetch per-artist so only their gigs show.
+  // All-gigs mode: fetch by date range, one request per week in parallel.
   useEffect(() => {
     setLoading(true);
+
+    if (personalised) {
+      // One request per followed artist, then filter to the visible date range
+      Promise.all([...following].map(id => api.getArtistGigs(id).catch(() => [])))
+        .then(results => {
+          const all = results.flat().filter(g => g.date >= rangeFrom && g.date <= rangeTo);
+          setGigs(all);
+        })
+        .finally(() => setLoading(false));
+      return;
+    }
+
     const cityParam = city !== 'All' ? city : undefined;
 
     if (viewMode === 'week') {
@@ -90,7 +108,7 @@ export default function Calendar() {
         .catch(() => setGigs([]))
         .finally(() => setLoading(false));
     } else {
-      // Fetch each week independently in parallel
+      // One request per week in parallel so each week gets its own budget
       const weekFetches = weeks.map(week => {
         const from = toISO(week[0]);
         const to   = toISO(week[6]);
@@ -102,7 +120,7 @@ export default function Calendar() {
         .then(results => setGigs(results.flat().filter(Boolean)))
         .finally(() => setLoading(false));
     }
-  }, [rangeFrom, rangeTo, city, viewMode, weeks]);
+  }, [rangeFrom, rangeTo, city, viewMode, weeks, personalised, following]);
 
   // Group gigs by date
   const gigsByDate = useMemo(() => {
@@ -156,7 +174,9 @@ export default function Calendar() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 py-8">
           <p className="text-xs font-semibold text-violet-400 uppercase tracking-widest mb-2">Browse</p>
           <h1 className="text-4xl font-black text-white mb-1">Gig Calendar</h1>
-          <p className="text-zinc-400 text-sm">Every UK gig, laid out by date.</p>
+          <p className="text-zinc-400 text-sm">
+            {personalised ? `Gigs from your ${following.size} followed artists, laid out by date.` : 'Every UK gig, laid out by date.'}
+          </p>
         </div>
       </div>
 
@@ -193,7 +213,17 @@ export default function Calendar() {
             </button>
           </div>
 
-          {/* City filter */}
+          {/* City filter — hidden in personalised mode */}
+          {personalised ? (
+            <div className="ml-auto flex items-center gap-2">
+              <span className="text-xs text-violet-400 font-medium">
+                ✦ Your {following.size} followed artist{following.size !== 1 ? 's' : ''}
+              </span>
+              <Link href="/profile" className="text-xs text-zinc-500 hover:text-white transition-colors">
+                Edit follows →
+              </Link>
+            </div>
+          ) : (
           <div className="flex gap-1.5 flex-wrap ml-auto">
             {CITIES.map(c => (
               <button key={c} onClick={() => setCity(c)}
@@ -206,6 +236,7 @@ export default function Calendar() {
               </button>
             ))}
           </div>
+          )}
         </div>
       </div>
 
@@ -291,7 +322,9 @@ export default function Calendar() {
 
             {!loading && (
               <p className="text-xs text-zinc-600 mt-4 text-right">
-                {gigs.length.toLocaleString()} gigs {city !== 'All' ? `in ${city}` : 'across UK'} · click a day for details
+                {gigs.length.toLocaleString()} gig{gigs.length !== 1 ? 's' : ''}{' '}
+                {personalised ? `from ${following.size} followed artists` : city !== 'All' ? `in ${city}` : 'across UK'}
+                {' · click a day for details'}
               </p>
             )}
           </div>
@@ -310,7 +343,9 @@ export default function Calendar() {
                 </div>
 
                 {selectedGigs.length === 0 ? (
-                  <p className="text-zinc-500 text-sm">No gigs{city !== 'All' ? ` in ${city}` : ''} on this day.</p>
+                  <p className="text-zinc-500 text-sm">
+                    {personalised ? 'None of your followed artists play on this day.' : `No gigs${city !== 'All' ? ` in ${city}` : ''} on this day.`}
+                  </p>
                 ) : (
                   <div className="space-y-2 max-h-[60vh] overflow-y-auto pr-1">
                     {selectedGigs.map(g => (
