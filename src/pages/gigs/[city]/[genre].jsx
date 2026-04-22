@@ -10,8 +10,10 @@ const CITIES = [
 const GENRES = ['rock','indie','pop','electronic','dance','jazz','classical','hip-hop','folk','metal','punk','alternative'];
 
 export default function CityGenreRoute({ city, genre, gigs, venues }) {
-  const title = `${genre} Gigs in ${city} — GigRadar`;
-  const desc  = `Every upcoming ${genre} gig in ${city}${gigs?.length ? ` — ${gigs.length}+ shows` : ''}. From grassroots clubs to major venues, all in one place.`;
+  const genreCap = genre ? genre.charAt(0).toUpperCase() + genre.slice(1) : '';
+  const year  = new Date().getFullYear();
+  const title = `${genreCap} Gigs in ${city} ${year} — GigRadar`;
+  const desc  = `Every upcoming ${genreCap} gig in ${city}${gigs?.length ? ` — ${gigs.length}+ shows` : ''}. From grassroots clubs to major venues, all in one place.`;
 
   return (
     <>
@@ -20,6 +22,10 @@ export default function CityGenreRoute({ city, genre, gigs, venues }) {
         <meta name="description" content={desc} />
         <meta property="og:title" content={title} />
         <meta property="og:description" content={desc} />
+        <meta property="og:type" content="website" />
+        <meta name="twitter:card" content="summary" />
+        <meta name="twitter:title" content={title} />
+        <meta name="twitter:description" content={desc} />
         <link rel="canonical" href={`https://gigradar.co.uk/gigs/${city.toLowerCase()}/${genre}`} />
       </Head>
       <CityGigsPage city={city} genre={genre} initialGigs={gigs || []} grassrootsVenues={venues || []} />

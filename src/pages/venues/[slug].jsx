@@ -3,10 +3,24 @@ import VenuePage from '../../views/VenuePage.jsx';
 import { CONFIG } from '../../utils/config.js';
 
 export default function VenueRoute({ venue }) {
-  const title = venue ? `${venue.name}${venue.city ? `, ${venue.city}` : ''} — GigRadar` : 'Venue — GigRadar';
-  const desc  = venue
-    ? `Upcoming gigs at ${venue.name}${venue.city ? ` in ${venue.city}` : ''}. Find tickets and get alerts on GigRadar.`
+  const title = venue
+    ? `${venue.name}${venue.city ? `, ${venue.city}` : ''} — Upcoming Gigs & Tickets · GigRadar`
+    : 'Venue — GigRadar';
+  const desc = venue
+    ? `${venue.upcoming || 0} upcoming gig${venue.upcoming !== 1 ? 's' : ''} at ${venue.name}${venue.city ? `, ${venue.city}` : ''}. Follow this venue for instant alerts when new shows are announced.`
     : 'Find upcoming gigs at this venue on GigRadar.';
+
+  const jsonLd = venue ? {
+    '@context': 'https://schema.org',
+    '@type': 'MusicVenue',
+    name: venue.name,
+    url: `https://gigradar.co.uk/venues/${venue.slug}`,
+    ...(venue.city ? { address: { '@type': 'PostalAddress', addressLocality: venue.city, addressCountry: 'GB' } } : {}),
+    ...(venue.capacity ? { maximumAttendeeCapacity: venue.capacity } : {}),
+    ...(venue.website ? { sameAs: venue.website } : {}),
+    ...(venue.photoUrl || venue.imageUrl ? { image: venue.photoUrl || venue.imageUrl } : {}),
+    ...(venue.bio ? { description: venue.bio.substring(0, 300) } : {}),
+  } : null;
 
   return (
     <>
@@ -23,6 +37,15 @@ export default function VenueRoute({ venue }) {
         <meta name="twitter:title" content={title} />
         <meta name="twitter:description" content={desc} />
         {(venue?.photoUrl || venue?.imageUrl) && <meta name="twitter:image" content={venue.photoUrl || venue.imageUrl} />}
+        {venue?.slug && (
+          <link rel="canonical" href={`https://gigradar.co.uk/venues/${venue.slug}`} />
+        )}
+        {jsonLd && (
+          <script
+            type="application/ld+json"
+            dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+          />
+        )}
       </Head>
       <VenuePage initialVenue={venue} />
     </>

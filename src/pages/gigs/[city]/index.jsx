@@ -11,8 +11,9 @@ const CITIES = [
 
 export default function CityRoute({ city, gigs, venues }) {
   const cityName = city || '';
-  const title = `Live Gigs in ${cityName} 2025 — Every Show · GigRadar`;
-  const desc  = `Find every upcoming live gig in ${cityName}${gigs?.length ? ` — ${gigs.length}+ shows` : ''} across Ticketmaster, Skiddle, Dice, RA and more. Grassroots venues included.`;
+  const year = new Date().getFullYear();
+  const title = `Live Gigs in ${cityName} ${year} — Every Show · GigRadar`;
+  const desc  = `Find every upcoming live gig in ${cityName}${gigs?.length ? ` — ${gigs.length}+ shows` : ''} across Ticketmaster, Skiddle, Resident Advisor, Ents24 and more. Grassroots venues included.`;
 
   return (
     <>
@@ -23,6 +24,10 @@ export default function CityRoute({ city, gigs, venues }) {
         <meta property="og:description" content={desc} />
         <meta property="og:type" content="website" />
         <link rel="canonical" href={`https://gigradar.co.uk/gigs/${cityName.toLowerCase()}`} />
+        <meta property="og:type" content="website" />
+        <meta name="twitter:card" content="summary" />
+        <meta name="twitter:title" content={title} />
+        <meta name="twitter:description" content={desc} />
       </Head>
       <CityGigsPage city={cityName} initialGigs={gigs || []} grassrootsVenues={venues || []} />
     </>

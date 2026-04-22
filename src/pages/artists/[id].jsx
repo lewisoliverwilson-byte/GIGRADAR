@@ -3,10 +3,22 @@ import ArtistDetail from '../../views/ArtistDetail.jsx';
 import { CONFIG } from '../../utils/config.js';
 
 export default function ArtistPage({ artist }) {
-  const title = artist ? `${artist.name} — GigRadar` : 'Artist — GigRadar';
-  const desc  = artist
-    ? `Upcoming gigs for ${artist.name}${artist.genres?.length ? ` (${artist.genres[0]})` : ''}. Find tickets and get alerts on GigRadar.`
+  const title = artist
+    ? `${artist.name} Tickets & Upcoming Gigs — GigRadar`
+    : 'Artist — GigRadar';
+  const desc = artist
+    ? `${artist.name} has ${artist.upcoming || 0} upcoming UK gig${artist.upcoming !== 1 ? 's' : ''}${artist.genres?.length ? ` — ${artist.genres[0]}` : ''}. Get tickets and instant alerts on GigRadar.`
     : 'Find upcoming gigs for this artist on GigRadar.';
+
+  const jsonLd = artist ? {
+    '@context': 'https://schema.org',
+    '@type': 'MusicGroup',
+    name: artist.name,
+    url: `https://gigradar.co.uk/artists/${artist.artistId}`,
+    ...(artist.imageUrl ? { image: artist.imageUrl } : {}),
+    ...(artist.genres?.length ? { genre: artist.genres } : {}),
+    ...(artist.bio ? { description: artist.bio.substring(0, 300) } : {}),
+  } : null;
 
   return (
     <>
@@ -21,6 +33,15 @@ export default function ArtistPage({ artist }) {
         <meta name="twitter:title" content={title} />
         <meta name="twitter:description" content={desc} />
         {artist?.imageUrl && <meta name="twitter:image" content={artist.imageUrl} />}
+        {artist?.artistId && (
+          <link rel="canonical" href={`https://gigradar.co.uk/artists/${artist.artistId}`} />
+        )}
+        {jsonLd && (
+          <script
+            type="application/ld+json"
+            dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+          />
+        )}
       </Head>
       <ArtistDetail initialArtist={artist} />
     </>

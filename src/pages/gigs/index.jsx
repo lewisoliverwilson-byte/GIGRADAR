@@ -6,7 +6,11 @@ export default function GigsPage() {
     <>
       <Head>
         <title>Upcoming UK Gigs — GigRadar</title>
-        <meta name="description" content="Find every upcoming UK gig. Filter by city, date, or artist. Tickets from Ticketmaster, Skiddle, Dice and more." />
+        <meta name="description" content="Find every upcoming UK gig. Filter by city, genre, date and price. Tickets from Ticketmaster, Skiddle, Ents24, Resident Advisor and more." />
+        <link rel="canonical" href="https://gigradar.co.uk/gigs" />
+        <meta property="og:title" content="Upcoming UK Gigs — GigRadar" />
+        <meta property="og:description" content="106,000+ upcoming UK gigs across every ticket platform. Filter by city, genre or date." />
+        <meta property="og:type" content="website" />
       </Head>
       <Gigs />
     </>

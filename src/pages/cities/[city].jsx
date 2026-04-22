@@ -4,6 +4,7 @@ import Link from 'next/link';
 import Head from 'next/head';
 import { api } from '../../utils/api.js';
 import Footer from '../../components/Footer.jsx';
+import { CONFIG } from '../../utils/config.js';
 
 const CITY_META = {
   london:     { name: 'London',     emoji: '🏙️' },
@@ -64,21 +65,21 @@ function VenueCard({ venue }) {
   );
 }
 
-export default function CityPage() {
-  const { query: { city } } = useRouter();
+export default function CityPage({ city: citySlug, initialVenues = [] }) {
+  const { query } = useRouter();
+  const city = citySlug || query.city;
   const meta = CITY_META[city];
-  const [venues, setVenues] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const [venues, setVenues] = useState(initialVenues);
+  const [loading, setLoading] = useState(initialVenues.length === 0);
 
   useEffect(() => {
-    if (!city) return;
+    if (!city || initialVenues.length > 0) return;
     setLoading(true);
     api.getVenuesFiltered({ city: meta?.name || city, grassroots: 'true' })
       .then(v => {
-        // Spotlight venues first, then sort by followerCount desc, then upcoming desc
         const sorted = [...v].sort((a, b) => {
-          if (a.isSpotlight && !b.isSpotlight) return -1;
-          if (!a.isSpotlight && b.isSpotlight) return 1;
+          if ((a.isVenuePro || a.isSpotlight) && !(b.isVenuePro || b.isSpotlight)) return -1;
+          if (!(a.isVenuePro || a.isSpotlight) && (b.isVenuePro || b.isSpotlight)) return 1;
           return (b.followerCount || 0) - (a.followerCount || 0) || (b.upcoming || 0) - (a.upcoming || 0);
         });
         setVenues(sorted);
@@ -96,11 +97,19 @@ export default function CityPage() {
     </div>
   );
 
+  const cityName = meta.name;
+  const title = `Grassroots Music Venues in ${cityName} — GigRadar`;
+  const desc  = `Discover the best grassroots music venues in ${cityName}. ${venues.length > 0 ? `${venues.length} venues` : 'Upcoming gigs'} — follow your favourites and get instant alerts when new shows are announced.`;
+
   return (
     <div className="min-h-screen bg-zinc-950 flex flex-col">
       <Head>
-        <title>Grassroots Venues in {meta.name} — GigRadar</title>
-        <meta name="description" content={`Discover grassroots music venues in ${meta.name}. Follow your favourites and get alerts when new gigs are announced.`} />
+        <title>{title}</title>
+        <meta name="description" content={desc} />
+        <meta property="og:title" content={title} />
+        <meta property="og:description" content={desc} />
+        <meta property="og:type" content="website" />
+        <link rel="canonical" href={`https://gigradar.co.uk/cities/${city}`} />
       </Head>
 
       <div className="flex-1 max-w-4xl mx-auto px-6 py-12 w-full">
@@ -142,4 +151,30 @@ export default function CityPage() {
       <Footer />
     </div>
   );
+}
+
+export async function getStaticPaths() {
+  return {
+    paths: Object.keys(CITY_META).map(city => ({ params: { city } })),
+    fallback: 'blocking',
+  };
+}
+
+export async function getStaticProps({ params }) {
+  const city = params.city || '';
+  const meta = CITY_META[city];
+  if (!meta) return { notFound: true };
+
+  try {
+    const res = await fetch(`${CONFIG.apiBaseUrl}/venues?city=${encodeURIComponent(meta.name)}&grassroots=true`);
+    const venues = res.ok ? await res.json() : [];
+    const sorted = [...venues].sort((a, b) => {
+      if ((a.isVenuePro || a.isSpotlight) && !(b.isVenuePro || b.isSpotlight)) return -1;
+      if (!(a.isVenuePro || a.isSpotlight) && (b.isVenuePro || b.isSpotlight)) return 1;
+      return (b.followerCount || 0) - (a.followerCount || 0) || (b.upcoming || 0) - (a.upcoming || 0);
+    });
+    return { props: { city, initialVenues: sorted }, revalidate: 3600 };
+  } catch {
+    return { props: { city, initialVenues: [] }, revalidate: 3600 };
+  }
 }

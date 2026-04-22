@@ -6,7 +6,8 @@ export default function VenuesPage() {
     <>
       <Head>
         <title>UK Music Venues — GigRadar</title>
-        <meta name="description" content="Browse 4,700+ UK music venues tracked by GigRadar. See upcoming gigs and follow your local venues." />
+        <meta name="description" content="Browse 12,000+ UK music venues tracked by GigRadar. See upcoming gigs, follow your local venues and get instant alerts." />
+        <link rel="canonical" href="https://gigradar.co.uk/venues" />
       </Head>
       <Venues />
     </>
