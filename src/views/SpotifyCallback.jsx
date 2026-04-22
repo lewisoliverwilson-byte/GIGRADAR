@@ -38,7 +38,7 @@ export default function SpotifyCallback() {
           grant_type: 'authorization_code',
           code,
           redirect_uri: redirectUri,
-          client_id: process.env.NEXT_PUBLIC_SPOTIFY_CLIENT_ID,
+          client_id: process.env.NEXT_PUBLIC_SPOTIFY_CLIENT_ID || '9f4abb0eac5a45019b8d9a492daa41fc',
           code_verifier: codeVerifier,
         }),
       });
