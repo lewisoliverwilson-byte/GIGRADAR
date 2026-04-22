@@ -59,7 +59,7 @@ if ! $CODE_ONLY; then
   aws lambda update-function-configuration \
     --function-name "$FUNCTION" \
     --region "$REGION" \
-    --environment "Variables={SETLISTFM_KEY=LLwRhC7w4JhTvH-8tqOmnGz5SV18W-8wurAw,SPOTIFY_CLIENT_ID=9f4abb0eac5a45019b8d9a492daa41fc,SPOTIFY_CLIENT_SECRET=130c12d419064803bec3126cb3d4e411}" \
+    --environment "Variables={SETLISTFM_KEY=LLwRhC7w4JhTvH-8tqOmnGz5SV18W-8wurAw,SPOTIFY_CLIENT_ID=9f4abb0eac5a45019b8d9a492daa41fc,SPOTIFY_CLIENT_SECRET=130c12d419064803bec3126cb3d4e411,ADMIN_API_KEY=gigradar-admin-2026,RESEND_API_KEY=re_8nJMD5FV_Pcz9wchwWJ5F7pZfbkURGfg1,STRIPE_WEBHOOK_SECRET=whsec_QJbF8ohcJneNlqd3Q1r7a6Qwawd7yrgf}" \
     --query "{LastModified:LastModified}" \
     --output table
   echo ""

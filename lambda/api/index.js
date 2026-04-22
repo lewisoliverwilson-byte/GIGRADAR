@@ -19,6 +19,10 @@ const VENUES_TABLE         = 'gigradar-venues';
 const FOLLOWS_TABLE        = 'gigradar-follows';
 const SPOTIFY_TOKENS_TABLE = 'gigradar-spotify-tokens';
 const ADMIN_KEY            = process.env.ADMIN_API_KEY || '';
+const STRIPE_WEBHOOK_SECRET = process.env.STRIPE_WEBHOOK_SECRET || '';
+const RESEND_API_KEY        = process.env.RESEND_API_KEY        || '';
+const FROM_EMAIL            = process.env.FROM_EMAIL            || 'GigRadar <onboarding@resend.dev>';
+const SITE_URL              = 'https://gigradar.co.uk';
 
 const SPOTIFY_CLIENT_ID     = process.env.SPOTIFY_CLIENT_ID     || '';
 const SPOTIFY_CLIENT_SECRET = process.env.SPOTIFY_CLIENT_SECRET || '';
@@ -1086,6 +1090,122 @@ async function unsubscribeByToken(params) {
   return ok({ ok: true, message: 'Unsubscribed successfully' });
 }
 
+/* ---- POST /stripe/webhook ---- */
+const crypto = require('crypto');
+
+async function stripeWebhook(event) {
+  const sig        = (event.headers || {})['stripe-signature'] || '';
+  const rawBody    = event.isBase64Encoded
+    ? Buffer.from(event.body || '', 'base64').toString('utf8')
+    : (event.body || '');
+
+  // Verify signature
+  if (STRIPE_WEBHOOK_SECRET) {
+    try {
+      const parts   = Object.fromEntries(sig.split(',').map(p => p.split('=')));
+      const ts      = parts.t || '';
+      const v1      = parts.v1 || '';
+      const payload = `${ts}.${rawBody}`;
+      const expected = crypto.createHmac('sha256', STRIPE_WEBHOOK_SECRET).update(payload).digest('hex');
+      if (expected !== v1) return { statusCode: 400, headers: CORS, body: 'Invalid signature' };
+      // Reject if timestamp is more than 5 minutes old
+      if (Math.abs(Date.now() / 1000 - parseInt(ts)) > 300) return { statusCode: 400, headers: CORS, body: 'Timestamp too old' };
+    } catch {
+      return { statusCode: 400, headers: CORS, body: 'Signature error' };
+    }
+  }
+
+  let stripeEvent;
+  try { stripeEvent = JSON.parse(rawBody); } catch { return { statusCode: 400, headers: CORS, body: 'Invalid JSON' }; }
+
+  if (stripeEvent.type !== 'checkout.session.completed') return ok({ received: true });
+
+  const session      = stripeEvent.data?.object || {};
+  const customerEmail = session.customer_details?.email || '';
+  const customFields  = session.custom_fields || [];
+  const venueField    = customFields.find(f => f.key === 'venue_slug');
+  const venueInput    = venueField?.text?.value?.trim() || '';
+
+  if (!venueInput) {
+    console.log('Stripe webhook: no venue name provided in session', session.id);
+    return ok({ received: true });
+  }
+
+  // Find venue by name (case-insensitive) or slug
+  const q = venueInput.toLowerCase();
+  const scanRes = await ddb.send(new ScanCommand({
+    TableName: VENUES_TABLE,
+    FilterExpression: 'contains(#nm, :q) OR slug = :qs',
+    ExpressionAttributeNames: { '#nm': 'name' },
+    ExpressionAttributeValues: { ':q': venueInput, ':qs': q.replace(/\s+/g, '-') },
+  })).catch(() => ({ Items: [] }));
+
+  const venues = (scanRes.Items || []).filter(v => v.name?.toLowerCase().includes(q));
+  const venue  = venues.sort((a, b) => {
+    const aExact = a.name?.toLowerCase() === q ? 0 : 1;
+    const bExact = b.name?.toLowerCase() === q ? 0 : 1;
+    return aExact - bExact;
+  })[0];
+
+  if (!venue) {
+    console.log(`Stripe webhook: venue not found for input "${venueInput}" (session ${session.id})`);
+    // Send admin alert so it can be handled manually
+    if (RESEND_API_KEY) {
+      await fetch('https://api.resend.com/emails', {
+        method: 'POST',
+        headers: { 'Authorization': `Bearer ${RESEND_API_KEY}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          from: FROM_EMAIL,
+          to: ['lewis.oliver.wilson@googlemail.com'],
+          subject: `GigRadar Spotlight: venue not found — manual activation needed`,
+          html: `<p>New Spotlight payment received but venue not found.</p>
+                 <p><b>Customer:</b> ${customerEmail}</p>
+                 <p><b>Venue input:</b> "${venueInput}"</p>
+                 <p><b>Session:</b> ${session.id}</p>
+                 <p>Find the venue and run: <code>node scripts/set-spotlight.cjs &lt;venueId&gt;</code></p>`,
+        }),
+      }).catch(() => {});
+    }
+    return ok({ received: true });
+  }
+
+  // Activate Spotlight
+  await ddb.send(new UpdateCommand({
+    TableName: VENUES_TABLE,
+    Key: { venueId: venue.venueId },
+    UpdateExpression: 'SET isSpotlight = :t, spotlightActivatedAt = :ts, spotlightEmail = :email',
+    ExpressionAttributeValues: { ':t': true, ':ts': new Date().toISOString(), ':email': customerEmail },
+  })).catch(() => {});
+
+  console.log(`Spotlight activated: ${venue.name} (${venue.venueId}) for ${customerEmail}`);
+
+  // Email the venue operator confirmation
+  if (RESEND_API_KEY && customerEmail) {
+    const venueUrl = `${SITE_URL}/venues/${venue.slug}`;
+    await fetch('https://api.resend.com/emails', {
+      method: 'POST',
+      headers: { 'Authorization': `Bearer ${RESEND_API_KEY}`, 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        from: FROM_EMAIL,
+        to: [customerEmail],
+        subject: `Your Spotlight badge is live — ${venue.name}`,
+        html: `<div style="font-family:-apple-system,sans-serif;max-width:520px;margin:auto;background:#111;color:#eee;padding:32px;border-radius:12px;">
+          <div style="background:#6366f1;border-radius:8px;padding:6px 10px;font-weight:900;font-size:16px;color:#fff;display:inline-block;margin-bottom:20px;">GR</div>
+          <h1 style="color:#fff;font-size:22px;margin:0 0 8px;">Your Spotlight badge is live.</h1>
+          <p style="color:#a1a1aa;font-size:14px;">
+            <a href="${venueUrl}" style="color:#818cf8;">${venue.name}</a> is now featured at the top of its city page on GigRadar.
+            You'll get a weekly stats email every Friday with your follower count and upcoming gig count.
+          </p>
+          <a href="${venueUrl}" style="display:block;margin-top:20px;background:#6366f1;color:#fff;text-decoration:none;text-align:center;font-weight:700;padding:12px;border-radius:10px;font-size:14px;">View your venue page →</a>
+          <p style="margin-top:20px;font-size:12px;color:#52525b;">Questions? Reply to this email.</p>
+        </div>`,
+      }),
+    }).catch(() => {});
+  }
+
+  return ok({ received: true, activated: venue.venueId });
+}
+
 /* ---- Router ---- */
 exports.handler = async (event) => {
   if (event.requestContext?.http?.method === 'OPTIONS') {
@@ -1168,7 +1288,8 @@ exports.handler = async (event) => {
     const rejectMatch = rawPath.match(/^\/admin\/claims\/([^/]+)\/reject$/);
     if (rejectMatch) return adminRejectClaim(decodeURIComponent(rejectMatch[1]), event);
 
-    if (rawPath === '/follows')     return followTarget(event);
+    if (rawPath === '/follows')          return followTarget(event);
+    if (rawPath === '/stripe/webhook')   return stripeWebhook(event);
 
     return notFound();
   }
