@@ -1,17 +1,43 @@
 'use strict';
 
+const https = require('https');
 const { DynamoDBClient }                                    = require('@aws-sdk/client-dynamodb');
 const { DynamoDBDocumentClient, QueryCommand, GetCommand }  = require('@aws-sdk/lib-dynamodb');
-const { SESClient, SendEmailCommand }                       = require('@aws-sdk/client-ses');
 
 const ddb = DynamoDBDocumentClient.from(new DynamoDBClient({ region: 'us-east-1' }));
-const ses = new SESClient({ region: 'us-east-1' });
 
-const FOLLOWS_TABLE = 'gigradar-follows';
-const ARTISTS_TABLE = 'gigradar-artists';
-const VENUES_TABLE  = 'gigradar-venues';
-const FROM_EMAIL    = process.env.FROM_EMAIL || 'noreply@gigradar.co.uk';
-const SITE_URL      = process.env.SITE_URL   || 'https://gigradar.co.uk';
+const FOLLOWS_TABLE   = 'gigradar-follows';
+const ARTISTS_TABLE   = 'gigradar-artists';
+const VENUES_TABLE    = 'gigradar-venues';
+const RESEND_API_KEY  = process.env.RESEND_API_KEY  || '';
+const FROM_EMAIL      = process.env.FROM_EMAIL      || 'GigRadar <onboarding@resend.dev>';
+const SITE_URL        = process.env.SITE_URL        || 'https://gigradar.co.uk';
+
+function resendSend(payload) {
+  return new Promise((resolve, reject) => {
+    const body = JSON.stringify(payload);
+    const req = https.request({
+      hostname: 'api.resend.com',
+      path: '/emails',
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${RESEND_API_KEY}`,
+        'Content-Type': 'application/json',
+        'Content-Length': Buffer.byteLength(body),
+      },
+    }, res => {
+      let data = '';
+      res.on('data', d => { data += d; });
+      res.on('end', () => {
+        if (res.statusCode >= 400) reject(new Error(`Resend ${res.statusCode}: ${data}`));
+        else resolve(JSON.parse(data));
+      });
+    });
+    req.on('error', reject);
+    req.write(body);
+    req.end();
+  });
+}
 
 async function getFollowers(targetId) {
   const r = await ddb.send(new QueryCommand({
@@ -24,31 +50,16 @@ async function getFollowers(targetId) {
   return r.Items || [];
 }
 
-async function getArtist(artistId) {
-  const r = await ddb.send(new GetCommand({ TableName: ARTISTS_TABLE, Key: { artistId } })).catch(() => ({}));
-  return r.Item || null;
-}
-
-async function getVenue(venueId) {
-  const r = await ddb.send(new GetCommand({ TableName: VENUES_TABLE, Key: { venueId } })).catch(() => ({}));
-  return r.Item || null;
-}
-
 async function sendAlert(email, subject, html, unsubToken) {
+  if (!RESEND_API_KEY) { console.warn('RESEND_API_KEY not set'); return; }
   const unsubUrl = `${SITE_URL}/unsubscribe?token=${unsubToken}`;
   const fullHtml = `${html}
 <p style="margin-top:32px;font-size:12px;color:#888;">
   <a href="${unsubUrl}" style="color:#888;">Unsubscribe</a> from these alerts.
 </p>`;
 
-  await ses.send(new SendEmailCommand({
-    Source: `GigRadar <${FROM_EMAIL}>`,
-    Destination: { ToAddresses: [email] },
-    Message: {
-      Subject: { Data: subject, Charset: 'UTF-8' },
-      Body: { Html: { Data: fullHtml, Charset: 'UTF-8' } },
-    },
-  })).catch(e => console.error('SES error for', email, e.message));
+  await resendSend({ from: FROM_EMAIL, to: [email], subject, html: fullHtml })
+    .catch(e => console.error('Resend error for', email, e.message));
 }
 
 function formatDate(d) {
@@ -62,7 +73,6 @@ exports.handler = async (event) => {
     .filter(r => r.eventName === 'INSERT' && r.dynamodb?.NewImage)
     .map(r => {
       const img = r.dynamodb.NewImage;
-      // Unmarshall simple string/number attributes
       const get = (key, type = 'S') => img[key]?.[type] || null;
       return {
         gigId:       get('gigId'),
@@ -87,7 +97,6 @@ exports.handler = async (event) => {
       gig.venueId ? getFollowers(gig.venueId) : Promise.resolve([]),
     ]);
 
-    // Merge, deduplicate by email
     const allFollowers = [...artistFollowers, ...venueFollowers];
     const byEmail = new Map();
     for (const f of allFollowers) {
@@ -97,23 +106,25 @@ exports.handler = async (event) => {
     if (!byEmail.size) continue;
 
     const dateStr = formatDate(gig.date);
+    const gigUrl = `${SITE_URL}/gigs/${encodeURIComponent(gig.gigId)}`;
     const ticketBtn = gig.ticketUrl
-      ? `<a href="${gig.ticketUrl}" style="display:inline-block;margin-top:16px;padding:10px 20px;background:#6366f1;color:#fff;text-decoration:none;border-radius:8px;">Get Tickets</a>`
+      ? `<a href="${gig.ticketUrl}" style="display:inline-block;margin-top:16px;padding:10px 20px;background:#6366f1;color:#fff;text-decoration:none;border-radius:8px;font-weight:bold;">Get Tickets</a>`
       : '';
 
     const subject = `${gig.artistName} at ${gig.venueName} — ${dateStr}`;
     const html = `
 <div style="font-family:sans-serif;max-width:480px;margin:auto;background:#111;color:#eee;padding:32px;border-radius:12px;">
-  <h2 style="margin:0 0 4px;font-size:20px;">New gig alert</h2>
-  <h1 style="margin:0 0 16px;font-size:26px;color:#fff;">${gig.artistName}</h1>
-  <p style="margin:0;font-size:16px;color:#ccc;">
+  <p style="margin:0 0 8px;font-size:13px;color:#888;font-weight:600;text-transform:uppercase;letter-spacing:0.1em;">New gig alert</p>
+  <h1 style="margin:0 0 4px;font-size:28px;color:#fff;font-weight:900;">${gig.artistName}</h1>
+  <p style="margin:0 0 20px;font-size:16px;color:#ccc;">
     📍 ${gig.venueName}${gig.venueCity ? `, ${gig.venueCity}` : ''}<br>
     📅 ${dateStr}
   </p>
   ${ticketBtn}
-  <p style="margin-top:24px;font-size:14px;">
-    <a href="${SITE_URL}/artists/${encodeURIComponent(gig.artistId)}" style="color:#818cf8;">View artist page →</a>
-  </p>
+  <div style="margin-top:24px;border-top:1px solid #333;padding-top:20px;display:flex;gap:12px;">
+    <a href="${SITE_URL}/artists/${encodeURIComponent(gig.artistId)}" style="color:#818cf8;font-size:14px;">View artist →</a>
+    <a href="${gigUrl}" style="color:#818cf8;font-size:14px;">View gig →</a>
+  </div>
 </div>`;
 
     for (const [email, follow] of byEmail) {

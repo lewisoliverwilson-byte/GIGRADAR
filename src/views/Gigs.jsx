@@ -10,6 +10,18 @@ const GENRES = ['All','rock','indie','pop','electronic','dance','jazz','classica
 const RADII  = [5, 10, 15, 25, 50];
 
 function todayStr() { return new Date().toISOString().split('T')[0]; }
+function addDays(d, n) { const r = new Date(d); r.setDate(r.getDate() + n); return r.toISOString().split('T')[0]; }
+function thisWeekendFrom() {
+  const d = new Date(); const day = d.getDay(); // 0=Sun,6=Sat
+  const daysToSat = day === 0 ? 6 : 6 - day;
+  return addDays(d.toISOString().split('T')[0], daysToSat);
+}
+function thisWeekendTo() { return addDays(thisWeekendFrom(), 1); }
+function thisWeekTo() {
+  const d = new Date(); const day = d.getDay();
+  const daysToSun = day === 0 ? 0 : 7 - day;
+  return addDays(d.toISOString().split('T')[0], daysToSun);
+}
 
 export default function Gigs() {
   const router = useRouter();
@@ -229,8 +241,23 @@ export default function Gigs() {
             )}
           </div>
 
-          {/* Row 2: price pills + grassroots + date range */}
+          {/* Row 2: quick date + price + grassroots + date range */}
           <div className="flex flex-wrap gap-2 items-center mt-2">
+            {[
+              ['Today', todayStr(), todayStr()],
+              ['This week', todayStr(), thisWeekTo()],
+              ['Weekend', thisWeekendFrom(), thisWeekendTo()],
+            ].map(([label, f, t]) => (
+              <button key={label}
+                onClick={() => { setFrom(f); setTo(t); setPage(1); }}
+                className={`text-xs px-3 py-1.5 rounded-lg font-medium border transition-colors ${
+                  from === f && to === t
+                    ? 'bg-violet-600 border-violet-500 text-white'
+                    : 'bg-zinc-800 border-zinc-700 text-zinc-400 hover:text-white hover:border-zinc-500'
+                }`}>
+                {label}
+              </button>
+            ))}
             <div className="flex gap-1 flex-wrap">
               {[['', 'Any price'], ['0', 'Free'], ['10', '£10'], ['20', '£20'], ['30', '£30'], ['50', '£50']].map(([val, label]) => (
                 <button key={val} onClick={() => { setMaxPrice(val); setPage(1); }}

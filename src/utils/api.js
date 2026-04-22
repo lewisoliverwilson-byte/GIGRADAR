@@ -52,6 +52,7 @@ export const api = {
   getArtistGigs:     (id)           => get(`/artists/${id}/gigs`),
   getSimilarArtists: (id)           => get(`/artists/${id}/similar`),
   getArtistSetlists: (id)           => get(`/artists/${id}/setlists`),
+  getGig:            (id)           => get(`/gigs/${encodeURIComponent(id)}`),
   getGigs:           (params)       => get(`/gigs${params ? '?' + new URLSearchParams(params) : ''}`),
   getNearbyGigs:     (lat, lng, radius = 15, genre) =>
     get(`/gigs/nearby?lat=${lat}&lng=${lng}&radius=${radius}${genre ? '&genre='+encodeURIComponent(genre) : ''}`),

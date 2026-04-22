@@ -741,6 +741,13 @@ async function adminRejectVenueClaim(venueId, event) {
   return ok({ ok: true });
 }
 
+/* ---- GET /gigs/:id ---- */
+async function getGig(gigId) {
+  const result = await ddb.send(new GetCommand({ TableName: GIGS_TABLE, Key: { gigId } }));
+  if (!result.Item) return notFound('Gig not found');
+  return ok(result.Item);
+}
+
 /* ---- GET /gigs ---- */
 async function getGigs(params) {
   const today    = new Date().toISOString().split('T')[0];
@@ -1309,6 +1316,8 @@ exports.handler = async (event) => {
     if (rawPath === '/on-sale')       return withCache('on-sale',     15*60000, () => getOnSaleGigs(params));
     if (rawPath === '/coming-soon')   return withCache('coming-soon', 15*60000, () => getComingSoonGigs(params));
     if (rawPath === '/gigs/nearby')   return getNearbyGigs(params);
+    const gigMatch = rawPath.match(/^\/gigs\/([^/]+)$/);
+    if (gigMatch) return getGig(decodeURIComponent(gigMatch[1]));
     if (rawPath === '/gigs')          return getGigs(params);
 
     const artistSetlistsMatch = rawPath.match(/^\/artists\/([^/]+)\/setlists$/);
