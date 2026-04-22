@@ -19,7 +19,7 @@ DRY=""
 [[ "$1" == "--dry-run" ]] && DRY="--dry-run"
 
 export TM_API_KEY="${TM_API_KEY:-ttdbtKPP936EBCBNnBPOwxvzIzYDoi8I}"
-export RESEND_API_KEY="${RESEND_API_KEY:-}"   # set this once you have a Resend key
+export RESEND_API_KEY="${RESEND_API_KEY:-re_8nJMD5FV_Pcz9wchwWJ5F7pZfbkURGfg1}"
 export SPOTIFY_CLIENT_ID="${SPOTIFY_CLIENT_ID:-9f4abb0eac5a45019b8d9a492daa41fc}"
 export SPOTIFY_CLIENT_SECRET="${SPOTIFY_CLIENT_SECRET:-130c12d419064803bec3126cb3d4e411}"
 export LASTFM_API_KEY="${LASTFM_API_KEY:-e2c0791c809dd2a81adde0158dd70c41}"

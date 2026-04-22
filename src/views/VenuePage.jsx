@@ -4,7 +4,6 @@ import Link from 'next/link';
 import { api } from '../utils/api.js';
 import { getToken } from '../utils/cognito.js';
 import { useAuth } from '../context/AuthContext.jsx';
-import { useFollow } from '../context/FollowContext.jsx';
 import GigCard from '../components/GigCard.jsx';
 import AlertButton from '../components/AlertButton.jsx';
 import Footer from '../components/Footer.jsx';
@@ -28,10 +27,9 @@ const TYPE_LABELS = {
 export default function VenuePage({ initialVenue = null }) {
   const { query: { slug } } = useRouter();
   const { user, openAuth } = useAuth();
-  const { isFollowingVenue, followVenue, unfollowVenue } = useFollow();
-
   const [venue, setVenue] = useState(initialVenue);
   const [gigs, setGigs] = useState([]);
+  const [discoveredCount, setDiscoveredCount] = useState(0);
   const [loading, setLoading] = useState(!initialVenue);
   const [tab, setTab] = useState('upcoming');
   const [showClaim, setShowClaim] = useState(false);
@@ -46,7 +44,11 @@ export default function VenuePage({ initialVenue = null }) {
     if (!initialVenue) setLoading(true);
     const venueFetch = initialVenue ? Promise.resolve(initialVenue) : api.getVenue(slug);
     Promise.all([venueFetch, api.getVenueGigs(slug)])
-      .then(([v, g]) => { setVenue(v); setGigs(g); })
+      .then(([v, g]) => {
+        setVenue(v);
+        // getVenueGigs returns { gigs, discoveredCount } or legacy array
+        if (Array.isArray(g)) { setGigs(g); } else { setGigs(g.gigs || []); setDiscoveredCount(g.discoveredCount || 0); }
+      })
       .catch(() => {})
       .finally(() => setLoading(false));
   }, [slug]);
@@ -70,16 +72,10 @@ export default function VenuePage({ initialVenue = null }) {
   const today = new Date().toISOString().split('T')[0];
   const upcoming = gigs.filter(g => g.date >= today).sort((a, b) => a.date.localeCompare(b.date));
   const past = gigs.filter(g => g.date < today).sort((a, b) => b.date.localeCompare(a.date));
-  const followed = isFollowingVenue(venue.venueId);
   const color = venueColor(venue.venueId);
   const isClaimed = !!venue.claimedBy;
   const isOwner = user && venue.claimedBy === user.sub;
   const canClaim = !isClaimed && !claimDone;
-
-  function toggleFollow() {
-    if (!user) return;
-    followed ? unfollowVenue(venue.venueId) : followVenue(venue.venueId);
-  }
 
   function startEdit() {
     setEditData({
@@ -187,16 +183,6 @@ export default function VenuePage({ initialVenue = null }) {
               </div>
 
               <div className="flex items-center gap-2 flex-shrink-0">
-                <button
-                  onClick={toggleFollow}
-                  className={`text-sm px-4 py-2 rounded-xl font-semibold transition-colors ${
-                    followed
-                      ? 'bg-violet-900 text-violet-300 border border-violet-700 hover:bg-red-900 hover:text-red-400 hover:border-red-700'
-                      : 'bg-violet-600 hover:bg-violet-500 text-white'
-                  }`}
-                >
-                  {followed ? 'Following' : 'Follow'}
-                </button>
                 <AlertButton targetId={venue.venueId} targetType="venue" targetName={venue.name} />
               </div>
             </div>
@@ -209,6 +195,23 @@ export default function VenuePage({ initialVenue = null }) {
                     {g}
                   </Link>
                 ))}
+              </div>
+            )}
+
+            {/* Stats row */}
+            {(venue.followerCount > 0 || discoveredCount > 0) && (
+              <div className="flex items-center gap-4 mt-3 flex-wrap">
+                {venue.followerCount > 0 && (
+                  <span className="text-xs text-zinc-400">
+                    <span className="font-semibold text-white">{venue.followerCount.toLocaleString()}</span> follower{venue.followerCount !== 1 ? 's' : ''}
+                  </span>
+                )}
+                {discoveredCount > 0 && (
+                  <span className="inline-flex items-center gap-1 bg-amber-950 text-amber-400 text-xs font-semibold px-2.5 py-0.5 rounded-full border border-amber-800"
+                    title="Artists who played here and now have 50k+ monthly Spotify listeners">
+                    ⚡ Discovered {discoveredCount} {discoveredCount === 1 ? 'artist' : 'artists'}
+                  </span>
+                )}
               </div>
             )}
 

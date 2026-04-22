@@ -1,7 +1,15 @@
 import React, { useState, useEffect } from 'react';
 import { api } from '../utils/api.js';
 
-const EMAIL_KEY = 'gr_alert_email';
+const EMAIL_KEY   = 'gr_alert_email';
+const VENUES_KEY  = 'gr_followed_venues';
+
+function getFollowedVenues() {
+  try { return JSON.parse(localStorage.getItem(VENUES_KEY) || '[]'); } catch { return []; }
+}
+function setFollowedVenues(ids) {
+  localStorage.setItem(VENUES_KEY, JSON.stringify(ids));
+}
 
 export default function AlertButton({ targetId, targetType, targetName, className = '' }) {
   const [email, setEmail] = useState(() => localStorage.getItem(EMAIL_KEY) || '');
@@ -16,10 +24,18 @@ export default function AlertButton({ targetId, targetType, targetName, classNam
     }
   }, [email, targetId]);
 
-  async function handleFollow(e) {
-    e.preventDefault();
-    const addr = input.trim();
-    if (!addr || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(addr)) return;
+  function localFollow(id) {
+    if (targetType !== 'venue') return;
+    const ids = getFollowedVenues();
+    if (!ids.includes(id)) setFollowedVenues([...ids, id]);
+  }
+
+  function localUnfollow(id) {
+    if (targetType !== 'venue') return;
+    setFollowedVenues(getFollowedVenues().filter(v => v !== id));
+  }
+
+  async function doFollow(addr) {
     setStatus('saving');
     try {
       await api.followTarget(addr, targetId, targetType, targetName);
@@ -29,22 +45,54 @@ export default function AlertButton({ targetId, targetType, targetName, classNam
       setShowInput(false);
       setInput('');
       setStatus('done');
+      localFollow(targetId);
     } catch {
       setStatus('error');
     }
+  }
+
+  async function handleFollow(e) {
+    e.preventDefault();
+    const addr = input.trim();
+    if (!addr || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(addr)) return;
+    await doFollow(addr);
   }
 
   async function handleUnfollow() {
     if (!email) return;
     await api.unfollowTarget(email, targetId).catch(() => {});
     setFollowing(false);
+    localUnfollow(targetId);
   }
+
+  const isVenue = targetType === 'venue';
+  const label   = isVenue ? 'Follow' : 'Get alerts';
 
   if (following) {
     return (
       <button onClick={handleUnfollow}
-        className={`text-xs px-3 py-1.5 rounded-lg border border-zinc-700 text-zinc-400 hover:text-red-400 hover:border-red-700 transition-colors ${className}`}>
-        🔔 Alerts on · turn off
+        className={`text-sm px-4 py-2 rounded-xl font-semibold border transition-colors ${
+          isVenue
+            ? 'bg-violet-900 text-violet-300 border-violet-700 hover:bg-red-900 hover:text-red-400 hover:border-red-700'
+            : 'text-xs px-3 py-1.5 border-zinc-700 text-zinc-400 hover:text-red-400 hover:border-red-700'
+        } ${className}`}>
+        {isVenue ? '✓ Following' : '🔔 Alerts on · turn off'}
+      </button>
+    );
+  }
+
+  // If email is already known, one-click follow — no form shown
+  if (email && !showInput) {
+    return (
+      <button
+        onClick={() => doFollow(email)}
+        disabled={status === 'saving'}
+        className={`text-sm px-4 py-2 rounded-xl font-semibold transition-colors disabled:opacity-50 ${
+          isVenue
+            ? 'bg-violet-600 hover:bg-violet-500 text-white'
+            : 'text-xs px-3 py-1.5 border border-zinc-700 text-zinc-400 hover:text-white hover:border-zinc-500'
+        } ${className}`}>
+        {status === 'saving' ? '…' : label}
       </button>
     );
   }
@@ -62,7 +110,7 @@ export default function AlertButton({ targetId, targetType, targetName, classNam
         />
         <button type="submit" disabled={status === 'saving'}
           className="bg-violet-600 hover:bg-violet-500 text-white text-xs font-semibold px-3 py-1.5 rounded-lg transition-colors disabled:opacity-50">
-          {status === 'saving' ? '…' : 'Alert me'}
+          {status === 'saving' ? '…' : 'Follow'}
         </button>
         <button type="button" onClick={() => setShowInput(false)}
           className="text-xs text-zinc-500 hover:text-white transition-colors">✕</button>
@@ -72,9 +120,13 @@ export default function AlertButton({ targetId, targetType, targetName, classNam
   }
 
   return (
-    <button onClick={() => { setInput(email); setShowInput(true); }}
-      className={`text-xs px-3 py-1.5 rounded-lg border border-zinc-700 text-zinc-400 hover:text-white hover:border-zinc-500 transition-colors ${className}`}>
-      🔔 Get gig alerts
+    <button onClick={() => { setInput(''); setShowInput(true); }}
+      className={`text-sm px-4 py-2 rounded-xl font-semibold transition-colors ${
+        isVenue
+          ? 'bg-violet-600 hover:bg-violet-500 text-white'
+          : 'text-xs px-3 py-1.5 border border-zinc-700 text-zinc-400 hover:text-white hover:border-zinc-500'
+      } ${className}`}>
+      {label}
     </button>
   );
 }

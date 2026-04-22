@@ -18,7 +18,7 @@ DRY=""
 [[ "$1" == "--dry-run" ]] && DRY="--dry-run"
 
 export TM_API_KEY="${TM_API_KEY:-ttdbtKPP936EBCBNnBPOwxvzIzYDoi8I}"
-export RESEND_API_KEY="${RESEND_API_KEY:-}"   # set this once you have a Resend key
+export RESEND_API_KEY="${RESEND_API_KEY:-re_8nJMD5FV_Pcz9wchwWJ5F7pZfbkURGfg1}"
 export SPOTIFY_CLIENT_ID="${SPOTIFY_CLIENT_ID:-9f4abb0eac5a45019b8d9a492daa41fc}"
 export SPOTIFY_CLIENT_SECRET="${SPOTIFY_CLIENT_SECRET:-130c12d419064803bec3126cb3d4e411}"
 export LASTFM_API_KEY="${LASTFM_API_KEY:-e2c0791c809dd2a81adde0158dd70c41}"
@@ -82,13 +82,23 @@ node "$ROOT/scripts/scrape-venue-gigs.cjs" $DRY \
 log "wave6" "done"
 
 # ════════════════════════════════════════════════════════════════
-# PHASE 1b — GIG ALERTS
+# PHASE 1b — GIG ALERTS + WEEKLY DIGEST
 # ════════════════════════════════════════════════════════════════
 echo ""
 echo "▶ Sending gig alerts to followers"
 node "$ROOT/scripts/send-gig-alerts.cjs" $DRY \
   > "$LOG_DIR/${TS}-alerts.txt" 2>&1
 log "alerts" "done"
+
+echo "▶ Sending weekly digest to venue followers"
+node "$ROOT/scripts/send-weekly-digest.cjs" $DRY \
+  > "$LOG_DIR/${TS}-digest.txt" 2>&1
+log "digest" "done"
+
+echo "▶ Sending Spotlight stats to venues"
+node "$ROOT/scripts/send-spotlight-stats.cjs" $DRY \
+  > "$LOG_DIR/${TS}-spotlight-stats.txt" 2>&1
+log "spotlight-stats" "done"
 
 # ════════════════════════════════════════════════════════════════
 # PHASE 2 — CLEANUP

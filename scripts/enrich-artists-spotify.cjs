@@ -176,6 +176,19 @@ async function main() {
           UpdateExpression: `SET ${sets.join(', ')}`,
           ExpressionAttributeValues: values,
         })).catch(() => {});
+
+        // Append listener snapshot to history for Early Radar growth tracking (max 52 entries)
+        if (followers) {
+          const entry = JSON.stringify({ ts: new Date().toISOString().split('T')[0], l: followers });
+          await ddb.send(new UpdateCommand({
+            TableName: ARTISTS_TABLE,
+            Key: { artistId },
+            UpdateExpression: 'SET listenersHistory = list_append(if_not_exists(listenersHistory, :empty), :entry)',
+            ExpressionAttributeValues: { ':entry': [entry], ':empty': [] },
+          })).catch(() => {});
+          // Trim history to last 52 entries (prune after a year of weekly runs)
+          // DynamoDB doesn't support REMOVE list slices natively, so pruning is done in a separate pass (Early Radar Phase 2)
+        }
       }
 
       enriched++;

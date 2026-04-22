@@ -1,5 +1,5 @@
 const { DynamoDBClient } = require('@aws-sdk/client-dynamodb');
-const { DynamoDBDocumentClient, ScanCommand, QueryCommand, GetCommand, UpdateCommand, PutCommand, DeleteCommand } = require('@aws-sdk/lib-dynamodb');
+const { DynamoDBDocumentClient, ScanCommand, QueryCommand, GetCommand, UpdateCommand, PutCommand, DeleteCommand, BatchGetCommand } = require('@aws-sdk/lib-dynamodb');
 
 const ddb = DynamoDBDocumentClient.from(new DynamoDBClient({ region: process.env.AWS_REGION || 'us-east-1' }));
 
@@ -260,6 +260,7 @@ async function getVenueGigs(slug) {
   const venue = (vRes.Items || [])[0];
   if (!venue) return notFound('Venue not found');
 
+  const today   = new Date().toISOString().split('T')[0];
   const yearAgo = new Date(Date.now() - 365 * 864e5).toISOString().split('T')[0];
   const result  = await ddb.send(new ScanCommand({
     TableName: GIGS_TABLE,
@@ -268,7 +269,33 @@ async function getVenueGigs(slug) {
     ExpressionAttributeValues: { ':vid': venue.venueId, ':vname': venue.name, ':yearAgo': yearAgo },
   }));
   const gigs = mergeGigTickets(result.Items || []).sort((a, b) => a.date.localeCompare(b.date));
-  return ok(gigs);
+
+  // "Discovered them first" — count past artists who subsequently blew up (>50k monthly listeners)
+  const pastArtistIds = [...new Set(
+    gigs.filter(g => g.date < today && g.artistId).map(g => g.artistId)
+  )].slice(0, 100);
+
+  let discoveredCount = 0;
+  if (pastArtistIds.length > 0) {
+    try {
+      const chunks = [];
+      for (let i = 0; i < pastArtistIds.length; i += 100) chunks.push(pastArtistIds.slice(i, i + 100));
+      for (const chunk of chunks) {
+        const batchRes = await ddb.send(new BatchGetCommand({
+          RequestItems: {
+            [ARTISTS_TABLE]: {
+              Keys: chunk.map(id => ({ artistId: id })),
+              ProjectionExpression: 'monthlyListeners',
+            },
+          },
+        }));
+        const items = batchRes.Responses?.[ARTISTS_TABLE] || [];
+        discoveredCount += items.filter(a => (a.monthlyListeners || 0) > 50000).length;
+      }
+    } catch {}
+  }
+
+  return ok({ gigs, discoveredCount });
 }
 
 /* ---- GET /search?q= ---- */
@@ -985,11 +1012,24 @@ async function followTarget(event) {
   const followId   = `${email}#${targetId}`;
   const unsubToken = Buffer.from(`${followId}:${Date.now()}`).toString('base64url').slice(0, 32);
 
-  await ddb.send(new PutCommand({
-    TableName: FOLLOWS_TABLE,
-    Item: { followId, email, targetId, targetType, targetName: targetName || '', confirmed: true, createdAt: new Date().toISOString(), unsubToken },
-    ConditionExpression: 'attribute_not_exists(followId)',
-  })).catch(() => {}); // ignore duplicate
+  let isNew = false;
+  try {
+    await ddb.send(new PutCommand({
+      TableName: FOLLOWS_TABLE,
+      Item: { followId, email, targetId, targetType, targetName: targetName || '', confirmed: true, createdAt: new Date().toISOString(), unsubToken },
+      ConditionExpression: 'attribute_not_exists(followId)',
+    }));
+    isNew = true;
+  } catch {} // ignore duplicate
+
+  if (isNew && targetType === 'venue') {
+    await ddb.send(new UpdateCommand({
+      TableName: VENUES_TABLE,
+      Key: { venueId: targetId },
+      UpdateExpression: 'ADD followerCount :one',
+      ExpressionAttributeValues: { ':one': 1 },
+    })).catch(() => {});
+  }
 
   return ok({ ok: true });
 }
@@ -998,7 +1038,26 @@ async function followTarget(event) {
 async function unfollowTarget(event) {
   const { email, targetId } = parseBody(event);
   if (!email || !targetId) return badRequest('email and targetId required');
+
+  // Fetch the follow record first to know targetType (needed for followerCount decrement)
+  const existing = await ddb.send(new GetCommand({
+    TableName: FOLLOWS_TABLE,
+    Key: { followId: `${email}#${targetId}` },
+  })).catch(() => ({}));
+  const targetType = existing.Item?.targetType;
+
   await ddb.send(new DeleteCommand({ TableName: FOLLOWS_TABLE, Key: { followId: `${email}#${targetId}` } })).catch(() => {});
+
+  if (targetType === 'venue') {
+    await ddb.send(new UpdateCommand({
+      TableName: VENUES_TABLE,
+      Key: { venueId: targetId },
+      UpdateExpression: 'ADD followerCount :neg',
+      ConditionExpression: 'followerCount > :zero',
+      ExpressionAttributeValues: { ':neg': -1, ':zero': 0 },
+    })).catch(() => {}); // safe to ignore if followerCount already 0
+  }
+
   return ok({ ok: true });
 }
 
