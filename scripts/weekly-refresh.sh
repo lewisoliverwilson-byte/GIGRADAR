@@ -137,10 +137,37 @@ node "$ROOT/scripts/enrich-artists-wikipedia.cjs" --resume $DRY \
   > "$LOG_DIR/${TS}-enrich-wiki.txt" 2>&1
 log "enrich-wiki" "done"
 
+echo "▶ Enrichment — Artist images from Spotify (high-res, --resume)"
+SPOTIFY_CLIENT_ID=$SPOTIFY_CLIENT_ID SPOTIFY_CLIENT_SECRET=$SPOTIFY_CLIENT_SECRET \
+  node "$ROOT/scripts/enrich-artists-images-spotify.cjs" --resume $DRY \
+  > "$LOG_DIR/${TS}-enrich-artist-images.txt" 2>&1
+log "enrich-artist-images" "done"
+
 echo "▶ Enrichment — Venue genres (full pass)"
 node "$ROOT/scripts/enrich-venues-genres.cjs" $DRY \
   > "$LOG_DIR/${TS}-enrich-venue-genres.txt" 2>&1
 log "enrich-venue-genres" "done"
+
+echo "▶ Enrichment — New venue discovery (MusicBrainz + Skiddle)"
+node "$ROOT/scripts/discover-new-venues.cjs" --source all $DRY \
+  > "$LOG_DIR/${TS}-discover-venues.txt" 2>&1
+log "discover-venues" "done"
+
+echo "▶ Enrichment — Venue profiles (web/Wikipedia/OSM, --resume)"
+node "$ROOT/scripts/enrich-venues-web.cjs" --resume $DRY \
+  > "$LOG_DIR/${TS}-enrich-venues-web.txt" 2>&1
+log "enrich-venues-web" "done"
+
+echo "▶ Enrichment — Venue MusicBrainz (capacity, website, 1 req/sec)"
+node "$ROOT/scripts/enrich-venues-musicbrainz.cjs" --resume $DRY \
+  > "$LOG_DIR/${TS}-enrich-venues-mb.txt" 2>&1 &
+MB_VENUE_PID=$!
+log "enrich-venues-mb" "started PID $MB_VENUE_PID (will complete in background)"
+
+echo "▶ Enrichment — Venue ticketing profile links"
+node "$ROOT/scripts/enrich-venues-ticketing-links.cjs" $DRY \
+  > "$LOG_DIR/${TS}-enrich-venue-links.txt" 2>&1
+log "enrich-venue-links" "done"
 
 # ════════════════════════════════════════════════════════════════
 # PHASE 4 — GENRE PROPAGATION
@@ -150,6 +177,11 @@ echo "▶ Grassroots venue classification"
 node "$ROOT/scripts/classify-grassroots-venues.cjs" $DRY \
   > "$LOG_DIR/${TS}-grassroots.txt" 2>&1
 log "grassroots" "done"
+
+echo "▶ Gig genre backfill — push artist genres onto gig records"
+node "$ROOT/scripts/backfill-gig-genres.cjs" $DRY \
+  > "$LOG_DIR/${TS}-backfill-gig-genres.txt" 2>&1
+log "backfill-gig-genres" "done"
 
 echo "▶ Genre propagation — artist → gigs + co-performer inference"
 node "$ROOT/scripts/update-gig-genres.cjs" $DRY \
@@ -179,11 +211,16 @@ node "$ROOT/scripts/generate-sitemap.cjs" \
   > "$LOG_DIR/${TS}-sitemap.txt" 2>&1
 log "sitemap" "done"
 
-# Wait for MusicBrainz to finish (if still running)
+# Wait for background MusicBrainz jobs to finish (if still running)
 if kill -0 $MB_PID 2>/dev/null; then
-  echo "  [mb] still running — waiting..."
+  echo "  [enrich-mb] still running — waiting..."
   wait $MB_PID
   log "enrich-mb" "done"
+fi
+if kill -0 $MB_VENUE_PID 2>/dev/null; then
+  echo "  [enrich-venues-mb] still running — waiting..."
+  wait $MB_VENUE_PID
+  log "enrich-venues-mb" "done"
 fi
 
 # ── Summary ───────────────────────────────────────────────────────────────────
@@ -201,12 +238,28 @@ for name in ticketmaster songkick skiddle dice ticketline ra seetickets gigantic
   printf "  %-15s %s\n" "$name" "$count"
 done
 echo ""
-echo "Enrichment:"
-for name in enrich-spotify enrich-lastfm enrich-mb enrich-wiki enrich-venue-genres; do
+echo "Artist enrichment:"
+for name in enrich-spotify enrich-lastfm enrich-mb enrich-wiki enrich-artist-images; do
   f="$LOG_DIR/${TS}-${name}.txt"
   [ -f "$f" ] || continue
   enriched=$(grep -oP 'Enriched\s*:\s*\K[\d,]+' "$f" 2>/dev/null | tail -1)
-  [ -n "$enriched" ] && printf "  %-25s %s artists\n" "$name" "$enriched"
+  [ -n "$enriched" ] && printf "  %-25s %s\n" "$name" "$enriched"
+done
+echo ""
+echo "Venue enrichment:"
+for name in discover-venues enrich-venues-web enrich-venues-mb enrich-venue-genres enrich-venue-links; do
+  f="$LOG_DIR/${TS}-${name}.txt"
+  [ -f "$f" ] || continue
+  count=$(grep -oP '(Enriched|Seeded|Updated|Found)\s*:\s*\K[\d,]+' "$f" 2>/dev/null | tail -1)
+  [ -n "$count" ] && printf "  %-25s %s\n" "$name" "$count"
+done
+echo ""
+echo "Gig enrichment:"
+for name in backfill-gig-genres update-gig-genres infer-genres dedup; do
+  f="$LOG_DIR/${TS}-${name}.txt"
+  [ -f "$f" ] || continue
+  count=$(grep -oP '(Updated|Genres set|Removed)\s*:\s*\K[\d,]+' "$f" 2>/dev/null | tail -1)
+  [ -n "$count" ] && printf "  %-25s %s\n" "$name" "$count"
 done
 echo ""
 cat "$LOG_DIR/${TS}-stats.txt" 2>/dev/null | grep -E 'Future|genres|Artists|With genres' | head -8
