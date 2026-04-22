@@ -508,6 +508,25 @@ async function getNearbyGigs(params) {
   return ok(gigs);
 }
 
+/* ---- GET /venues/featured — Pro + Spotlight only, used by homepage ---- */
+async function getVenuesFeatured() {
+  return withCache('venues_featured', 5 * 60 * 1000, async () => {
+    const result = await ddb.send(new ScanCommand({
+      TableName: VENUES_TABLE,
+      FilterExpression: 'isActive = :a AND (isVenuePro = :t OR isSpotlight = :t)',
+      ExpressionAttributeValues: { ':a': true, ':t': true },
+      ProjectionExpression: 'venueId, #n, slug, city, #cap, followerCount, upcoming, genres, isVenuePro, isSpotlight, isGrassroots, photoUrl, imageUrl',
+      ExpressionAttributeNames: { '#n': 'name', '#cap': 'capacity' },
+    }));
+    const venues = (result.Items || []).sort((a, b) => {
+      if (a.isVenuePro && !b.isVenuePro) return -1;
+      if (!a.isVenuePro && b.isVenuePro) return 1;
+      return (b.followerCount || 0) - (a.followerCount || 0);
+    });
+    return ok(venues);
+  });
+}
+
 /* ---- GET /venues?city=&grassroots= ---- */
 async function getVenuesFiltered(params) {
   const city       = (params?.city || '').trim();
@@ -1417,6 +1436,7 @@ exports.handler = async (event) => {
     const artistSetlistsMatch = rawPath.match(/^\/artists\/([^/]+)\/setlists$/);
     if (artistSetlistsMatch) return getArtistSetlists(decodeURIComponent(artistSetlistsMatch[1]));
 
+    if (rawPath === '/venues/featured') return getVenuesFeatured();
     if (rawPath === '/venues') return (params?.city || params?.grassroots) ? getVenuesFiltered(params) : getVenues();
 
     const venueGigsMatch = rawPath.match(/^\/venues\/([^/]+)\/gigs$/);

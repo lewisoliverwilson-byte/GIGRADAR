@@ -14,7 +14,6 @@ const CITIES = ['London','Manchester','Birmingham','Glasgow','Liverpool','Leeds'
 export default function Home() {
   const { user, openAuth } = useAuth();
   const { following } = useFollow();
-  const [artists, setArtists] = useState([]);
   const [gigs, setGigs] = useState([]);
   const [trending, setTrending] = useState([]);
   const [emerging, setEmerging] = useState([]);
@@ -31,31 +30,28 @@ export default function Home() {
   const router = useRouter();
 
   useEffect(() => {
+    // Phase 1: above-fold content — show as fast as possible
+    Promise.all([api.getGigs(), api.getTrending()])
+      .then(([g, t]) => { setGigs(g); setTrending(t); })
+      .catch(() => {})
+      .finally(() => setLoading(false));
+
+    // Phase 2: below-fold — load after first render
     Promise.all([
-      api.getArtists(),
-      api.getGigs(),
-      api.getTrending(),
-      api.getEmerging(),
-      api.getGrassroots(),
+      api.getEmerging().catch(() => []),
+      api.getGrassroots().catch(() => []),
       api.getOnSale().catch(() => []),
       api.getComingSoon().catch(() => []),
       api.getEarlyRadar().catch(() => []),
-      api.getVenues().catch(() => []),
-    ])
-      .then(([a, g, t, e, gr, os, cs, er, vs]) => {
-        setArtists(a);
-        setGigs(g);
-        setTrending(t);
-        setEmerging(e);
-        setGrassroots(gr);
-        setOnSale(os);
-        setComingSoon(cs);
-        setEarlyRadar(er);
-        const proVenues = (Array.isArray(vs) ? vs : []).filter(v => v.isVenuePro || v.isSpotlight);
-        setFeaturedVenues(proVenues.slice(0, 8));
-      })
-      .catch(() => {})
-      .finally(() => setLoading(false));
+      api.getVenuesFeatured().catch(() => []),
+    ]).then(([e, gr, os, cs, er, vs]) => {
+      setEmerging(e);
+      setGrassroots(gr);
+      setOnSale(os);
+      setComingSoon(cs);
+      setEarlyRadar(er);
+      setFeaturedVenues((Array.isArray(vs) ? vs : []).slice(0, 8));
+    }).catch(() => {});
   }, []);
 
   const today = new Date().toISOString().split('T')[0];
@@ -89,11 +85,6 @@ export default function Home() {
       () => router.push('/gigs')
     );
   }
-
-  const featuredArtists = [...artists]
-    .filter(a => a.upcoming > 0)
-    .sort((a, b) => (b.upcoming - a.upcoming) || ((a.lastfmRank || 999999) - (b.lastfmRank || 999999)))
-    .slice(0, 18);
 
   const upcomingGigs = gigs.filter(g => g.date >= today).slice(0, 8);
   const followedGigs = gigs.filter(g => following.has(g.artistId) && g.date >= today);
@@ -260,10 +251,6 @@ export default function Home() {
         ) : trending.length > 0 ? (
           <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 gap-3">
             {trending.slice(0, 12).map(a => <ArtistCard key={a.artistId} artist={a} />)}
-          </div>
-        ) : (
-          <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 gap-3">
-            {featuredArtists.slice(0, 12).map(a => <ArtistCard key={a.artistId} artist={a} />)}
           </div>
         )}
       </section>

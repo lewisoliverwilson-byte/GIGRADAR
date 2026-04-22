@@ -62,6 +62,7 @@ export const api = {
   getGrassroots:     (params)       => get(`/grassroots${params ? '?' + new URLSearchParams(params) : ''}`),
   getOnSale:         (params)       => get(`/on-sale${params ? '?' + new URLSearchParams(params) : ''}`),
   getComingSoon:     (params)       => get(`/coming-soon${params ? '?' + new URLSearchParams(params) : ''}`),
+  getVenuesFeatured: ()             => get('/venues/featured'),
   getVenues:         ()             => get('/venues'),
   getVenuesFiltered: (params)       => get(`/venues?${new URLSearchParams(params)}`),
   getVenue:          (slug)         => get(`/venues/${slug}`),
