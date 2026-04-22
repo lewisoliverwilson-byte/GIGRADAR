@@ -75,16 +75,34 @@ export default function Calendar() {
     return { rangeFrom: toISO(gridStart), rangeTo: toISO(gridEnd), weeks: ws };
   }, [viewMode, currentDate]);
 
-  // Fetch gigs when range or city changes
+  // Fetch gigs when range or city changes.
+  // Week view: one request. Month view: one request per week (parallel) so each
+  // week gets its own 500-gig budget rather than early days exhausting the total.
   useEffect(() => {
     setLoading(true);
-    const params = { from: rangeFrom, to: rangeTo, limit: 500 };
-    if (city !== 'All') params.city = city;
-    api.getGigs(params)
-      .then(g => setGigs(Array.isArray(g) ? g : []))
-      .catch(() => setGigs([]))
-      .finally(() => setLoading(false));
-  }, [rangeFrom, rangeTo, city]);
+    const cityParam = city !== 'All' ? city : undefined;
+
+    if (viewMode === 'week') {
+      const params = { from: rangeFrom, to: rangeTo, limit: 2000 };
+      if (cityParam) params.city = cityParam;
+      api.getGigs(params)
+        .then(g => setGigs(Array.isArray(g) ? g : []))
+        .catch(() => setGigs([]))
+        .finally(() => setLoading(false));
+    } else {
+      // Fetch each week independently in parallel
+      const weekFetches = weeks.map(week => {
+        const from = toISO(week[0]);
+        const to   = toISO(week[6]);
+        const params = { from, to, limit: 500 };
+        if (cityParam) params.city = cityParam;
+        return api.getGigs(params).catch(() => []);
+      });
+      Promise.all(weekFetches)
+        .then(results => setGigs(results.flat().filter(Boolean)))
+        .finally(() => setLoading(false));
+    }
+  }, [rangeFrom, rangeTo, city, viewMode, weeks]);
 
   // Group gigs by date
   const gigsByDate = useMemo(() => {

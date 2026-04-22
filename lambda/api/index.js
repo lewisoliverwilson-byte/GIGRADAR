@@ -744,7 +744,7 @@ async function adminRejectVenueClaim(venueId, event) {
 /* ---- GET /gigs ---- */
 async function getGigs(params) {
   const today    = new Date().toISOString().split('T')[0];
-  const limit    = Math.min(parseInt(params?.limit || '200', 10), 500);
+  const limit    = Math.min(parseInt(params?.limit || '200', 10), 2000);
   const city     = (params?.city  || '').trim().split(/\s+/).map(w => w ? w[0].toUpperCase() + w.slice(1).toLowerCase() : '').join(' ');
   const genre    = (params?.genre || '').trim().toLowerCase();
   const maxPrice = params?.maxPrice ? parseFloat(params.maxPrice) : null;
