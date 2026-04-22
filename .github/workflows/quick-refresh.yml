@@ -28,9 +28,12 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '20'
-          cache: 'npm'
 
-      - run: npm ci
+      - name: Install dependencies
+        run: |
+          npm ci
+          cd lambda/scraper && npm ci
+          cd lambda/api && npm ci
 
       - name: Run quick refresh
         run: bash scripts/quick-refresh.sh
