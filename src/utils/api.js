@@ -73,8 +73,14 @@ export const api = {
   updateArtist:  (id, body, token)        => patch(`/artists/${id}`, body, token),
 
   // Venue claiming & editing (requires Cognito JWT)
-  claimVenue:    (slug, body, token)      => post(`/venues/${slug}/claim`, body, token),
-  updateVenue:   (slug, body, token)      => patch(`/venues/${slug}`, body, token),
+  claimVenue:          (slug, body, token) => post(`/venues/${slug}/claim`, body, token),
+  updateVenue:         (slug, body, token) => patch(`/venues/${slug}`, body, token),
+  trackVenueView:      (slug)             => post(`/venues/${slug}/view`, {}),
+  getVenueAnalytics:   (slug, token)      => {
+    const headers = { 'Content-Type': 'application/json' };
+    if (token) headers['Authorization'] = `Bearer ${token}`;
+    return fetch(`${base}/venues/${slug}/analytics`, { headers }).then(r => r.ok ? r.json() : Promise.reject(r));
+  },
 
   // Follows / email alerts
   followTarget:  (email, targetId, targetType, targetName) =>

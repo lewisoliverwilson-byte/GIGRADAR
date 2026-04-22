@@ -38,6 +38,8 @@ export default function VenuePage({ initialVenue = null }) {
   const [editData, setEditData] = useState({});
   const [saving, setSaving] = useState(false);
   const [saveError, setSaveError] = useState('');
+  const [analytics, setAnalytics] = useState(null);
+  const [analyticsLoading, setAnalyticsLoading] = useState(false);
 
   useEffect(() => {
     if (!slug) return;
@@ -46,12 +48,26 @@ export default function VenuePage({ initialVenue = null }) {
     Promise.all([venueFetch, api.getVenueGigs(slug)])
       .then(([v, g]) => {
         setVenue(v);
-        // getVenueGigs returns { gigs, discoveredCount } or legacy array
         if (Array.isArray(g)) { setGigs(g); } else { setGigs(g.gigs || []); setDiscoveredCount(g.discoveredCount || 0); }
+        // Track page view for non-owners
+        if (!user || v.claimedBy !== user?.sub) {
+          api.trackVenueView(slug).catch(() => {});
+        }
       })
       .catch(() => {})
       .finally(() => setLoading(false));
   }, [slug]);
+
+  useEffect(() => {
+    if (tab !== 'analytics' || analytics || !venue) return;
+    setAnalyticsLoading(true);
+    import('../utils/cognito.js').then(({ getToken }) => getToken()).then(token => {
+      if (!token) return;
+      return api.getVenueAnalytics(venue.slug, token);
+    }).then(data => {
+      if (data) setAnalytics(data);
+    }).catch(() => {}).finally(() => setAnalyticsLoading(false));
+  }, [tab, venue]);
 
   if (loading) return <Skeleton />;
 
@@ -75,7 +91,11 @@ export default function VenuePage({ initialVenue = null }) {
   const color = venueColor(venue.venueId);
   const isClaimed = !!venue.claimedBy;
   const isOwner = user && venue.claimedBy === user.sub;
+  const isVenuePro = !!venue.isVenuePro;
+  const isSpotlight = !!venue.isSpotlight;
   const canClaim = !isClaimed && !claimDone;
+  const canViewAnalytics = isOwner && (isVenuePro || isSpotlight);
+  const canAnnounce = isOwner && (isVenuePro || isSpotlight);
 
   function startEdit() {
     setEditData({
@@ -86,6 +106,7 @@ export default function VenuePage({ initialVenue = null }) {
       bookingEmail: venue.bookingEmail || '',
       imageUrl: venue.imageUrl || '',
       capacity: venue.capacity ? String(venue.capacity) : '',
+      ...(canAnnounce ? { announcement: venue.announcement || '' } : {}),
     });
     setEditing(true);
     setSaveError('');
@@ -165,6 +186,21 @@ export default function VenuePage({ initialVenue = null }) {
                     <span className="inline-flex items-center gap-1 bg-violet-900 text-violet-300 text-xs font-semibold px-2.5 py-0.5 rounded-full border border-violet-700">
                       <svg className="w-3 h-3" viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" /></svg>
                       Verified
+                    </span>
+                  )}
+                  {isVenuePro && (
+                    <span className="inline-flex items-center gap-1 bg-gradient-to-r from-amber-900 to-orange-900 text-amber-300 text-xs font-bold px-2.5 py-0.5 rounded-full border border-amber-700">
+                      ⭐ Venue Pro
+                    </span>
+                  )}
+                  {isSpotlight && !isVenuePro && (
+                    <span className="inline-flex items-center gap-1 bg-indigo-950 text-indigo-300 text-xs font-semibold px-2.5 py-0.5 rounded-full border border-indigo-700">
+                      ✦ Spotlight
+                    </span>
+                  )}
+                  {isClaimed && !isSpotlight && !isVenuePro && (
+                    <span className="inline-flex items-center gap-1 bg-zinc-800 text-zinc-400 text-xs font-semibold px-2.5 py-0.5 rounded-full border border-zinc-600">
+                      ✓ Claimed
                     </span>
                   )}
                 </div>
@@ -266,6 +302,16 @@ export default function VenuePage({ initialVenue = null }) {
                   <textarea value={editData.bio} onChange={e => setEditData(d => ({ ...d, bio: e.target.value }))}
                     rows={3} className="w-full bg-zinc-800 border border-zinc-700 text-white rounded-xl px-3 py-2 focus:outline-none focus:border-violet-500 resize-none text-sm" />
                 </div>
+                {canAnnounce && (
+                  <div>
+                    <label className="block text-xs text-zinc-500 mb-1.5 font-medium">Announcement <span className="text-amber-500">(pinned banner for fans)</span></label>
+                    <textarea value={editData.announcement || ''} onChange={e => setEditData(d => ({ ...d, announcement: e.target.value }))}
+                      rows={2} maxLength={280}
+                      placeholder="e.g. New booking form live — DM for enquiries"
+                      className="w-full bg-zinc-800 border border-zinc-700 text-white rounded-xl px-3 py-2 focus:outline-none focus:border-amber-500 resize-none text-sm" />
+                    <p className="text-xs text-zinc-600 mt-1">{(editData.announcement || '').length}/280</p>
+                  </div>
+                )}
                 <div className="grid grid-cols-2 gap-2">
                   {[['website', 'Website'], ['instagram', 'Instagram'], ['facebook', 'Facebook'], ['bookingEmail', 'Booking email'], ['imageUrl', 'Photo URL'], ['capacity', 'Capacity']].map(([k, label]) => (
                     <div key={k}>
@@ -308,11 +354,23 @@ export default function VenuePage({ initialVenue = null }) {
           </div>
         </div>
 
+        {/* Announcement banner */}
+        {venue.announcement && (
+          <div className="mb-4 bg-amber-950/50 border border-amber-800/60 rounded-2xl px-5 py-4 flex items-start gap-3">
+            <span className="text-amber-400 text-lg flex-shrink-0 mt-0.5">📢</span>
+            <p className="text-amber-200 text-sm leading-relaxed">{venue.announcement}</p>
+          </div>
+        )}
+
         <div className="border-t border-zinc-800 mb-6" />
 
         {/* Tabs */}
-        <div className="flex gap-1 bg-zinc-900 border border-zinc-800 rounded-xl p-1 w-fit mb-6">
-          {[['upcoming', `Upcoming (${upcoming.length})`], ['past', `Past (${past.length})`]].map(([key, label]) => (
+        <div className="flex gap-1 bg-zinc-900 border border-zinc-800 rounded-xl p-1 w-fit mb-6 flex-wrap">
+          {[
+            ['upcoming', `Upcoming (${upcoming.length})`],
+            ['past', `Past (${past.length})`],
+            ...(canViewAnalytics ? [['analytics', 'Analytics']] : []),
+          ].map(([key, label]) => (
             <button key={key} onClick={() => setTab(key)}
               className={`px-5 py-2 rounded-lg text-sm font-medium transition-colors ${
                 tab === key ? 'bg-zinc-800 text-white' : 'text-zinc-400 hover:text-white'
@@ -322,7 +380,9 @@ export default function VenuePage({ initialVenue = null }) {
           ))}
         </div>
 
-        {(tab === 'upcoming' ? upcoming : past).length === 0 ? (
+        {tab === 'analytics' ? (
+          <AnalyticsPanel analytics={analytics} loading={analyticsLoading} />
+        ) : (tab === 'upcoming' ? upcoming : past).length === 0 ? (
           <div className="bg-zinc-900 border border-zinc-800 rounded-2xl p-12 text-center">
             <p className="text-5xl mb-4">{tab === 'upcoming' ? '🎸' : '📅'}</p>
             <p className="text-white font-bold">
@@ -351,6 +411,67 @@ export default function VenuePage({ initialVenue = null }) {
           onClose={() => setShowClaim(false)}
           onSuccess={() => { setShowClaim(false); setClaimDone(true); }}
         />
+      )}
+    </div>
+  );
+}
+
+function AnalyticsPanel({ analytics, loading }) {
+  if (loading) {
+    return (
+      <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
+        {[1, 2, 3].map(i => <div key={i} className="h-24 bg-zinc-800 animate-pulse rounded-2xl" />)}
+      </div>
+    );
+  }
+  if (!analytics) {
+    return (
+      <div className="bg-zinc-900 border border-zinc-800 rounded-2xl p-12 text-center">
+        <p className="text-white font-bold">No analytics yet</p>
+        <p className="text-sm text-zinc-500 mt-1">Stats appear once visitors start viewing your page.</p>
+      </div>
+    );
+  }
+
+  const months = Object.entries(analytics.monthlyViews || {})
+    .sort(([a], [b]) => b.localeCompare(a))
+    .slice(0, 6);
+
+  return (
+    <div className="space-y-6">
+      <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
+        {[
+          { label: 'Total page views', value: (analytics.pageViews || 0).toLocaleString(), icon: '👁' },
+          { label: 'Followers', value: (analytics.followerCount || 0).toLocaleString(), icon: '🔔' },
+          { label: 'Upcoming gigs', value: (analytics.upcomingCount || 0).toLocaleString(), icon: '🎸' },
+        ].map(({ label, value, icon }) => (
+          <div key={label} className="bg-zinc-900 border border-zinc-800 rounded-2xl p-5">
+            <div className="text-2xl mb-1">{icon}</div>
+            <div className="text-2xl font-black text-white">{value}</div>
+            <div className="text-xs text-zinc-500 mt-0.5">{label}</div>
+          </div>
+        ))}
+      </div>
+
+      {months.length > 0 && (
+        <div className="bg-zinc-900 border border-zinc-800 rounded-2xl p-5">
+          <h3 className="text-sm font-semibold text-zinc-300 mb-4">Monthly page views</h3>
+          <div className="space-y-2">
+            {months.map(([month, views]) => {
+              const max = Math.max(...months.map(([, v]) => v), 1);
+              const pct = Math.round((views / max) * 100);
+              return (
+                <div key={month} className="flex items-center gap-3">
+                  <span className="text-xs text-zinc-500 w-16 flex-shrink-0">{month}</span>
+                  <div className="flex-1 bg-zinc-800 rounded-full h-2 overflow-hidden">
+                    <div className="h-2 rounded-full bg-violet-500 transition-all" style={{ width: `${pct}%` }} />
+                  </div>
+                  <span className="text-xs text-zinc-400 w-10 text-right flex-shrink-0">{views}</span>
+                </div>
+              );
+            })}
+          </div>
+        </div>
       )}
     </div>
   );

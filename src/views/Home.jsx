@@ -27,6 +27,7 @@ export default function Home() {
   const [nearbyGigs, setNearbyGigs] = useState([]);
   const [nearbyLoading, setNearbyLoading] = useState(false);
   const [locationDenied, setLocationDenied] = useState(false);
+  const [featuredVenues, setFeaturedVenues] = useState([]);
   const router = useRouter();
 
   useEffect(() => {
@@ -39,8 +40,9 @@ export default function Home() {
       api.getOnSale().catch(() => []),
       api.getComingSoon().catch(() => []),
       api.getEarlyRadar().catch(() => []),
+      api.getVenues().catch(() => []),
     ])
-      .then(([a, g, t, e, gr, os, cs, er]) => {
+      .then(([a, g, t, e, gr, os, cs, er, vs]) => {
         setArtists(a);
         setGigs(g);
         setTrending(t);
@@ -49,6 +51,8 @@ export default function Home() {
         setOnSale(os);
         setComingSoon(cs);
         setEarlyRadar(er);
+        const proVenues = (Array.isArray(vs) ? vs : []).filter(v => v.isVenuePro || v.isSpotlight);
+        setFeaturedVenues(proVenues.slice(0, 8));
       })
       .catch(() => {})
       .finally(() => setLoading(false));
@@ -373,6 +377,42 @@ export default function Home() {
           </div>
         </div>
       </section>
+
+      {/* Featured Venues */}
+      {featuredVenues.length > 0 && (
+        <section className="border-t border-zinc-800">
+          <div className="max-w-5xl mx-auto px-6 py-12">
+            <div className="flex items-center justify-between mb-6">
+              <div>
+                <div className="flex items-center gap-2 mb-1">
+                  <span className="text-xs font-bold text-amber-400 uppercase tracking-widest">⭐ Featured Venues</span>
+                </div>
+                <h2 className="text-2xl font-bold text-white">Spotlight & Pro venues</h2>
+                <p className="text-sm text-zinc-500 mt-1">Verified venue operators keeping their listings up to date on GigRadar.</p>
+              </div>
+              <Link href="/venues" className="text-sm text-zinc-400 hover:text-white transition-colors hidden sm:block">All venues →</Link>
+            </div>
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+              {featuredVenues.map(v => (
+                <Link key={v.venueId} href={`/venues/${v.slug}`}
+                  className="bg-zinc-900 border border-zinc-800 hover:border-zinc-600 rounded-2xl p-4 transition-all hover:-translate-y-0.5 group">
+                  <div className="flex items-center gap-2 mb-2">
+                    {v.isVenuePro
+                      ? <span className="text-xs font-bold text-amber-400">⭐</span>
+                      : <span className="text-xs font-bold text-indigo-400">✦</span>
+                    }
+                    {v.upcoming > 0 && (
+                      <span className="text-xs text-zinc-500">{v.upcoming} gig{v.upcoming !== 1 ? 's' : ''}</span>
+                    )}
+                  </div>
+                  <div className="font-semibold text-white text-sm group-hover:text-violet-300 transition-colors leading-tight">{v.name}</div>
+                  {v.city && <div className="text-xs text-zinc-500 mt-0.5">{v.city}</div>}
+                </Link>
+              ))}
+            </div>
+          </div>
+        </section>
+      )}
 
       {/* Early Radar */}
       <section className="border-t border-zinc-800 bg-zinc-900/20">

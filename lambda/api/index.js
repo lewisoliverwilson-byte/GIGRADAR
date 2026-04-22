@@ -685,7 +685,12 @@ async function updateVenueProfile(slug, event) {
   if (!venue) return notFound('Venue not found');
   if (venue.claimedBy !== sub) return forbidden();
 
-  const allowed = ['bio', 'website', 'instagram', 'facebook', 'twitter', 'imageUrl', 'photoUrl', 'email', 'phone', 'bookingEmail', 'capacity', 'isGrassroots'];
+  const isProOrSpotlight = venue.isVenuePro || venue.isSpotlight;
+  const allowed = [
+    'bio', 'website', 'instagram', 'facebook', 'twitter', 'imageUrl', 'photoUrl',
+    'email', 'phone', 'bookingEmail', 'capacity', 'isGrassroots',
+    ...(isProOrSpotlight ? ['announcement'] : []),
+  ];
   const data = parseBody(event);
   const updates = Object.entries(data).filter(([k]) => allowed.includes(k));
   if (updates.length === 0) return badRequest('No valid fields');
@@ -702,6 +707,79 @@ async function updateVenueProfile(slug, event) {
     ExpressionAttributeValues: values,
   }));
   return ok({ ok: true });
+}
+
+/* ---- POST /venues/:slug/view — track page view (non-owner visitors) ---- */
+async function trackVenueView(slug) {
+  const vRes = await ddb.send(new ScanCommand({
+    TableName: VENUES_TABLE,
+    FilterExpression: 'slug = :s',
+    ExpressionAttributeValues: { ':s': slug },
+  }));
+  const venue = (vRes.Items || [])[0];
+  if (!venue) return notFound('Venue not found');
+
+  const now   = new Date();
+  const month = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+
+  await ddb.send(new UpdateCommand({
+    TableName: VENUES_TABLE,
+    Key: { venueId: venue.venueId },
+    UpdateExpression: `ADD pageViews :one, #vm :one SET lastViewMonth = if_not_exists(lastViewMonth, :m)`,
+    ConditionExpression: 'attribute_exists(venueId)',
+    ExpressionAttributeNames: { '#vm': `pageViews_${month}` },
+    ExpressionAttributeValues: { ':one': 1, ':m': month },
+  })).catch(() => {});
+
+  return ok({ ok: true });
+}
+
+/* ---- GET /venues/:slug/analytics — Pro/Spotlight owners only ---- */
+async function getVenueAnalytics(slug, event) {
+  const sub = getJwtSub(event);
+  if (!sub) return unauthorized();
+
+  const vRes = await ddb.send(new ScanCommand({
+    TableName: VENUES_TABLE,
+    FilterExpression: 'slug = :s',
+    ExpressionAttributeValues: { ':s': slug },
+  }));
+  const venue = (vRes.Items || [])[0];
+  if (!venue) return notFound('Venue not found');
+  if (venue.claimedBy !== sub) return forbidden();
+  if (!venue.isVenuePro && !venue.isSpotlight) return forbidden('Analytics require Spotlight or Venue Pro');
+
+  // Count followers
+  const followRes = await ddb.send(new ScanCommand({
+    TableName: FOLLOWS_TABLE,
+    FilterExpression: 'targetId = :t AND targetType = :v',
+    ExpressionAttributeValues: { ':t': venue.venueId, ':v': 'venue' },
+  })).catch(() => ({ Items: [] }));
+  const followerCount = (followRes.Items || []).length;
+
+  // Count upcoming gigs
+  const today = new Date().toISOString().split('T')[0];
+  const gigsRes = await ddb.send(new ScanCommand({
+    TableName: GIGS_TABLE,
+    FilterExpression: 'canonicalVenueId = :v AND #d >= :today',
+    ExpressionAttributeNames: { '#d': 'date' },
+    ExpressionAttributeValues: { ':v': venue.venueId, ':today': today },
+  })).catch(() => ({ Items: [] }));
+  const upcomingCount = (gigsRes.Items || []).length;
+
+  // Build monthly snapshot from pageViews_YYYY-MM keys
+  const monthlyViews = {};
+  for (const [k, v] of Object.entries(venue)) {
+    const m = k.match(/^pageViews_(\d{4}-\d{2})$/);
+    if (m) monthlyViews[m[1]] = v;
+  }
+
+  return ok({
+    pageViews: venue.pageViews || 0,
+    monthlyViews,
+    followerCount,
+    upcomingCount,
+  });
 }
 
 /* ---- GET /admin/venue-claims ---- */
@@ -1196,14 +1274,19 @@ async function stripeWebhook(event) {
 
   if (stripeEvent.type !== 'checkout.session.completed') return ok({ received: true });
 
-  const session      = stripeEvent.data?.object || {};
+  const session       = stripeEvent.data?.object || {};
   const customerEmail = session.customer_details?.email || '';
   const customFields  = session.custom_fields || [];
   const venueField    = customFields.find(f => f.key === 'venue_slug');
   const venueInput    = venueField?.text?.value?.trim() || '';
 
+  // Detect tier from amount: £149 = Pro, £49 = Spotlight
+  const amountTotal  = session.amount_total || 0;
+  const isPro        = amountTotal >= 14900;
+  const tierName     = isPro ? 'Venue Pro' : 'Spotlight';
+
   if (!venueInput) {
-    console.log('Stripe webhook: no venue name provided in session', session.id);
+    console.log(`Stripe webhook: no venue name provided in session ${session.id}`);
     return ok({ received: true });
   }
 
@@ -1225,7 +1308,6 @@ async function stripeWebhook(event) {
 
   if (!venue) {
     console.log(`Stripe webhook: venue not found for input "${venueInput}" (session ${session.id})`);
-    // Send admin alert so it can be handled manually
     if (RESEND_API_KEY) {
       await fetch('https://api.resend.com/emails', {
         method: 'POST',
@@ -1233,45 +1315,57 @@ async function stripeWebhook(event) {
         body: JSON.stringify({
           from: FROM_EMAIL,
           to: ['lewis.oliver.wilson@googlemail.com'],
-          subject: `GigRadar Spotlight: venue not found — manual activation needed`,
-          html: `<p>New Spotlight payment received but venue not found.</p>
+          subject: `GigRadar ${tierName}: venue not found — manual activation needed`,
+          html: `<p>New ${tierName} payment received but venue not found.</p>
                  <p><b>Customer:</b> ${customerEmail}</p>
                  <p><b>Venue input:</b> "${venueInput}"</p>
-                 <p><b>Session:</b> ${session.id}</p>
-                 <p>Find the venue and run: <code>node scripts/set-spotlight.cjs &lt;venueId&gt;</code></p>`,
+                 <p><b>Tier:</b> ${tierName} (£${(amountTotal / 100).toFixed(0)}/month)</p>
+                 <p><b>Session:</b> ${session.id}</p>`,
         }),
       }).catch(() => {});
     }
     return ok({ received: true });
   }
 
-  // Activate Spotlight
+  // Activate Spotlight or Venue Pro
+  const updateExpr = isPro
+    ? 'SET isVenuePro = :t, isSpotlight = :t, venueProActivatedAt = :ts, venueProEmail = :email'
+    : 'SET isSpotlight = :t, spotlightActivatedAt = :ts, spotlightEmail = :email';
+
   await ddb.send(new UpdateCommand({
     TableName: VENUES_TABLE,
     Key: { venueId: venue.venueId },
-    UpdateExpression: 'SET isSpotlight = :t, spotlightActivatedAt = :ts, spotlightEmail = :email',
+    UpdateExpression: updateExpr,
     ExpressionAttributeValues: { ':t': true, ':ts': new Date().toISOString(), ':email': customerEmail },
   })).catch(() => {});
 
-  console.log(`Spotlight activated: ${venue.name} (${venue.venueId}) for ${customerEmail}`);
+  console.log(`${tierName} activated: ${venue.name} (${venue.venueId}) for ${customerEmail}`);
 
-  // Email the venue operator confirmation
+  // Confirmation email
   if (RESEND_API_KEY && customerEmail) {
     const venueUrl = `${SITE_URL}/venues/${venue.slug}`;
+    const proFeatures = isPro ? `
+      <ul style="color:#a1a1aa;font-size:14px;padding-left:20px;margin:12px 0;">
+        <li>Venue Pro badge on your page</li>
+        <li>Analytics dashboard — page views, followers, upcoming gigs</li>
+        <li>Announcement banner (pin messages for fans)</li>
+        <li>Featured placement on the GigRadar homepage</li>
+        <li>Weekly stats email every Friday</li>
+      </ul>` : '';
     await fetch('https://api.resend.com/emails', {
       method: 'POST',
       headers: { 'Authorization': `Bearer ${RESEND_API_KEY}`, 'Content-Type': 'application/json' },
       body: JSON.stringify({
         from: FROM_EMAIL,
         to: [customerEmail],
-        subject: `Your Spotlight badge is live — ${venue.name}`,
+        subject: `Your ${tierName} is live — ${venue.name}`,
         html: `<div style="font-family:-apple-system,sans-serif;max-width:520px;margin:auto;background:#111;color:#eee;padding:32px;border-radius:12px;">
           <div style="background:#6366f1;border-radius:8px;padding:6px 10px;font-weight:900;font-size:16px;color:#fff;display:inline-block;margin-bottom:20px;">GR</div>
-          <h1 style="color:#fff;font-size:22px;margin:0 0 8px;">Your Spotlight badge is live.</h1>
+          <h1 style="color:#fff;font-size:22px;margin:0 0 8px;">Your ${tierName} is live.</h1>
           <p style="color:#a1a1aa;font-size:14px;">
-            <a href="${venueUrl}" style="color:#818cf8;">${venue.name}</a> is now featured at the top of its city page on GigRadar.
-            You'll get a weekly stats email every Friday with your follower count and upcoming gig count.
+            <a href="${venueUrl}" style="color:#818cf8;">${venue.name}</a> is now active on GigRadar.
           </p>
+          ${proFeatures}
           <a href="${venueUrl}" style="display:block;margin-top:20px;background:#6366f1;color:#fff;text-decoration:none;text-align:center;font-weight:700;padding:12px;border-radius:10px;font-size:14px;">View your venue page →</a>
           <p style="margin-top:20px;font-size:12px;color:#52525b;">Questions? Reply to this email.</p>
         </div>`,
@@ -1279,7 +1373,7 @@ async function stripeWebhook(event) {
     }).catch(() => {});
   }
 
-  return ok({ received: true, activated: venue.venueId });
+  return ok({ received: true, activated: venue.venueId, tier: tierName });
 }
 
 /* ---- Router ---- */
@@ -1328,6 +1422,9 @@ exports.handler = async (event) => {
     const venueGigsMatch = rawPath.match(/^\/venues\/([^/]+)\/gigs$/);
     if (venueGigsMatch) return getVenueGigs(decodeURIComponent(venueGigsMatch[1]));
 
+    const venueAnalyticsMatch = rawPath.match(/^\/venues\/([^/]+)\/analytics$/);
+    if (venueAnalyticsMatch) return getVenueAnalytics(decodeURIComponent(venueAnalyticsMatch[1]), event);
+
     const venueMatch = rawPath.match(/^\/venues\/([^/]+)$/);
     if (venueMatch) return getVenue(decodeURIComponent(venueMatch[1]));
 
@@ -1351,6 +1448,9 @@ exports.handler = async (event) => {
 
     const venueClaimMatch = rawPath.match(/^\/venues\/([^/]+)\/claim$/);
     if (venueClaimMatch) return submitVenueClaim(decodeURIComponent(venueClaimMatch[1]), event);
+
+    const venueViewMatch = rawPath.match(/^\/venues\/([^/]+)\/view$/);
+    if (venueViewMatch) return trackVenueView(decodeURIComponent(venueViewMatch[1]));
 
     const approveVenueClaimMatch = rawPath.match(/^\/admin\/venue-claims\/([^/]+)\/approve$/);
     if (approveVenueClaimMatch) return adminApproveVenueClaim(decodeURIComponent(approveVenueClaimMatch[1]), event);
