@@ -4,7 +4,7 @@ import Head from 'next/head';
 import Footer from '../components/Footer.jsx';
 
 const SPOTLIGHT_LINK = 'https://buy.stripe.com/7sY7sDdFecFJ2uubU26Na01';
-const PRO_LINK       = 'https://buy.stripe.com/7sY7sDdFecFJ2uubU26Na01'; // TODO: replace with £149 Stripe link
+const PRO_LINK       = 'https://buy.stripe.com/7sYdR18kUgVZ5GGbU26Na02';
 
 const SPOTLIGHT_BENEFITS = [
   { icon: '✦', title: 'Spotlight badge', desc: 'Pinned at the top of your city page above all other venues.' },
