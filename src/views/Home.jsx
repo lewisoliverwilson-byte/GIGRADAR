@@ -21,6 +21,7 @@ export default function Home() {
   const [grassroots, setGrassroots] = useState([]);
   const [onSale, setOnSale] = useState([]);
   const [comingSoon, setComingSoon] = useState([]);
+  const [earlyRadar, setEarlyRadar] = useState([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
   const router = useRouter();
@@ -34,8 +35,9 @@ export default function Home() {
       api.getGrassroots(),
       api.getOnSale().catch(() => []),
       api.getComingSoon().catch(() => []),
+      api.getEarlyRadar().catch(() => []),
     ])
-      .then(([a, g, t, e, gr, os, cs]) => {
+      .then(([a, g, t, e, gr, os, cs, er]) => {
         setArtists(a);
         setGigs(g);
         setTrending(t);
@@ -43,6 +45,7 @@ export default function Home() {
         setGrassroots(gr);
         setOnSale(os);
         setComingSoon(cs);
+        setEarlyRadar(er);
       })
       .catch(() => {})
       .finally(() => setLoading(false));
@@ -313,6 +316,75 @@ export default function Home() {
               Grassroots venues are where careers are built and scenes are born. Every ticket sold keeps these spaces open.
               GigRadar highlights every show at these venues so they never go unnoticed.
             </p>
+          </div>
+        </div>
+      </section>
+
+      {/* Early Radar */}
+      <section className="border-t border-zinc-800 bg-zinc-900/20">
+        <div className="max-w-5xl mx-auto px-6 py-12">
+          <div className="flex items-center justify-between mb-2">
+            <div>
+              <div className="flex items-center gap-2 mb-1">
+                <span className="inline-block w-2 h-2 rounded-full bg-violet-400 animate-pulse"></span>
+                <span className="text-xs font-bold text-violet-400 uppercase tracking-widest">Early Radar</span>
+              </div>
+              <h2 className="text-2xl font-bold text-white">On the rise — playing grassroots this week</h2>
+              <p className="text-sm text-zinc-500 mt-1">Artists with the fastest growing Spotify audiences, still playing small stages.</p>
+            </div>
+          </div>
+
+          <div className="mt-6">
+            {loading ? (
+              <div className="space-y-3">
+                {Array.from({ length: 3 }).map((_, i) => <div key={i} className="h-20 rounded-xl bg-zinc-800 animate-pulse" />)}
+              </div>
+            ) : earlyRadar.length === 0 ? (
+              <div className="bg-zinc-900 border border-zinc-800 rounded-2xl p-8 text-center">
+                <div className="text-3xl mb-3">📡</div>
+                <p className="text-white font-semibold mb-1">Building the radar…</p>
+                <p className="text-sm text-zinc-500 max-w-sm mx-auto">
+                  Early Radar tracks how fast artists are growing on Spotify. We're collecting the first week of data — check back soon.
+                </p>
+              </div>
+            ) : (
+              <div className="space-y-3">
+                {earlyRadar.map(artist => {
+                  const gig = artist.upcomingGrassrootsGigs?.[0];
+                  return (
+                    <div key={artist.artistId} className="bg-zinc-900 border border-zinc-800 hover:border-zinc-700 rounded-2xl p-4 flex items-center gap-4 transition-colors">
+                      <Link href={`/artists/${encodeURIComponent(artist.artistId)}`} className="shrink-0">
+                        {artist.imageUrl
+                          ? <img src={artist.imageUrl} alt={artist.name} className="w-12 h-12 rounded-xl object-cover" />
+                          : <div className="w-12 h-12 rounded-xl bg-zinc-800 flex items-center justify-center text-lg font-black text-zinc-500">{artist.name?.[0]}</div>
+                        }
+                      </Link>
+                      <div className="flex-1 min-w-0">
+                        <Link href={`/artists/${encodeURIComponent(artist.artistId)}`}
+                          className="font-bold text-white hover:text-violet-300 transition-colors block truncate">
+                          {artist.name}
+                        </Link>
+                        {gig && (
+                          <p className="text-xs text-zinc-400 truncate mt-0.5">
+                            {gig.venueName}{gig.venueCity ? `, ${gig.venueCity}` : ''} · {new Date(gig.date).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })}
+                          </p>
+                        )}
+                      </div>
+                      <div className="text-right shrink-0">
+                        <div className="text-sm font-bold text-violet-400">+{artist.growthRate}%</div>
+                        <div className="text-xs text-zinc-500">{(artist.latestListeners || 0).toLocaleString()} listeners</div>
+                      </div>
+                      {gig?.ticketUrl && (
+                        <a href={gig.ticketUrl} target="_blank" rel="noopener noreferrer"
+                          className="shrink-0 text-xs bg-violet-600 hover:bg-violet-500 text-white font-semibold px-3 py-1.5 rounded-lg transition-colors">
+                          Tickets
+                        </a>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            )}
           </div>
         </div>
       </section>

@@ -1090,6 +1090,75 @@ async function unsubscribeByToken(params) {
   return ok({ ok: true, message: 'Unsubscribed successfully' });
 }
 
+/* ---- GET /early-radar ---- */
+async function getEarlyRadar() {
+  const today      = new Date().toISOString().split('T')[0];
+  const twoWeeks   = new Date(Date.now() + 14 * 864e5).toISOString().split('T')[0];
+
+  // Artists with 2+ listener history snapshots
+  const artistsRes = await ddb.send(new ScanCommand({
+    TableName: ARTISTS_TABLE,
+    FilterExpression: 'size(listenersHistory) >= :min',
+    ExpressionAttributeValues: { ':min': 2 },
+    ProjectionExpression: 'artistId, #n, listenersHistory, imageUrl, genres',
+    ExpressionAttributeNames: { '#n': 'name' },
+  })).catch(() => ({ Items: [] }));
+
+  const artists = artistsRes.Items || [];
+  if (!artists.length) return ok([]);
+
+  // Compute growth rate from history snapshots
+  const withGrowth = artists.map(a => {
+    const history = (a.listenersHistory || []).map(e => {
+      try { return typeof e === 'string' ? JSON.parse(e) : e; } catch { return null; }
+    }).filter(Boolean).sort((x, y) => (x.ts || '').localeCompare(y.ts || ''));
+    if (history.length < 2) return null;
+    const oldest = history[0].l;
+    const latest = history[history.length - 1].l;
+    if (!oldest || oldest <= 0) return null;
+    const growthRate = ((latest - oldest) / oldest) * 100;
+    return { ...a, growthRate: Math.round(growthRate), latestListeners: latest };
+  }).filter(Boolean);
+
+  if (!withGrowth.length) return ok([]);
+
+  // Top 50 by growth rate, then cross-reference with upcoming grassroots gigs
+  const topGrowing = withGrowth.sort((a, b) => b.growthRate - a.growthRate).slice(0, 50);
+  const topIds     = new Set(topGrowing.map(a => a.artistId));
+
+  const gigsRes = await ddb.send(new ScanCommand({
+    TableName: GIGS_TABLE,
+    FilterExpression: '#d >= :today AND #d <= :twoWeeks AND #ig = :t',
+    ExpressionAttributeNames: { '#d': 'date', '#ig': '_isGrassroots' },
+    ExpressionAttributeValues: { ':today': today, ':twoWeeks': twoWeeks, ':t': true },
+    ProjectionExpression: 'artistId, artistName, venueName, venueCity, venueSlug, #d, gigId, ticketUrl',
+  })).catch(() => ({ Items: [] }));
+
+  const gigsByArtist = new Map();
+  for (const g of (gigsRes.Items || [])) {
+    if (!topIds.has(g.artistId)) continue;
+    if (!gigsByArtist.has(g.artistId)) gigsByArtist.set(g.artistId, []);
+    gigsByArtist.get(g.artistId).push(g);
+  }
+
+  const result = topGrowing
+    .filter(a => gigsByArtist.has(a.artistId))
+    .slice(0, 10)
+    .map(a => ({
+      artistId:              a.artistId,
+      name:                  a.name,
+      imageUrl:              a.imageUrl,
+      genres:                a.genres,
+      growthRate:            a.growthRate,
+      latestListeners:       a.latestListeners,
+      upcomingGrassrootsGigs: (gigsByArtist.get(a.artistId) || [])
+        .sort((x, y) => x.date.localeCompare(y.date))
+        .slice(0, 2),
+    }));
+
+  return ok(result);
+}
+
 /* ---- POST /stripe/webhook ---- */
 const crypto = require('crypto');
 
@@ -1235,6 +1304,7 @@ exports.handler = async (event) => {
 
     if (rawPath === '/trending')      return withCache('trending',    30*60000, () => getTrending());
     if (rawPath === '/emerging')      return withCache('emerging',    30*60000, () => getEmerging());
+    if (rawPath === '/early-radar')   return withCache('early-radar', 60*60000, () => getEarlyRadar());
     if (rawPath === '/grassroots')    return withCache('grassroots',  30*60000, () => getGrassrootsGigs(params));
     if (rawPath === '/on-sale')       return withCache('on-sale',     15*60000, () => getOnSaleGigs(params));
     if (rawPath === '/coming-soon')   return withCache('coming-soon', 15*60000, () => getComingSoonGigs(params));

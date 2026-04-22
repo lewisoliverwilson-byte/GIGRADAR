@@ -57,6 +57,7 @@ export const api = {
     get(`/gigs/nearby?lat=${lat}&lng=${lng}&radius=${radius}${genre ? '&genre='+encodeURIComponent(genre) : ''}`),
   getTrending:       ()             => get('/trending'),
   getEmerging:       ()             => get('/emerging'),
+  getEarlyRadar:     ()             => get('/early-radar'),
   getGrassroots:     (params)       => get(`/grassroots${params ? '?' + new URLSearchParams(params) : ''}`),
   getOnSale:         (params)       => get(`/on-sale${params ? '?' + new URLSearchParams(params) : ''}`),
   getComingSoon:     (params)       => get(`/coming-soon${params ? '?' + new URLSearchParams(params) : ''}`),

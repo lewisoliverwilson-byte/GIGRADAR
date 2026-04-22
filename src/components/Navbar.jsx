@@ -8,6 +8,7 @@ const NAV_LINKS = [
   { href: '/gigs',     label: 'Gigs' },
   { href: '/artists',  label: 'Artists' },
   { href: '/venues',   label: 'Venues' },
+  { href: '/cities',   label: 'Cities' },
   { href: '/discover', label: 'Discover' },
 ];
 

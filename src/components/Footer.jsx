@@ -16,15 +16,15 @@ export default function Footer() {
           <div>
             <p className="text-xs font-semibold text-zinc-400 uppercase tracking-widest mb-4">Discover</p>
             <div className="space-y-2.5">
-              {[['Gigs', '/gigs'], ['Artists', '/artists'], ['Venues', '/venues'], ['Discover', '/discover']].map(([l, h]) => (
+              {[['Gigs', '/gigs'], ['Artists', '/artists'], ['Venues', '/venues'], ['Cities', '/cities'], ['Discover', '/discover']].map(([l, h]) => (
                 <Link key={h} href={h} className="block text-sm text-zinc-500 hover:text-white transition-colors">{l}</Link>
               ))}
             </div>
           </div>
           <div>
-            <p className="text-xs font-semibold text-zinc-400 uppercase tracking-widest mb-4">Account</p>
+            <p className="text-xs font-semibold text-zinc-400 uppercase tracking-widest mb-4">For venues</p>
             <div className="space-y-2.5">
-              {[['Sign up', '/'], ['Log in', '/'], ['Profile', '/profile']].map(([l, h]) => (
+              {[['List your venue', '/list-your-venue'], ['Venue Spotlight', '/list-your-venue'], ['Sign up', '/'], ['Log in', '/'], ['Profile', '/profile']].map(([l, h]) => (
                 <Link key={l} href={h} className="block text-sm text-zinc-500 hover:text-white transition-colors">{l}</Link>
               ))}
             </div>
