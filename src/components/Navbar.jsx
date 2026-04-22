@@ -5,11 +5,12 @@ import { useAuth } from '../context/AuthContext.jsx';
 import { useFollow } from '../context/FollowContext.jsx';
 
 const NAV_LINKS = [
-  { href: '/gigs',     label: 'Gigs' },
-  { href: '/artists',  label: 'Artists' },
-  { href: '/venues',   label: 'Venues' },
-  { href: '/cities',   label: 'Cities' },
-  { href: '/discover', label: 'Discover' },
+  { href: '/gigs',      label: 'Gigs' },
+  { href: '/calendar',  label: 'Calendar' },
+  { href: '/artists',   label: 'Artists' },
+  { href: '/venues',    label: 'Venues' },
+  { href: '/cities',    label: 'Cities' },
+  { href: '/discover',  label: 'Discover' },
 ];
 
 export default function Navbar() {

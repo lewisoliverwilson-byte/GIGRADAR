@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useMemo } from 'react';
+import React, { useEffect, useState, useCallback, useRef } from 'react';
 import { api } from '../utils/api.js';
 import GigCard from '../components/GigCard.jsx';
 import VenueCard from '../components/VenueCard.jsx';
@@ -10,62 +10,54 @@ const GENRES = [
   'Alternative', 'Classical', 'Reggae', 'Blues', 'Experimental',
 ];
 
-const PER_PAGE = 20;
+const PER_PAGE = 40;
 
 export default function Discover() {
-  const [gigs, setGigs] = useState([]);
-  const [artists, setArtists] = useState([]);
-  const [venues, setVenues] = useState([]);
+  const [gigs, setGigs]       = useState([]);
+  const [venues, setVenues]   = useState([]);
   const [loading, setLoading] = useState(true);
-  const [city, setCity] = useState('');
-  const [genre, setGenre] = useState('');
-  const [view, setView] = useState('gigs');
-  const [page, setPage] = useState(1);
+  const [city, setCity]       = useState('');
+  const [genre, setGenre]     = useState('');
+  const [view, setView]       = useState('gigs');
+  const [page, setPage]       = useState(1);
+  const debounceRef           = useRef(null);
 
-  useEffect(() => {
-    Promise.all([api.getGigs(), api.getArtists(), api.getVenues()])
-      .then(([g, a, v]) => { setGigs(g); setArtists(a); setVenues(v); })
+  const fetchData = useCallback((cityVal, genreVal) => {
+    setLoading(true);
+    setPage(1);
+    const gigParams = { limit: 200 };
+    if (cityVal.trim())  gigParams.city  = cityVal.trim();
+    if (genreVal)        gigParams.genre = genreVal;
+    Promise.all([
+      api.getGigs(gigParams),
+      api.getVenuesFiltered({ ...(cityVal.trim() ? { city: cityVal.trim() } : {}), limit: 200 }),
+    ])
+      .then(([g, v]) => { setGigs(Array.isArray(g) ? g : []); setVenues(Array.isArray(v) ? v : []); })
       .catch(() => {})
       .finally(() => setLoading(false));
   }, []);
 
-  const artistMap = useMemo(() => {
-    const m = {};
-    artists.forEach(a => { m[a.artistId] = a; });
-    return m;
-  }, [artists]);
+  useEffect(() => { fetchData('', ''); }, [fetchData]);
 
-  const today = new Date().toISOString().split('T')[0];
+  function handleCityChange(val) {
+    setCity(val);
+    clearTimeout(debounceRef.current);
+    debounceRef.current = setTimeout(() => fetchData(val, genre), 400);
+  }
 
-  const filteredGigs = useMemo(() => {
-    let list = gigs.filter(g => g.date >= today);
-    if (city.trim()) {
-      const q = city.trim().toLowerCase();
-      list = list.filter(g => g.venueCity?.toLowerCase().includes(q));
-    }
-    if (genre) {
-      list = list.filter(g => {
-        const a = artistMap[g.artistId];
-        return a?.genres?.some(gen => gen.toLowerCase().includes(genre.toLowerCase()));
-      });
-    }
-    return list.sort((a, b) => a.date.localeCompare(b.date));
-  }, [gigs, city, genre, artistMap, today]);
+  function handleGenreChange(val) {
+    setGenre(val);
+    fetchData(city, val);
+  }
 
-  const filteredVenues = useMemo(() => {
-    let list = venues.filter(v => v.isActive);
-    if (city.trim()) {
-      const q = city.trim().toLowerCase();
-      list = list.filter(v => v.city?.toLowerCase().includes(q));
-    }
-    return list.sort((a, b) => (b.upcoming || 0) - (a.upcoming || 0));
-  }, [venues, city]);
+  function clearFilters() {
+    setCity(''); setGenre('');
+    fetchData('', '');
+  }
 
-  const pagedGigs = filteredGigs.slice(0, page * PER_PAGE);
-  const hasMore = pagedGigs.length < filteredGigs.length;
-  const hasFilters = city.trim() || genre;
-
-  function clearFilters() { setCity(''); setGenre(''); setPage(1); }
+  const pagedGigs   = gigs.slice(0, page * PER_PAGE);
+  const hasMore     = pagedGigs.length < gigs.length;
+  const hasFilters  = city.trim() || genre;
 
   return (
     <div className="min-h-screen bg-zinc-950">
@@ -101,7 +93,7 @@ export default function Discover() {
                 type="text"
                 placeholder="Filter by city…"
                 value={city}
-                onChange={e => { setCity(e.target.value); setPage(1); }}
+                onChange={e => handleCityChange(e.target.value)}
                 className="bg-zinc-800 border border-zinc-700 text-white rounded-xl pl-10 pr-3 py-2 text-sm w-44 focus:outline-none focus:border-violet-500 placeholder-zinc-500 transition-colors"
               />
             </div>
@@ -116,7 +108,7 @@ export default function Discover() {
           {view === 'gigs' && (
             <div className="flex flex-wrap gap-2 mt-3">
               {GENRES.map(g => (
-                <button key={g} onClick={() => { setGenre(genre === g ? '' : g); setPage(1); }}
+                <button key={g} onClick={() => handleGenreChange(genre === g ? '' : g)}
                   className={`px-3 py-1 rounded-full text-sm font-medium border transition-colors ${
                     genre === g
                       ? 'bg-violet-600 border-violet-600 text-white'
@@ -140,42 +132,31 @@ export default function Discover() {
         ) : view === 'venues' ? (
           <>
             <p className="text-sm text-zinc-500 mb-5">
-              {filteredVenues.length.toLocaleString()} venues{city ? ` in ${city}` : ''}
+              {venues.length.toLocaleString()} venues{city ? ` in ${city}` : ''}
             </p>
-            {filteredVenues.length === 0 ? (
+            {venues.length === 0 ? (
               <EmptyState icon="🏛️" text={city ? `No venues found in ${city}` : 'No venues found.'} />
             ) : (
               <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
-                {filteredVenues.slice(0, 50).map(v => <VenueCard key={v.venueId} venue={v} />)}
+                {venues.slice(0, 50).map(v => <VenueCard key={v.venueId} venue={v} />)}
               </div>
             )}
           </>
         ) : (
           <>
             <p className="text-sm text-zinc-500 mb-5">
-              {filteredGigs.length.toLocaleString()} gig{filteredGigs.length !== 1 ? 's' : ''}
+              {gigs.length.toLocaleString()} gig{gigs.length !== 1 ? 's' : ''}
               {city ? ` in ${city}` : ''}
               {genre ? ` · ${genre}` : ''}
             </p>
-            {filteredGigs.length === 0 ? (
+            {gigs.length === 0 ? (
               <EmptyState icon="🎵" text="No gigs found. Try a different city or genre." />
             ) : (
               <>
                 <div className="space-y-2">
-                  {pagedGigs.map(g => {
-                    const artist = artistMap[g.artistId];
-                    const isGrassroots = !artist?.lastfmRank || artist.lastfmRank > 500;
-                    return (
-                      <div key={g.gigId} className="relative">
-                        {isGrassroots && (
-                          <span className="absolute -top-1.5 right-2 z-10 text-[9px] font-bold uppercase tracking-wider bg-emerald-900 text-emerald-400 border border-emerald-700 rounded-md px-1.5 py-0.5">
-                            Grassroots
-                          </span>
-                        )}
-                        <GigCard gig={g} showArtist />
-                      </div>
-                    );
-                  })}
+                  {pagedGigs.map(g => (
+                    <GigCard key={g.gigId} gig={g} showArtist />
+                  ))}
                 </div>
                 {hasMore && (
                   <div className="text-center mt-10">

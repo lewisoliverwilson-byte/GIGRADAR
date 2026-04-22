@@ -24,6 +24,9 @@ export default function Home() {
   const [earlyRadar, setEarlyRadar] = useState([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
+  const [nearbyGigs, setNearbyGigs] = useState([]);
+  const [nearbyLoading, setNearbyLoading] = useState(false);
+  const [locationDenied, setLocationDenied] = useState(false);
   const router = useRouter();
 
   useEffect(() => {
@@ -53,7 +56,26 @@ export default function Home() {
 
   const today = new Date().toISOString().split('T')[0];
 
+  function loadNearbyGigs(lat, lng) {
+    setNearbyLoading(true);
+    api.getNearbyGigs(lat, lng, 15)
+      .then(g => setNearbyGigs(Array.isArray(g) ? g.slice(0, 8) : []))
+      .catch(() => setNearbyGigs([]))
+      .finally(() => setNearbyLoading(false));
+  }
+
   function handleNearMe() {
+    if (!navigator.geolocation) { router.push('/gigs'); return; }
+    navigator.geolocation.getCurrentPosition(
+      pos => {
+        sessionStorage.setItem('nearme_coords', JSON.stringify({ lat: pos.coords.latitude, lng: pos.coords.longitude }));
+        loadNearbyGigs(pos.coords.latitude, pos.coords.longitude);
+      },
+      () => setLocationDenied(true)
+    );
+  }
+
+  function handleNearMeNav() {
     if (!navigator.geolocation) { router.push('/gigs'); return; }
     navigator.geolocation.getCurrentPosition(
       pos => {
@@ -116,7 +138,7 @@ export default function Home() {
             <Link href="/gigs" className="bg-violet-600 hover:bg-violet-500 text-white font-semibold px-7 py-3 rounded-xl transition-colors">
               Browse gigs
             </Link>
-            <button onClick={handleNearMe} className="bg-zinc-800 hover:bg-zinc-700 border border-zinc-700 hover:border-emerald-600 text-white font-semibold px-7 py-3 rounded-xl transition-colors flex items-center gap-2">
+            <button onClick={handleNearMeNav} className="bg-zinc-800 hover:bg-zinc-700 border border-zinc-700 hover:border-emerald-600 text-white font-semibold px-7 py-3 rounded-xl transition-colors flex items-center gap-2">
               📍 Near me
             </button>
             <Link href="/artists" className="bg-zinc-800 hover:bg-zinc-700 border border-zinc-700 text-white font-semibold px-7 py-3 rounded-xl transition-colors hidden sm:inline-flex">
@@ -158,6 +180,38 @@ export default function Home() {
           </div>
         </div>
       </section>
+
+      {/* Near me results — shown after user clicks "Near me" in city row */}
+      {(nearbyLoading || nearbyGigs.length > 0 || locationDenied) && (
+        <section className="border-b border-zinc-800">
+          <div className="max-w-5xl mx-auto px-6 py-8">
+            <div className="flex items-center justify-between mb-5">
+              <div className="flex items-center gap-2">
+                <span className="text-emerald-400">📍</span>
+                <h2 className="text-xl font-bold text-white">Gigs near you</h2>
+              </div>
+              {nearbyGigs.length > 0 && (
+                <button onClick={handleNearMeNav} className="text-sm text-violet-400 hover:text-violet-300 transition-colors">
+                  See all →
+                </button>
+              )}
+            </div>
+            {nearbyLoading ? (
+              <div className="space-y-2">
+                {Array.from({ length: 4 }).map((_, i) => <div key={i} className="h-20 bg-zinc-800 rounded-xl animate-pulse" />)}
+              </div>
+            ) : locationDenied ? (
+              <p className="text-zinc-500 text-sm">Location access denied. <button onClick={handleNearMeNav} className="text-violet-400 hover:text-violet-300 underline">Use city search instead →</button></p>
+            ) : nearbyGigs.length === 0 ? (
+              <p className="text-zinc-500 text-sm">No gigs found within 15 miles. <button onClick={handleNearMeNav} className="text-violet-400 hover:text-violet-300 underline">Try a wider search →</button></p>
+            ) : (
+              <div className="space-y-2">
+                {nearbyGigs.map(g => <GigCard key={g.gigId} gig={g} showArtist />)}
+              </div>
+            )}
+          </div>
+        </section>
+      )}
 
       {/* My gigs */}
       {user && following.size > 0 && (

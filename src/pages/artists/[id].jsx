@@ -17,6 +17,10 @@ export default function ArtistPage({ artist }) {
         <meta property="og:description" content={desc} />
         {artist?.imageUrl && <meta property="og:image" content={artist.imageUrl} />}
         <meta property="og:type" content="profile" />
+        <meta name="twitter:card" content={artist?.imageUrl ? 'summary_large_image' : 'summary'} />
+        <meta name="twitter:title" content={title} />
+        <meta name="twitter:description" content={desc} />
+        {artist?.imageUrl && <meta name="twitter:image" content={artist.imageUrl} />}
       </Head>
       <ArtistDetail initialArtist={artist} />
     </>

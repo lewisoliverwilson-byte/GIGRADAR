@@ -1,0 +1,7 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://gigradar.co.uk/sitemap.xml
+Sitemap: https://gigradar.co.uk/sitemap-artists.xml
+Sitemap: https://gigradar.co.uk/sitemap-venues.xml
+Sitemap: https://gigradar.co.uk/sitemap-static.xml

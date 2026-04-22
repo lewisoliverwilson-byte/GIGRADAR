@@ -1,10 +1,11 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Head from 'next/head';
 import Link from 'next/link';
 import { useRouter } from 'next/router';
 import { useAuth } from '../context/AuthContext.jsx';
 import { useFollow } from '../context/FollowContext.jsx';
 import { getToken } from '../utils/cognito.js';
+import { api } from '../utils/api.js';
 import { CONFIG } from '../utils/config.js';
 import Footer from '../components/Footer.jsx';
 
@@ -15,13 +16,34 @@ function useSpotifyConnection(user) {
   return raw ? JSON.parse(raw) : null;
 }
 
+function formatDate(dateStr) {
+  const d = new Date(dateStr + 'T00:00:00');
+  return d.toLocaleDateString('en-GB', { weekday: 'short', day: 'numeric', month: 'short' });
+}
+
 export default function Profile() {
   const router = useRouter();
   const { user } = useAuth();
-  const { following, unfollow } = useFollow();
+  const { following, unfollow, followingVenues, unfollowVenue } = useFollow();
   const spotifyConn = useSpotifyConnection(user);
-  const [disconnecting, setDisconnecting] = useState(false);
+  const [disconnecting, setDisconnecting]     = useState(false);
   const [disconnectPrompt, setDisconnectPrompt] = useState(false);
+  const [upcomingGigs, setUpcomingGigs]       = useState([]);
+  const [gigsLoading, setGigsLoading]         = useState(false);
+
+  useEffect(() => {
+    if (!following.size) { setUpcomingGigs([]); return; }
+    setGigsLoading(true);
+    const today = new Date().toISOString().split('T')[0];
+    Promise.all([...following].map(id => api.getArtistGigs(id).catch(() => [])))
+      .then(results => {
+        const all = results.flat()
+          .filter(g => g.date >= today)
+          .sort((a, b) => a.date.localeCompare(b.date));
+        setUpcomingGigs(all.slice(0, 30));
+      })
+      .finally(() => setGigsLoading(false));
+  }, [following]);
 
   if (user === undefined) return null;
   if (!user) { if (typeof window !== 'undefined') router.replace('/'); return null; }
@@ -50,12 +72,56 @@ export default function Profile() {
 
         <div className="max-w-2xl mx-auto px-6 py-8 pb-20 space-y-5">
 
-          {/* Following */}
+          {/* Upcoming gigs feed */}
+          {(following.size > 0 || followingVenues.size > 0) && (
+            <div className="bg-zinc-900 border border-zinc-800 rounded-2xl p-6">
+              <h2 className="font-bold text-white text-lg mb-4">Your upcoming gigs</h2>
+              {gigsLoading ? (
+                <div className="space-y-2">
+                  {Array.from({ length: 4 }).map((_, i) => (
+                    <div key={i} className="h-14 bg-zinc-800 rounded-xl animate-pulse" />
+                  ))}
+                </div>
+              ) : upcomingGigs.length === 0 ? (
+                <div className="text-center py-6">
+                  <p className="text-zinc-500 text-sm mb-3">No upcoming gigs from artists you follow.</p>
+                  <Link href="/gigs" className="bg-zinc-800 hover:bg-zinc-700 border border-zinc-700 text-white font-semibold px-5 py-2 rounded-xl transition-colors text-sm">
+                    Browse gigs →
+                  </Link>
+                </div>
+              ) : (
+                <div className="space-y-0.5">
+                  {upcomingGigs.map(g => (
+                    <div key={g.gigId} className="flex items-center justify-between py-2.5 border-b border-zinc-800 last:border-0 gap-3">
+                      <div className="flex items-center gap-3 min-w-0">
+                        <span className="text-xs text-zinc-500 w-20 shrink-0">{formatDate(g.date)}</span>
+                        <div className="min-w-0">
+                          <p className="text-sm text-white font-medium truncate capitalize">{g.artistId?.replace(/-/g, ' ')}</p>
+                          <p className="text-xs text-zinc-500 truncate">{g.venueName}{g.venueCity ? `, ${g.venueCity}` : ''}</p>
+                        </div>
+                      </div>
+                      {g.tickets?.[0]?.url && (
+                        <a href={g.tickets[0].url} target="_blank" rel="noopener noreferrer"
+                          className="shrink-0 text-xs bg-violet-600 hover:bg-violet-500 text-white font-semibold px-3 py-1.5 rounded-lg transition-colors">
+                          Tickets
+                        </a>
+                      )}
+                    </div>
+                  ))}
+                  {upcomingGigs.length === 30 && (
+                    <p className="text-xs text-zinc-600 pt-2 text-center">Showing next 30 gigs</p>
+                  )}
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* Following artists */}
           <div className="bg-zinc-900 border border-zinc-800 rounded-2xl p-6">
             <div className="flex items-center justify-between mb-4">
               <h2 className="font-bold text-white text-lg">Following</h2>
               <span className="bg-zinc-800 text-zinc-400 text-xs px-2.5 py-1 rounded-md font-medium">
-                {following.size} artists
+                {following.size} artist{following.size !== 1 ? 's' : ''}
               </span>
             </div>
             {following.size === 0 ? (
@@ -83,6 +149,32 @@ export default function Profile() {
               </div>
             )}
           </div>
+
+          {/* Following venues */}
+          {followingVenues.size > 0 && (
+            <div className="bg-zinc-900 border border-zinc-800 rounded-2xl p-6">
+              <div className="flex items-center justify-between mb-4">
+                <h2 className="font-bold text-white text-lg">Venues</h2>
+                <span className="bg-zinc-800 text-zinc-400 text-xs px-2.5 py-1 rounded-md font-medium">
+                  {followingVenues.size} venue{followingVenues.size !== 1 ? 's' : ''}
+                </span>
+              </div>
+              <div className="space-y-0.5">
+                {[...followingVenues].map(id => (
+                  <div key={id} className="flex items-center justify-between py-2.5 border-b border-zinc-800 last:border-0">
+                    <Link href={`/venues/${id}`}
+                      className="text-sm text-zinc-300 hover:text-white transition-colors capitalize">
+                      {id.replace(/-/g, ' ')}
+                    </Link>
+                    <button onClick={() => unfollowVenue(id)}
+                      className="text-xs text-zinc-600 hover:text-red-400 transition-colors">
+                      Unfollow
+                    </button>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
 
           {/* Connected accounts */}
           <div className="bg-zinc-900 border border-zinc-800 rounded-2xl p-6">
@@ -156,6 +248,7 @@ export default function Profile() {
               </div>
             )}
           </div>
+
         </div>
 
         <Footer />

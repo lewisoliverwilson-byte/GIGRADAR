@@ -19,6 +19,10 @@ export default function VenueRoute({ venue }) {
           <meta property="og:image" content={venue.photoUrl || venue.imageUrl} />
         )}
         <meta property="og:type" content="place" />
+        <meta name="twitter:card" content={(venue?.photoUrl || venue?.imageUrl) ? 'summary_large_image' : 'summary'} />
+        <meta name="twitter:title" content={title} />
+        <meta name="twitter:description" content={desc} />
+        {(venue?.photoUrl || venue?.imageUrl) && <meta name="twitter:image" content={venue.photoUrl || venue.imageUrl} />}
       </Head>
       <VenuePage initialVenue={venue} />
     </>
