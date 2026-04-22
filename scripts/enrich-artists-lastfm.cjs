@@ -33,7 +33,8 @@ const PROGRESS_FILE  = path.join(__dirname, 'lastfm-enrich-progress.json');
 const LASTFM_KEY     = process.env.LASTFM_API_KEY || 'e2c0791c809dd2a81adde0158dd70c41';
 const DRY_RUN        = process.argv.includes('--dry-run');
 const RESUME         = process.argv.includes('--resume');
-const QUICK          = process.argv.includes('--quick'); // only artists with upcoming gigs
+const QUICK          = process.argv.includes('--quick');       // only artists with upcoming gigs
+const NO_GENRES      = process.argv.includes('--no-genres');   // only artists missing genres
 const sleep          = ms => new Promise(r => setTimeout(r, ms));
 
 function loadProgress() {
@@ -49,12 +50,21 @@ function saveProgress(done) {
 // ─── Load all artists ─────────────────────────────────────────────────────────
 
 async function loadArtists() {
-  console.log(`Loading artists${QUICK ? ' with upcoming gigs' : ''} from DynamoDB...`);
+  const flags = [QUICK && 'upcoming only', NO_GENRES && 'missing genres'].filter(Boolean).join(', ');
+  console.log(`Loading artists${flags ? ` (${flags})` : ''} from DynamoDB...`);
   const artists = [];
   let lastKey;
   do {
-    const p = { TableName: ARTISTS_TABLE, ProjectionExpression: 'artistId, #n', ExpressionAttributeNames: { '#n': 'name' } };
-    if (QUICK) { p.FilterExpression = 'upcoming > :z'; p.ExpressionAttributeValues = { ':z': 0 }; }
+    const p = {
+      TableName: ARTISTS_TABLE,
+      ProjectionExpression: 'artistId, #n',
+      ExpressionAttributeNames: { '#n': 'name' },
+    };
+    const filters = [];
+    const vals = {};
+    if (QUICK)     { filters.push('upcoming > :z');                        vals[':z'] = 0; }
+    if (NO_GENRES) { filters.push('attribute_not_exists(genres) OR size(genres) = :zero'); vals[':zero'] = 0; }
+    if (filters.length) { p.FilterExpression = filters.join(' AND '); p.ExpressionAttributeValues = vals; }
     if (lastKey) p.ExclusiveStartKey = lastKey;
     const r = await ddb.send(new ScanCommand(p)).catch(() => ({ Items: [] }));
     artists.push(...(r.Items || []));

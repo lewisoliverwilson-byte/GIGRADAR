@@ -158,19 +158,25 @@ async function autoSeedVenue(venueObj) {
   return venueId;
 }
 
-async function autoSeedArtist(name) {
+async function autoSeedArtist(name, genres) {
   if (!name || name.length < 2 || name.length > 100) return null;
   if (JUNK_ARTIST.test(name.trim())) return null;
   const artistId = toArtistId(name);
   if (!artistId || artistId.length < 2 || DRY_RUN) return artistId;
 
   if (!seededArtists.has(artistId)) {
+    const sets = ['#n = if_not_exists(#n,:n)', 'upcoming = if_not_exists(upcoming,:u)', 'lastUpdated = :t'];
+    const vals = { ':n': name, ':u': 0, ':t': new Date().toISOString() };
+    if (genres && genres.length) {
+      sets.push('genres = if_not_exists(genres,:g)');
+      vals[':g'] = genres;
+    }
     await ddb.send(new UpdateCommand({
       TableName: ARTISTS_TABLE,
       Key: { artistId },
-      UpdateExpression: `SET #n = if_not_exists(#n,:n), upcoming = if_not_exists(upcoming,:u), lastUpdated = :t`,
+      UpdateExpression: `SET ${sets.join(', ')}`,
       ExpressionAttributeNames: { '#n': 'name' },
-      ExpressionAttributeValues: { ':n': name, ':u': 0, ':t': new Date().toISOString() },
+      ExpressionAttributeValues: vals,
     })).catch(() => {});
     seededArtists.add(artistId);
   }
@@ -189,10 +195,13 @@ async function processPage(html, eventId, gigsSaved) {
   const ev = nuxt.state?.event;
   if (!ev) return 0;
 
-  // Check if this is a music event
-  const eventGenres = (ev.genres || []).map(g => (g.tag || g.name || '').toLowerCase());
-  const isMusic = eventGenres.some(g => MUSIC_GENRES.has(g));
+  // Check if this is a music event and normalise genres
+  const rawGenres   = (ev.genres || []).map(g => (g.tag || g.name || '').toLowerCase().trim()).filter(Boolean);
+  const eventGenres = [...new Set(rawGenres)];
+  const isMusic     = eventGenres.some(g => MUSIC_GENRES.has(g));
   if (!isMusic) return 0;
+  // Keep only music-relevant genres for tagging (skip meta-tags like 'music')
+  const cleanGenres = eventGenres.filter(g => g !== 'music' && MUSIC_GENRES.has(g));
 
   // Get date from <time> element (more reliable than parsing Nuxt state)
   const dateMatch = html.match(/<time[^>]*datetime="(\d{4}-\d{2}-\d{2})"/);
@@ -225,7 +234,7 @@ async function processPage(html, eventId, gigsSaved) {
 
   let newGigs = 0;
   for (const artistName of allArtists) {
-    const artistId = await autoSeedArtist(artistName);
+    const artistId = await autoSeedArtist(artistName, cleanGenres);
     if (!artistId) continue;
 
     const gigId = `e24-${eventId}-${artistId}`.replace(/[^a-z0-9-]/gi, '-').substring(0, 100);
@@ -240,6 +249,7 @@ async function processPage(html, eventId, gigsSaved) {
       isSoldOut,
       minPrice:  priceNum,
       supportActs: otherArtists,
+      ...(cleanGenres.length ? { genre: cleanGenres } : {}),
       tickets: [{ seller: 'Ents24', url: ticketUrl, available: !isSoldOut, price }],
       sources:     ['ents24'],
       lastUpdated: new Date().toISOString(),

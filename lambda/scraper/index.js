@@ -373,7 +373,8 @@ async function fetchSkiddle(nameMap) {
           artist = await autoSeedArtist(rawName, nameMap);
           if (!artist) continue;
         }
-        const date   = ev.date;
+        const date       = ev.date;
+        const skiGenres  = (ev.genres || []).map(g => (g.name || g).toLowerCase().trim()).filter(Boolean);
         gigs.push({
           gigId:        `ski-${ev.id}`,
           dedupKey:     dedupKey(artist.id, date, ev.venue?.name || ''),
@@ -387,6 +388,7 @@ async function fetchSkiddle(nameMap) {
           venueCountry: 'GB',
           isSoldOut:    ev.soldout === '1',
           supportActs:  [],
+          ...(skiGenres.length ? { genre: skiGenres } : {}),
           tickets: [{
             seller:    'Skiddle',
             url:       ev.link || '#',
@@ -1373,8 +1375,9 @@ async function fetchVenueSkiddleGigs(venue, nameMap) {
       const norm   = normaliseName(rawName);
       let   artist = nameMap[norm];
       if (!artist) { artist = await autoSeedArtist(rawName, nameMap); if (!artist) continue; }
-      const date = (ev.date || '').split('T')[0];
+      const date      = (ev.date || '').split('T')[0];
       if (!date) continue;
+      const skiGenres = (ev.genres || []).map(g => (g.name || g).toLowerCase().trim()).filter(Boolean);
       gigs.push({
         gigId:            `ski-v-${venue.skiddleId}-${ev.id}`,
         dedupKey:         dedupKey(artist.id, date, venue.name),
@@ -1389,6 +1392,7 @@ async function fetchVenueSkiddleGigs(venue, nameMap) {
         canonicalVenueId: venue.venueId,
         isSoldOut:        !ev.tickets,
         supportActs:      [],
+        ...(skiGenres.length ? { genre: skiGenres } : {}),
         tickets: [{
           seller:    'Skiddle',
           url:       ev.link || 'https://www.skiddle.com',
