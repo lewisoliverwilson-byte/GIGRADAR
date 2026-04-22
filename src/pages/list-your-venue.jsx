@@ -3,7 +3,7 @@ import Link from 'next/link';
 import Head from 'next/head';
 import Footer from '../components/Footer.jsx';
 
-const STRIPE_PAYMENT_LINK = 'https://buy.stripe.com/placeholder'; // replace with real Stripe Payment Link
+const STRIPE_PAYMENT_LINK = 'https://buy.stripe.com/test_dRmaEPgG05A77s1coHb3q00';
 
 const BENEFITS = [
   { icon: '★', title: 'Spotlight badge', desc: 'Pinned at the top of your city page above all other venues.' },
