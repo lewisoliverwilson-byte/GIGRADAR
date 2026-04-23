@@ -36,13 +36,13 @@ export default function CityRoute({ city, gigs, venues }) {
 
 export async function getStaticPaths() {
   return {
-    paths: CITIES.map(city => ({ params: { city: city.toLowerCase() } })),
+    paths: CITIES.map(city => ({ params: { id: city.toLowerCase() } })),
     fallback: 'blocking',
   };
 }
 
 export async function getStaticProps({ params }) {
-  const slug = (params.city || '').toLowerCase();
+  const slug = (params.id || '').toLowerCase();
   // Capitalise first letter only
   const city = slug.charAt(0).toUpperCase() + slug.slice(1);
 

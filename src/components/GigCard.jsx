@@ -49,7 +49,7 @@ export default function GigCard({ gig, showArtist = false, distanceMiles, isGras
   return (
     <div className={`flex bg-zinc-900 border border-zinc-800 rounded-xl overflow-hidden hover:border-zinc-600 transition-colors ${isPast ? 'opacity-40' : ''}`}>
       {/* Date block — links to gig detail */}
-      <Link href={`/gigs/${gig.gigId}`} className="w-16 shrink-0 flex flex-col items-center justify-center bg-zinc-800 border-r border-zinc-700 py-4 gap-0.5 hover:bg-zinc-700 transition-colors">
+      <Link href={`/gig/${gig.gigId}`} className="w-16 shrink-0 flex flex-col items-center justify-center bg-zinc-800 border-r border-zinc-700 py-4 gap-0.5 hover:bg-zinc-700 transition-colors">
         {d ? (
           <>
             <span className="text-[9px] font-bold uppercase tracking-widest text-zinc-400">

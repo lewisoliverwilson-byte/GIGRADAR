@@ -38,7 +38,7 @@ export async function getStaticPaths() {
 }
 
 export async function getStaticProps({ params }) {
-  const city  = (params.city || '').charAt(0).toUpperCase() + (params.city || '').slice(1);
+  const city  = (params.id || '').charAt(0).toUpperCase() + (params.id || '').slice(1);
   const genre = (params.genre || '').toLowerCase();
   if (!GENRES.includes(genre)) return { notFound: true };
 

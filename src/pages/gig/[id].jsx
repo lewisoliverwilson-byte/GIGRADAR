@@ -1,6 +1,6 @@
 import Head from 'next/head';
-import GigDetail from '../../views/GigDetail.jsx';
-import { CONFIG } from '../../utils/config.js';
+import GigDetail from '../views/GigDetail.jsx';
+import { CONFIG } from '../utils/config.js';
 
 export default function GigPage({ gig }) {
   const artistName = gig?.artistName || (gig?.artistId || '').replace(/-/g, ' ');
@@ -75,7 +75,7 @@ export default function GigPage({ gig }) {
         <meta name="twitter:title" content={title} />
         <meta name="twitter:description" content={desc} />
         {gig?.gigId && (
-          <link rel="canonical" href={`${CONFIG.siteUrl}/gigs/${gig.gigId}`} />
+          <link rel="canonical" href={`${CONFIG.siteUrl}/gig/${gig.gigId}`} />
         )}
         {jsonLd && (
           <script
