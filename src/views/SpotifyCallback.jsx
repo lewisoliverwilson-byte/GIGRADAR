@@ -70,7 +70,15 @@ export default function SpotifyCallback() {
           'Content-Type': 'application/json',
           ...(gigRadarToken ? { Authorization: `Bearer ${gigRadarToken}` } : {}),
         },
-        body: JSON.stringify({ artists: spotifyArtists.map(a => ({ id: a.id, name: a.name })) }),
+        body: JSON.stringify({
+          artists: spotifyArtists.map(a => ({
+            id:       a.id,
+            name:     a.name,
+            imageUrl: a.images?.[0]?.url || null,
+            genres:   a.genres || [],
+            followers: a.followers?.total || 0,
+          })),
+        }),
       });
 
       const { artists: matched } = matchRes.ok ? await matchRes.json() : { artists: [] };
