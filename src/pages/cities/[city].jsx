@@ -109,7 +109,7 @@ export default function CityPage({ city: citySlug, initialVenues = [] }) {
         <meta property="og:title" content={title} />
         <meta property="og:description" content={desc} />
         <meta property="og:type" content="website" />
-        <link rel="canonical" href={`https://gigradar.co.uk/cities/${city}`} />
+        <link rel="canonical" href={`${CONFIG.siteUrl}/cities/${city}`} />
       </Head>
 
       <div className="flex-1 max-w-4xl mx-auto px-6 py-12 w-full">

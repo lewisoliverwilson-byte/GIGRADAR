@@ -26,7 +26,7 @@ export default function CityGenreRoute({ city, genre, gigs, venues }) {
         <meta name="twitter:card" content="summary" />
         <meta name="twitter:title" content={title} />
         <meta name="twitter:description" content={desc} />
-        <link rel="canonical" href={`https://gigradar.co.uk/gigs/${city.toLowerCase()}/${genre}`} />
+        <link rel="canonical" href={`${CONFIG.siteUrl}/gigs/${city.toLowerCase()}/${genre}`} />
       </Head>
       <CityGigsPage city={city} genre={genre} initialGigs={gigs || []} grassrootsVenues={venues || []} />
     </>

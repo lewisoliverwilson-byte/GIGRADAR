@@ -14,7 +14,7 @@ export default function VenueRoute({ venue }) {
     '@context': 'https://schema.org',
     '@type': 'MusicVenue',
     name: venue.name,
-    url: `https://gigradar.co.uk/venues/${venue.slug}`,
+    url: `${CONFIG.siteUrl}/venues/${venue.slug}`,
     ...(venue.city ? { address: { '@type': 'PostalAddress', addressLocality: venue.city, addressCountry: 'GB' } } : {}),
     ...(venue.capacity ? { maximumAttendeeCapacity: venue.capacity } : {}),
     ...(venue.website ? { sameAs: venue.website } : {}),
@@ -38,7 +38,7 @@ export default function VenueRoute({ venue }) {
         <meta name="twitter:description" content={desc} />
         {(venue?.photoUrl || venue?.imageUrl) && <meta name="twitter:image" content={venue.photoUrl || venue.imageUrl} />}
         {venue?.slug && (
-          <link rel="canonical" href={`https://gigradar.co.uk/venues/${venue.slug}`} />
+          <link rel="canonical" href={`${CONFIG.siteUrl}/venues/${venue.slug}`} />
         )}
         {jsonLd && (
           <script

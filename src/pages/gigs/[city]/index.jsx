@@ -23,7 +23,7 @@ export default function CityRoute({ city, gigs, venues }) {
         <meta property="og:title" content={title} />
         <meta property="og:description" content={desc} />
         <meta property="og:type" content="website" />
-        <link rel="canonical" href={`https://gigradar.co.uk/gigs/${cityName.toLowerCase()}`} />
+        <link rel="canonical" href={`${CONFIG.siteUrl}/gigs/${cityName.toLowerCase()}`} />
         <meta property="og:type" content="website" />
         <meta name="twitter:card" content="summary" />
         <meta name="twitter:title" content={title} />

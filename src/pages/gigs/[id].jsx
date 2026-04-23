@@ -59,7 +59,7 @@ export default function GigPage({ gig }) {
     organizer: {
       '@type': 'Organization',
       name: 'GigRadar',
-      url: 'https://gigradar.co.uk',
+      url: CONFIG.siteUrl,
     },
   } : null;
 
@@ -75,7 +75,7 @@ export default function GigPage({ gig }) {
         <meta name="twitter:title" content={title} />
         <meta name="twitter:description" content={desc} />
         {gig?.gigId && (
-          <link rel="canonical" href={`https://gigradar.co.uk/gigs/${gig.gigId}`} />
+          <link rel="canonical" href={`${CONFIG.siteUrl}/gigs/${gig.gigId}`} />
         )}
         {jsonLd && (
           <script

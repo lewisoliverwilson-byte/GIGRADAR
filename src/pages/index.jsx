@@ -1,5 +1,6 @@
 import Head from 'next/head';
 import Home from '../views/Home.jsx';
+import { CONFIG } from '../utils/config.js';
 
 export default function IndexPage() {
   return (
@@ -10,7 +11,7 @@ export default function IndexPage() {
         <meta property="og:title" content="GigRadar — Find Every UK Gig" />
         <meta property="og:description" content="Track every upcoming gig for UK artists. One place, every source." />
         <meta property="og:type" content="website" />
-        <link rel="canonical" href="https://gigradar.co.uk" />
+        <link rel="canonical" href={CONFIG.siteUrl} />
         <meta name="twitter:card" content="summary" />
         <meta name="twitter:title" content="GigRadar — Find Every UK Gig" />
         <meta name="twitter:description" content="Track every upcoming gig for UK artists. One place, every source." />

@@ -14,7 +14,7 @@ export default function ArtistPage({ artist }) {
     '@context': 'https://schema.org',
     '@type': 'MusicGroup',
     name: artist.name,
-    url: `https://gigradar.co.uk/artists/${artist.artistId}`,
+    url: `${CONFIG.siteUrl}/artists/${artist.artistId}`,
     ...(artist.imageUrl ? { image: artist.imageUrl } : {}),
     ...(artist.genres?.length ? { genre: artist.genres } : {}),
     ...(artist.bio ? { description: artist.bio.substring(0, 300) } : {}),
@@ -34,7 +34,7 @@ export default function ArtistPage({ artist }) {
         <meta name="twitter:description" content={desc} />
         {artist?.imageUrl && <meta name="twitter:image" content={artist.imageUrl} />}
         {artist?.artistId && (
-          <link rel="canonical" href={`https://gigradar.co.uk/artists/${artist.artistId}`} />
+          <link rel="canonical" href={`${CONFIG.siteUrl}/artists/${artist.artistId}`} />
         )}
         {jsonLd && (
           <script

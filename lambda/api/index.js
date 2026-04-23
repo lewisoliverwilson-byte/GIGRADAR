@@ -22,7 +22,7 @@ const ADMIN_KEY            = process.env.ADMIN_API_KEY || '';
 const STRIPE_WEBHOOK_SECRET = process.env.STRIPE_WEBHOOK_SECRET || '';
 const RESEND_API_KEY        = process.env.RESEND_API_KEY        || '';
 const FROM_EMAIL            = process.env.FROM_EMAIL            || 'GigRadar <onboarding@resend.dev>';
-const SITE_URL              = 'https://gigradar.co.uk';
+const SITE_URL              = process.env.SITE_URL || 'https://main.d1mv18y3gsflql.amplifyapp.com';
 
 const SPOTIFY_CLIENT_ID     = process.env.SPOTIFY_CLIENT_ID     || '';
 const SPOTIFY_CLIENT_SECRET = process.env.SPOTIFY_CLIENT_SECRET || '';
