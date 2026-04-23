@@ -46,8 +46,8 @@ function isPast(date) {
 export default function Calendar() {
   const today = new Date();
   const { user } = useAuth();
-  const { following } = useFollow();
-  const personalised = following.size > 0;
+  const { following, followingVenues } = useFollow();
+  const personalised = following.size > 0 || followingVenues.size > 0;
 
   const [viewMode, setViewMode]       = useState('month');
   const [currentDate, setCurrentDate] = useState(today);
@@ -88,11 +88,14 @@ export default function Calendar() {
     setLoading(true);
 
     if (personalised) {
-      // One request per followed artist, then filter to the visible date range
-      Promise.all([...following].map(id => api.getArtistGigs(id).catch(() => [])))
+      const artistFetches = [...following].map(id => api.getArtistGigs(id).catch(() => []));
+      const venueFetches  = [...followingVenues].map(id => api.getVenueGigs(id).catch(() => []));
+      Promise.all([...artistFetches, ...venueFetches])
         .then(results => {
           const all = results.flat().filter(g => g.date >= rangeFrom && g.date <= rangeTo);
-          setGigs(all);
+          const seen = new Set();
+          const deduped = all.filter(g => { if (seen.has(g.gigId)) return false; seen.add(g.gigId); return true; });
+          setGigs(deduped);
         })
         .finally(() => setLoading(false));
       return;
@@ -175,7 +178,9 @@ export default function Calendar() {
           <p className="text-xs font-semibold text-violet-400 uppercase tracking-widest mb-2">Browse</p>
           <h1 className="text-4xl font-black text-white mb-1">Gig Calendar</h1>
           <p className="text-zinc-400 text-sm">
-            {personalised ? `Gigs from your ${following.size} followed artists, laid out by date.` : 'Every UK gig, laid out by date.'}
+            {personalised
+              ? `Gigs from your ${following.size} followed artist${following.size !== 1 ? 's' : ''}${followingVenues.size > 0 ? ` and ${followingVenues.size} venue${followingVenues.size !== 1 ? 's' : ''}` : ''}, laid out by date.`
+              : 'Every UK gig, laid out by date.'}
           </p>
         </div>
       </div>
@@ -217,7 +222,7 @@ export default function Calendar() {
           {personalised ? (
             <div className="ml-auto flex items-center gap-2">
               <span className="text-xs text-violet-400 font-medium">
-                ✦ Your {following.size} followed artist{following.size !== 1 ? 's' : ''}
+                ✦ {following.size} artist{following.size !== 1 ? 's' : ''}{followingVenues.size > 0 ? ` · ${followingVenues.size} venue${followingVenues.size !== 1 ? 's' : ''}` : ''}
               </span>
               <Link href="/profile" className="text-xs text-zinc-500 hover:text-white transition-colors">
                 Edit follows →
@@ -323,7 +328,9 @@ export default function Calendar() {
             {!loading && (
               <p className="text-xs text-zinc-600 mt-4 text-right">
                 {gigs.length.toLocaleString()} gig{gigs.length !== 1 ? 's' : ''}{' '}
-                {personalised ? `from ${following.size} followed artists` : city !== 'All' ? `in ${city}` : 'across UK'}
+                {personalised
+                  ? `from ${following.size + followingVenues.size} followed`
+                  : city !== 'All' ? `in ${city}` : 'across UK'}
                 {' · click a day for details'}
               </p>
             )}

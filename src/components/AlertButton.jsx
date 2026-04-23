@@ -5,18 +5,25 @@ const EMAIL_KEY   = 'gr_alert_email';
 const VENUES_KEY  = 'gr_followed_venues';
 
 function getFollowedVenues() {
+  if (typeof window === 'undefined') return [];
   try { return JSON.parse(localStorage.getItem(VENUES_KEY) || '[]'); } catch { return []; }
 }
 function setFollowedVenues(ids) {
+  if (typeof window === 'undefined') return;
   localStorage.setItem(VENUES_KEY, JSON.stringify(ids));
 }
 
 export default function AlertButton({ targetId, targetType, targetName, className = '' }) {
-  const [email, setEmail] = useState(() => localStorage.getItem(EMAIL_KEY) || '');
+  const [email, setEmail] = useState('');
   const [following, setFollowing] = useState(false);
   const [showInput, setShowInput] = useState(false);
   const [input, setInput] = useState('');
   const [status, setStatus] = useState('idle');
+
+  useEffect(() => {
+    const stored = localStorage.getItem(EMAIL_KEY) || '';
+    if (stored) setEmail(stored);
+  }, []);
 
   useEffect(() => {
     if (email && targetId) {
