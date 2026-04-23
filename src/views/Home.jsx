@@ -252,7 +252,7 @@ export default function Home() {
           <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 gap-3">
             {trending.slice(0, 12).map(a => <ArtistCard key={a.artistId} artist={a} />)}
           </div>
-        )}
+        ) : null}
       </section>
 
       {/* On sale this week */}

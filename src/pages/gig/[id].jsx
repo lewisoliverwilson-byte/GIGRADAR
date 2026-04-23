@@ -1,6 +1,6 @@
 import Head from 'next/head';
-import GigDetail from '../views/GigDetail.jsx';
-import { CONFIG } from '../utils/config.js';
+import GigDetail from '../../views/GigDetail.jsx';
+import { CONFIG } from '../../utils/config.js';
 
 export default function GigPage({ gig }) {
   const artistName = gig?.artistName || (gig?.artistId || '').replace(/-/g, ' ');
