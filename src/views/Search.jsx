@@ -45,7 +45,7 @@ export default function Search() {
     <>
       <Head>
         <title>{query ? `"${query}" — GigRadar` : 'Search — GigRadar'}</title>
-        <meta name="description" content="Search 18,000+ artists and 4,700+ UK venues on GigRadar." />
+        <meta name="description" content="Search 40,000+ artists and 8,000+ UK venues on GigRadar." />
       </Head>
       <div className="min-h-screen bg-zinc-950">
         <div className="bg-zinc-950 border-b border-zinc-800">
@@ -83,7 +83,7 @@ export default function Search() {
             <div className="text-center py-20">
               <p className="text-5xl mb-4">🔍</p>
               <p className="text-white font-bold text-lg">Start typing to search</p>
-              <p className="text-zinc-400 text-sm mt-2">Search across 18,000+ artists and 4,700+ UK venues.</p>
+              <p className="text-zinc-400 text-sm mt-2">Search across 40,000+ artists and 8,000+ UK venues.</p>
               <div className="flex gap-3 justify-center mt-6">
                 <Link href="/artists" className="bg-zinc-800 hover:bg-zinc-700 border border-zinc-700 text-white font-semibold px-5 py-2.5 rounded-xl transition-colors text-sm">
                   Browse artists

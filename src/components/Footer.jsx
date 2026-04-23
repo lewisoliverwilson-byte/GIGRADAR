@@ -11,7 +11,7 @@ export default function Footer() {
               <div className="w-7 h-7 rounded-lg bg-violet-600 flex items-center justify-center font-black text-sm text-white">G</div>
               <span className="font-black text-base text-white">GigRadar</span>
             </Link>
-            <p className="text-sm text-zinc-500 leading-relaxed">Every UK gig, one place. Updated every 6 hours from 10+ ticket sources.</p>
+            <p className="text-sm text-zinc-500 leading-relaxed">Every UK gig, one place. Updated weekly from 14 ticket sources.</p>
           </div>
           <div>
             <p className="text-xs font-semibold text-zinc-400 uppercase tracking-widest mb-4">Discover</p>
@@ -40,7 +40,7 @@ export default function Footer() {
         </div>
         <div className="border-t border-zinc-800 pt-6 flex flex-col sm:flex-row items-center justify-between gap-3">
           <p className="text-xs text-zinc-600">© {new Date().getFullYear()} GigRadar. Not affiliated with any ticket vendor.</p>
-          <p className="text-xs text-zinc-600">18,000+ artists · 4,700+ venues · Updated every 6 hours</p>
+          <p className="text-xs text-zinc-600">40K+ artists · 8K+ venues · 86K+ gigs</p>
         </div>
       </div>
     </footer>

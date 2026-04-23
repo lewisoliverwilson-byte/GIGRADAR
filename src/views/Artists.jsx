@@ -38,7 +38,7 @@ export default function Artists() {
         <div className="max-w-7xl mx-auto px-6 py-10">
           <p className="text-xs font-semibold text-violet-400 uppercase tracking-widest mb-2">Discover</p>
           <h1 className="text-4xl font-black text-white mb-2">UK Artists</h1>
-          <p className="text-zinc-400 text-sm">18,000+ UK artists tracked across every major ticket platform. Follow artists to get gig alerts.</p>
+          <p className="text-zinc-400 text-sm">40,000+ UK artists tracked across every major ticket platform. Follow artists to get gig alerts.</p>
         </div>
       </div>
 

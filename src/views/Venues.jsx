@@ -42,7 +42,7 @@ export default function Venues() {
         <div className="max-w-7xl mx-auto px-6 py-10">
           <p className="text-xs font-semibold text-violet-400 uppercase tracking-widest mb-2">Discover</p>
           <h1 className="text-4xl font-black text-white mb-2">UK Venues</h1>
-          <p className="text-zinc-400 text-sm">4,700+ UK venues tracked. Follow a venue to get alerts whenever new gigs are announced.</p>
+          <p className="text-zinc-400 text-sm">8,000+ UK venues tracked. Follow a venue to get alerts whenever new gigs are announced.</p>
         </div>
       </div>
 
