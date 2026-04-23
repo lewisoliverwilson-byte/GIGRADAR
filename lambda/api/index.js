@@ -911,6 +911,15 @@ function normaliseArtistName(name) {
     .replace(/\s+/g, ' ');
 }
 
+function toArtistSlug(name) {
+  return name.toLowerCase().trim()
+    .replace(/[^a-z0-9\s]/g, '')
+    .replace(/\s+/g, '-')
+    .replace(/-+/g, '-')
+    .replace(/^-|-$/g, '')
+    .slice(0, 80);
+}
+
 async function getValidSpotifyToken(userId) {
   const result = await ddb.send(new GetCommand({
     TableName: SPOTIFY_TOKENS_TABLE,
@@ -1010,22 +1019,103 @@ async function matchArtists(event) {
   const result = await ddb.send(new ScanCommand({ TableName: ARTISTS_TABLE }));
   const dbArtists = (result.Items || []).filter(a => a.name && !a.artistId.startsWith('_'));
 
-  const bySpotifyId = new Map(dbArtists.filter(a => a.spotify).map(a => [a.spotify.split('/').pop(), a]));
-  const byNormName  = new Map(dbArtists.map(a => [normaliseArtistName(a.name), a]));
+  // Index by Spotify artist ID (most precise lookup)
+  const bySpotifyId = new Map(
+    dbArtists.filter(a => a.spotify)
+      .map(a => [a.spotify.split('/').pop(), a])
+  );
+  // Index by exact lowercase name
+  const byExactName = new Map(dbArtists.map(a => [a.name.toLowerCase().trim(), a]));
+  // Track all slugs to avoid collisions when creating new profiles
+  const existingSlugs = new Set(dbArtists.map(a => a.artistId));
 
   const matched = [];
   const seen = new Set();
+  const createQueue = [];
 
   for (const sa of spotifyArtists) {
-    const match = bySpotifyId.get(sa.id) || byNormName.get(normaliseArtistName(sa.name));
+    const exactKey = sa.name.toLowerCase().trim();
+
+    // 1. Spotify ID match — ground truth
+    let match = bySpotifyId.get(sa.id);
+
+    // 2. Exact name match — only accept if no conflicting Spotify ID is stored
+    //    (different stored ID = different artist, e.g. a tribute band)
+    if (!match) {
+      const nameMatch = byExactName.get(exactKey);
+      if (nameMatch) {
+        const storedSpotifyId = nameMatch.spotify ? nameMatch.spotify.split('/').pop() : null;
+        if (!storedSpotifyId || storedSpotifyId === sa.id) {
+          match = nameMatch;
+        }
+        // storedSpotifyId differs → tribute or covers band with same name — skip
+      }
+    }
+
     if (match && !seen.has(match.artistId)) {
       seen.add(match.artistId);
       matched.push({
         artistId: match.artistId,
         name:     match.name,
-        imageUrl: match.imageUrl || null,
-        genres:   match.genres   || [],
+        imageUrl: match.imageUrl || sa.imageUrl || null,
+        genres:   match.genres?.length ? match.genres : (sa.genres || []),
       });
+      // Opportunistically store Spotify ID if this profile didn't have one yet
+      if (!match.spotify && sa.id) {
+        ddb.send(new UpdateCommand({
+          TableName: ARTISTS_TABLE,
+          Key: { artistId: match.artistId },
+          UpdateExpression: 'SET spotify = :s',
+          ExpressionAttributeValues: { ':s': `https://open.spotify.com/artist/${sa.id}` },
+        })).catch(() => {});
+      }
+    } else if (!match) {
+      createQueue.push(sa);
+    }
+  }
+
+  // Create stub profiles for Spotify artists not yet in GigRadar
+  for (const sa of createQueue) {
+    const baseSlug = toArtistSlug(sa.name);
+    if (!baseSlug) continue;
+
+    // Find a unique slug — if base is taken by a different artist, append Spotify ID fragment
+    let slug = baseSlug;
+    if (existingSlugs.has(slug)) {
+      slug = `${baseSlug}-${sa.id.slice(0, 6)}`;
+    }
+    if (existingSlugs.has(slug)) continue; // Still taken — skip
+    existingSlugs.add(slug);
+
+    const item = {
+      artistId:  slug,
+      name:      sa.name,
+      spotify:   `https://open.spotify.com/artist/${sa.id}`,
+      upcoming:  0,
+      source:    'spotify',
+      createdAt: new Date().toISOString(),
+    };
+    if (sa.imageUrl) item.imageUrl = sa.imageUrl;
+    if (sa.genres?.length) item.genres = sa.genres;
+
+    try {
+      await ddb.send(new PutCommand({
+        TableName: ARTISTS_TABLE,
+        Item: item,
+        ConditionExpression: 'attribute_not_exists(artistId)',
+      }));
+      matched.push({
+        artistId: slug,
+        name:     sa.name,
+        imageUrl: sa.imageUrl || null,
+        genres:   sa.genres   || [],
+      });
+    } catch (err) {
+      if (err.name === 'ConditionalCheckFailedException') {
+        // Another request created this profile concurrently — still return it
+        matched.push({ artistId: slug, name: sa.name, imageUrl: sa.imageUrl || null, genres: sa.genres || [] });
+      }
+      // Any other error: silently skip — don't fail the whole request
     }
   }
 
