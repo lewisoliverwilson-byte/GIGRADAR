@@ -4,13 +4,13 @@
 
 @layer base {
   html {
-    background-color: #09090b;
+    background-color: #000000;
     color: #ffffff;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
   }
   body {
-    background-color: #09090b;
+    background-color: #000000;
   }
   * { box-sizing: border-box; }
 }

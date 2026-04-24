@@ -7,9 +7,25 @@ import { useFollow } from '../context/FollowContext.jsx';
 import ArtistCard from '../components/ArtistCard.jsx';
 import GigCard from '../components/GigCard.jsx';
 import Footer from '../components/Footer.jsx';
-import { artistInitials, artistColor } from '../utils/format.js';
 
 const CITIES = ['London','Manchester','Birmingham','Glasgow','Liverpool','Leeds','Bristol','Edinburgh','Newcastle','Sheffield','Nottingham','Cardiff','Brighton'];
+
+function SectionHeader({ title, subtitle, label, labelColor = 'text-zinc-500', href, linkText }) {
+  return (
+    <div className="flex items-end justify-between mb-6 border-b border-zinc-900 pb-4">
+      <div>
+        {label && <p className={`text-[10px] font-black uppercase tracking-widest mb-1 ${labelColor}`}>{label}</p>}
+        <h2 className="font-display text-4xl text-white">{title}</h2>
+        {subtitle && <p className="text-xs font-bold uppercase tracking-wider text-zinc-600 mt-1">{subtitle}</p>}
+      </div>
+      {href && (
+        <Link href={href} className="text-[10px] font-black uppercase tracking-widest text-zinc-500 hover:text-white transition-colors shrink-0 mb-1">
+          {linkText || 'See all'} →
+        </Link>
+      )}
+    </div>
+  );
+}
 
 export default function Home() {
   const { user, openAuth } = useAuth();
@@ -30,13 +46,11 @@ export default function Home() {
   const router = useRouter();
 
   useEffect(() => {
-    // Phase 1: above-fold content — show as fast as possible
     Promise.all([api.getGigs(), api.getTrending()])
       .then(([g, t]) => { setGigs(g); setTrending(t); })
       .catch(() => {})
       .finally(() => setLoading(false));
 
-    // Phase 2: below-fold — load after first render
     Promise.all([
       api.getEmerging().catch(() => []),
       api.getGrassroots().catch(() => []),
@@ -94,63 +108,82 @@ export default function Home() {
     if (search.trim()) router.push(`/search?q=${encodeURIComponent(search.trim())}`);
   }
 
+  // Marquee: duplicate for seamless loop
+  const marqueeNames = trending.length > 0
+    ? [...trending.map(a => a.name), ...trending.map(a => a.name)]
+    : [];
+
   return (
-    <div className="min-h-screen bg-zinc-950">
+    <div className="min-h-screen bg-black">
 
       {/* Hero */}
-      <section className="bg-zinc-950 border-b border-zinc-800">
-        <div className="max-w-4xl mx-auto px-6 py-24 text-center">
+      <section className="bg-black border-b border-zinc-900">
 
-          <div className="inline-flex items-center gap-2 bg-violet-950 border border-violet-800 rounded-full px-4 py-1.5 text-sm text-violet-300 font-medium mb-8">
-            <span className="w-1.5 h-1.5 rounded-full bg-violet-400 animate-pulse inline-block"></span>
-            Updated weekly · 14 ticket sources
+        {/* Artist name ticker */}
+        {marqueeNames.length > 0 && (
+          <div className="border-b border-zinc-900 overflow-hidden py-2.5">
+            <div className="flex animate-marquee whitespace-nowrap">
+              {marqueeNames.map((name, i) => (
+                <span key={i} className="font-display text-sm text-zinc-700 px-6 tracking-widest shrink-0">
+                  {name}
+                </span>
+              ))}
+            </div>
           </div>
+        )}
 
-          <h1 className="text-5xl sm:text-6xl lg:text-7xl font-black tracking-tight leading-tight mb-6">
-            <span className="text-white">Every UK gig.</span>
-            <br />
-            <span className="text-violet-400">One place.</span>
-          </h1>
+        <div className="max-w-7xl mx-auto px-6 py-16 lg:py-24">
+          <div className="max-w-4xl">
 
-          <p className="text-zinc-400 text-lg max-w-xl mx-auto mb-10 leading-relaxed">
-            86,000+ UK gigs from every ticket platform. Follow artists, discover grassroots venues, get alerts the moment new shows drop.
-          </p>
+            <h1 className="font-display text-[13vw] lg:text-[9rem] leading-none text-white mb-0">
+              EVERY UK GIG.
+            </h1>
+            <h1 className="font-display text-[13vw] lg:text-[9rem] leading-none text-zinc-600 mb-10">
+              ONE PLACE.
+            </h1>
 
-          <form onSubmit={handleSearch} className="max-w-lg mx-auto flex gap-2 mb-8">
-            <input
-              type="text"
-              value={search}
-              onChange={e => setSearch(e.target.value)}
-              placeholder="Search artists or venues…"
-              className="flex-1 bg-zinc-900 border border-zinc-700 rounded-xl px-5 py-3 text-white placeholder-zinc-500 focus:outline-none focus:border-violet-500 text-base transition-colors"
-            />
-            <button type="submit" className="bg-violet-600 hover:bg-violet-500 text-white font-semibold px-6 py-3 rounded-xl transition-colors text-base">
-              Search
-            </button>
-          </form>
+            <p className="text-sm font-bold uppercase tracking-widest text-zinc-500 mb-10 max-w-lg">
+              86,000+ gigs from every ticket platform. Follow artists, get alerts the moment new shows drop.
+            </p>
 
-          <div className="flex gap-3 justify-center flex-wrap">
-            <Link href="/gigs" className="bg-violet-600 hover:bg-violet-500 text-white font-semibold px-7 py-3 rounded-xl transition-colors">
-              Browse gigs
-            </Link>
-            <button onClick={handleNearMeNav} className="bg-zinc-800 hover:bg-zinc-700 border border-zinc-700 hover:border-emerald-600 text-white font-semibold px-7 py-3 rounded-xl transition-colors flex items-center gap-2">
-              📍 Near me
-            </button>
-            <Link href="/artists" className="bg-zinc-800 hover:bg-zinc-700 border border-zinc-700 text-white font-semibold px-7 py-3 rounded-xl transition-colors hidden sm:inline-flex">
-              Find artists
-            </Link>
-            {!user && (
-              <button onClick={() => openAuth('signup')} className="text-zinc-400 hover:text-white font-medium px-5 py-3 transition-colors hidden sm:block">
-                Sign up free →
+            <div className="flex flex-wrap gap-3 items-center mb-6">
+              {!user ? (
+                <button onClick={() => openAuth('signup')}
+                  className="bg-white text-black font-black text-sm uppercase tracking-widest px-8 py-4 hover:bg-zinc-100 transition-colors">
+                  CREATE ACCOUNT
+                </button>
+              ) : null}
+              <Link href="/gigs"
+                className="border border-zinc-700 text-white font-black text-sm uppercase tracking-widest px-8 py-4 hover:bg-white hover:text-black hover:border-white transition-colors">
+                BROWSE GIGS
+              </Link>
+              <button onClick={handleNearMeNav}
+                className="border border-zinc-800 text-zinc-400 font-black text-sm uppercase tracking-widest px-8 py-4 hover:border-white hover:text-white transition-colors flex items-center gap-2">
+                NEAR ME
               </button>
-            )}
+            </div>
+
+            <form onSubmit={handleSearch} className="flex max-w-md">
+              <input
+                type="text"
+                value={search}
+                onChange={e => setSearch(e.target.value)}
+                placeholder="Search artists or venues..."
+                className="flex-1 bg-zinc-950 border border-zinc-800 border-r-0 px-4 py-3 text-white placeholder-zinc-700 focus:outline-none focus:border-zinc-600 text-sm font-medium transition-colors"
+              />
+              <button type="submit" className="border border-zinc-800 bg-zinc-900 hover:bg-white hover:text-black px-5 py-3 text-white text-sm font-black transition-colors">
+                →
+              </button>
+            </form>
+
           </div>
 
-          <div className="grid grid-cols-3 gap-6 max-w-xs mx-auto mt-14">
-            {[['86K+', 'Upcoming gigs'], ['40K+', 'Artists tracked'], ['8K+', 'UK venues']].map(([val, label]) => (
+          {/* Stats strip */}
+          <div className="flex gap-12 mt-16 border-t border-zinc-900 pt-8">
+            {[['86K+', 'Upcoming gigs'], ['40K+', 'Artists tracked'], ['8K+', 'UK venues'], ['14', 'Ticket sources']].map(([val, label]) => (
               <div key={label}>
-                <p className="text-2xl font-black text-white">{val}</p>
-                <p className="text-xs text-zinc-500 mt-0.5">{label}</p>
+                <p className="font-display text-4xl text-white">{val}</p>
+                <p className="text-[10px] font-black uppercase tracking-widest text-zinc-600 mt-0.5">{label}</p>
               </div>
             ))}
           </div>
@@ -158,51 +191,39 @@ export default function Home() {
       </section>
 
       {/* Browse by city */}
-      <section className="border-b border-zinc-800">
-        <div className="max-w-5xl mx-auto px-6 py-8">
-          <h2 className="text-sm font-bold text-zinc-400 uppercase tracking-widest mb-4">Browse by city</h2>
+      <section className="border-b border-zinc-900">
+        <div className="max-w-7xl mx-auto px-6 py-8">
+          <p className="text-[10px] font-black uppercase tracking-widest text-zinc-600 mb-4">Browse by city</p>
           <div className="flex flex-wrap gap-2">
             {CITIES.map(city => (
               <Link key={city} href={`/gigs/${city.toLowerCase()}`}
-                className="bg-zinc-900 hover:bg-zinc-800 border border-zinc-700 hover:border-violet-600 text-white text-sm font-medium px-4 py-2 rounded-xl transition-colors">
+                className="border border-zinc-800 text-zinc-400 text-[10px] font-black uppercase tracking-widest px-4 py-2 hover:border-white hover:text-white transition-colors">
                 {city}
               </Link>
             ))}
             <button onClick={handleNearMe}
-              className="bg-zinc-900 hover:bg-zinc-800 border border-zinc-700 hover:border-emerald-600 text-emerald-400 text-sm font-medium px-4 py-2 rounded-xl transition-colors flex items-center gap-1.5">
-              📍 Near me
+              className="border border-zinc-800 text-zinc-500 text-[10px] font-black uppercase tracking-widest px-4 py-2 hover:border-white hover:text-white transition-colors">
+              Near me
             </button>
           </div>
         </div>
       </section>
 
-      {/* Near me results — shown after user clicks "Near me" in city row */}
+      {/* Near me results */}
       {(nearbyLoading || nearbyGigs.length > 0 || locationDenied) && (
-        <section className="border-b border-zinc-800">
-          <div className="max-w-5xl mx-auto px-6 py-8">
-            <div className="flex items-center justify-between mb-5">
-              <div className="flex items-center gap-2">
-                <span className="text-emerald-400">📍</span>
-                <h2 className="text-xl font-bold text-white">Gigs near you</h2>
-              </div>
-              {nearbyGigs.length > 0 && (
-                <button onClick={handleNearMeNav} className="text-sm text-violet-400 hover:text-violet-300 transition-colors">
-                  See all →
-                </button>
-              )}
-            </div>
+        <section className="border-b border-zinc-900">
+          <div className="max-w-7xl mx-auto px-6 py-10">
+            <SectionHeader title="GIGS NEAR YOU" href="/gigs" linkText="See all" />
             {nearbyLoading ? (
-              <div className="space-y-2">
-                {Array.from({ length: 4 }).map((_, i) => <div key={i} className="h-20 bg-zinc-800 rounded-xl animate-pulse" />)}
+              <div className="space-y-px">
+                {Array.from({ length: 4 }).map((_, i) => <div key={i} className="h-16 bg-zinc-950 animate-pulse" />)}
               </div>
             ) : locationDenied ? (
-              <p className="text-zinc-500 text-sm">Location access denied. <button onClick={handleNearMeNav} className="text-violet-400 hover:text-violet-300 underline">Use city search instead →</button></p>
+              <p className="text-xs font-bold uppercase tracking-wider text-zinc-600">Location access denied. <button onClick={handleNearMeNav} className="text-white underline">Use city search →</button></p>
             ) : nearbyGigs.length === 0 ? (
-              <p className="text-zinc-500 text-sm">No gigs found within 15 miles. <button onClick={handleNearMeNav} className="text-violet-400 hover:text-violet-300 underline">Try a wider search →</button></p>
+              <p className="text-xs font-bold uppercase tracking-wider text-zinc-600">No gigs found within 15 miles.</p>
             ) : (
-              <div className="space-y-2">
-                {nearbyGigs.map(g => <GigCard key={g.gigId} gig={g} showArtist />)}
-              </div>
+              <div>{nearbyGigs.map(g => <GigCard key={g.gigId} gig={g} showArtist />)}</div>
             )}
           </div>
         </section>
@@ -210,190 +231,106 @@ export default function Home() {
 
       {/* My gigs */}
       {user && following.size > 0 && (
-        <section className="max-w-5xl mx-auto px-6 py-12">
-          <div className="flex items-center justify-between mb-5">
-            <h2 className="text-xl font-bold text-white">Your upcoming gigs</h2>
-            {followedGigs.length > 8 && (
-              <Link href="/gigs?filter=following" className="text-sm text-violet-400 hover:text-violet-300 transition-colors">
-                View all {followedGigs.length} →
-              </Link>
+        <section className="border-b border-zinc-900">
+          <div className="max-w-7xl mx-auto px-6 py-10">
+            <SectionHeader title="YOUR UPCOMING GIGS"
+              href={followedGigs.length > 8 ? '/gigs?filter=following' : undefined}
+              linkText={`View all ${followedGigs.length}`} />
+            {followedGigs.length > 0 ? (
+              <div>{followedGigs.slice(0, 8).map(g => <GigCard key={g.gigId} gig={g} showArtist />)}</div>
+            ) : (
+              <p className="text-xs font-bold uppercase tracking-wider text-zinc-700">None of your followed artists have announced shows yet.</p>
             )}
           </div>
-          {followedGigs.length > 0 ? (
-            <div className="space-y-2">
-              {followedGigs.slice(0, 8).map(g => <GigCard key={g.gigId} gig={g} showArtist />)}
-            </div>
-          ) : (
-            <div className="bg-zinc-900 border border-zinc-800 rounded-2xl p-10 text-center">
-              <p className="text-zinc-400 text-sm">None of your followed artists have announced shows yet.</p>
-            </div>
-          )}
         </section>
       )}
 
       {/* Trending artists */}
-      <section className="max-w-7xl mx-auto px-6 py-12">
-        <div className="flex items-center justify-between mb-6">
-          <div>
-            <h2 className="text-2xl font-bold text-white">Trending now</h2>
-            <p className="text-sm text-zinc-500 mt-1">Most popular UK artists with upcoming shows</p>
-          </div>
-          <Link href="/artists" className="text-sm text-violet-400 hover:text-violet-300 font-medium transition-colors">
-            See all artists →
-          </Link>
+      <section className="border-b border-zinc-900">
+        <div className="max-w-7xl mx-auto px-6 py-10">
+          <SectionHeader title="TRENDING NOW" subtitle="Most popular UK artists with upcoming shows" href="/artists" linkText="All artists" />
+          {loading ? (
+            <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 gap-px bg-zinc-900">
+              {Array.from({ length: 12 }).map((_, i) => (
+                <div key={i} className="aspect-square bg-zinc-950 animate-pulse" />
+              ))}
+            </div>
+          ) : trending.length > 0 ? (
+            <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 gap-px bg-zinc-900">
+              {trending.slice(0, 12).map(a => <ArtistCard key={a.artistId} artist={a} />)}
+            </div>
+          ) : null}
         </div>
-        {loading ? (
-          <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 gap-3">
-            {Array.from({ length: 12 }).map((_, i) => (
-              <div key={i} className="aspect-square rounded-xl bg-zinc-800 animate-pulse" />
-            ))}
-          </div>
-        ) : trending.length > 0 ? (
-          <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 gap-3">
-            {trending.slice(0, 12).map(a => <ArtistCard key={a.artistId} artist={a} />)}
-          </div>
-        ) : null}
       </section>
 
       {/* On sale this week */}
       {(loading || onSale.length > 0) && (
-        <section className="border-t border-zinc-800">
-          <div className="max-w-5xl mx-auto px-6 py-12">
-            <div className="flex items-center justify-between mb-6">
-              <div>
-                <div className="flex items-center gap-2 mb-1">
-                  <span className="inline-block w-2 h-2 rounded-full bg-amber-400 animate-pulse"></span>
-                  <span className="text-xs font-bold text-amber-400 uppercase tracking-widest">On sale now</span>
-                </div>
-                <h2 className="text-2xl font-bold text-white">Tickets on sale this week</h2>
-                <p className="text-sm text-zinc-500 mt-1">Newly released tickets — grab them before they sell out</p>
-              </div>
-              <Link href="/gigs" className="text-sm text-amber-400 hover:text-amber-300 font-medium transition-colors hidden sm:block">
-                Browse all gigs →
-              </Link>
-            </div>
+        <section className="border-b border-zinc-900">
+          <div className="max-w-7xl mx-auto px-6 py-10">
+            <SectionHeader title="ON SALE NOW" label="Tickets just dropped" labelColor="text-amber-500" subtitle="Grab them before they sell out" href="/gigs" linkText="All gigs" />
             {loading ? (
-              <div className="space-y-2">
-                {Array.from({ length: 4 }).map((_, i) => <div key={i} className="h-20 rounded-xl bg-zinc-800 animate-pulse" />)}
+              <div className="space-y-px">
+                {Array.from({ length: 4 }).map((_, i) => <div key={i} className="h-16 bg-zinc-950 animate-pulse" />)}
               </div>
             ) : (
-              <div className="space-y-2">
-                {onSale.slice(0, 8).map(g => <GigCard key={g.gigId} gig={g} showArtist />)}
-              </div>
+              <div>{onSale.slice(0, 8).map(g => <GigCard key={g.gigId} gig={g} showArtist />)}</div>
             )}
           </div>
         </section>
       )}
 
-      {/* Recently announced */}
+      {/* Just announced */}
       {(loading || comingSoon.length > 0) && (
-        <section className="border-t border-zinc-800">
-          <div className="max-w-5xl mx-auto px-6 py-12">
-            <div className="flex items-center justify-between mb-6">
-              <div>
-                <div className="flex items-center gap-2 mb-1">
-                  <span className="inline-block w-2 h-2 rounded-full bg-sky-400"></span>
-                  <span className="text-xs font-bold text-sky-400 uppercase tracking-widest">Just announced</span>
-                </div>
-                <h2 className="text-2xl font-bold text-white">Recently announced shows</h2>
-                <p className="text-sm text-zinc-500 mt-1">New gigs added in the last two weeks</p>
-              </div>
-              <Link href="/gigs" className="text-sm text-sky-400 hover:text-sky-300 font-medium transition-colors hidden sm:block">
-                See all gigs →
-              </Link>
-            </div>
+        <section className="border-b border-zinc-900">
+          <div className="max-w-7xl mx-auto px-6 py-10">
+            <SectionHeader title="JUST ANNOUNCED" label="New this week" labelColor="text-sky-500" subtitle="New gigs added in the last two weeks" href="/gigs" linkText="See all" />
             {loading ? (
-              <div className="space-y-2">
-                {Array.from({ length: 4 }).map((_, i) => <div key={i} className="h-20 rounded-xl bg-zinc-800 animate-pulse" />)}
+              <div className="space-y-px">
+                {Array.from({ length: 4 }).map((_, i) => <div key={i} className="h-16 bg-zinc-950 animate-pulse" />)}
               </div>
             ) : (
-              <div className="space-y-2">
-                {comingSoon.slice(0, 8).map(g => <GigCard key={g.gigId} gig={g} showArtist />)}
-              </div>
+              <div>{comingSoon.slice(0, 8).map(g => <GigCard key={g.gigId} gig={g} showArtist />)}</div>
             )}
           </div>
         </section>
       )}
 
-      {/* Grassroots picks */}
-      <section className="border-t border-zinc-800 bg-zinc-900/30">
-        <div className="max-w-5xl mx-auto px-6 py-12">
-          <div className="flex items-center justify-between mb-2">
-            <div>
-              <div className="flex items-center gap-2 mb-1">
-                <span className="inline-block w-2 h-2 rounded-full bg-emerald-400"></span>
-                <span className="text-xs font-bold text-emerald-400 uppercase tracking-widest">Support local venues</span>
-              </div>
-              <h2 className="text-2xl font-bold text-white">Grassroots gigs this week</h2>
-              <p className="text-sm text-zinc-500 mt-1">Small stages, big atmosphere. The heartbeat of UK live music.</p>
+      {/* Grassroots */}
+      <section className="border-b border-zinc-900">
+        <div className="max-w-7xl mx-auto px-6 py-10">
+          <SectionHeader title="GRASSROOTS GIGS" label="Support local venues" labelColor="text-emerald-500" subtitle="Small stages, big atmosphere" href="/gigs?grassroots=true" linkText="More grassroots" />
+          {loading ? (
+            <div className="space-y-px">
+              {Array.from({ length: 5 }).map((_, i) => <div key={i} className="h-16 bg-zinc-950 animate-pulse" />)}
             </div>
-            <Link href="/gigs?grassroots=true" className="text-sm text-emerald-400 hover:text-emerald-300 font-medium transition-colors hidden sm:block">
-              More grassroots gigs →
-            </Link>
-          </div>
-
-          <div className="mt-6">
-            {loading ? (
-              <div className="space-y-2">
-                {Array.from({ length: 5 }).map((_, i) => <div key={i} className="h-20 rounded-xl bg-zinc-800 animate-pulse" />)}
-              </div>
-            ) : grassroots.length > 0 ? (
-              <>
-                <div className="space-y-2">
-                  {grassroots.slice(0, 8).map(g => (
-                    <GigCard key={g.gigId} gig={g} showArtist grassroots />
-                  ))}
-                </div>
-                <div className="mt-6 flex gap-3 flex-wrap">
-                  <Link href="/gigs?grassroots=true" className="text-sm text-emerald-400 hover:text-emerald-300 font-medium transition-colors sm:hidden">
-                    More grassroots gigs →
-                  </Link>
-                </div>
-              </>
-            ) : (
-              <p className="text-zinc-500 text-sm">Check back soon for grassroots picks.</p>
-            )}
-          </div>
-
-          <div className="mt-8 bg-emerald-950/40 border border-emerald-900/50 rounded-2xl p-5">
-            <p className="text-sm text-emerald-300 font-medium">🎸 Why grassroots matters</p>
-            <p className="text-xs text-zinc-400 mt-1.5 leading-relaxed">
-              Grassroots venues are where careers are built and scenes are born. Every ticket sold keeps these spaces open.
-              GigRadar highlights every show at these venues so they never go unnoticed.
-            </p>
-          </div>
+          ) : grassroots.length > 0 ? (
+            <div>{grassroots.slice(0, 8).map(g => <GigCard key={g.gigId} gig={g} showArtist grassroots />)}</div>
+          ) : (
+            <p className="text-xs font-bold uppercase tracking-wider text-zinc-700">Check back soon.</p>
+          )}
         </div>
       </section>
 
       {/* Featured Venues */}
       {featuredVenues.length > 0 && (
-        <section className="border-t border-zinc-800">
-          <div className="max-w-5xl mx-auto px-6 py-12">
-            <div className="flex items-center justify-between mb-6">
-              <div>
-                <div className="flex items-center gap-2 mb-1">
-                  <span className="text-xs font-bold text-amber-400 uppercase tracking-widest">⭐ Featured Venues</span>
-                </div>
-                <h2 className="text-2xl font-bold text-white">Spotlight & Pro venues</h2>
-                <p className="text-sm text-zinc-500 mt-1">Verified venue operators keeping their listings up to date on GigRadar.</p>
-              </div>
-              <Link href="/venues" className="text-sm text-zinc-400 hover:text-white transition-colors hidden sm:block">All venues →</Link>
-            </div>
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+        <section className="border-b border-zinc-900">
+          <div className="max-w-7xl mx-auto px-6 py-10">
+            <SectionHeader title="FEATURED VENUES" label="Verified on GigRadar" labelColor="text-amber-500" href="/venues" linkText="All venues" />
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-px bg-zinc-900">
               {featuredVenues.map(v => (
                 <Link key={v.venueId} href={`/venues/${v.slug}`}
-                  className="bg-zinc-900 border border-zinc-800 hover:border-zinc-600 rounded-2xl p-4 transition-all hover:-translate-y-0.5 group">
+                  className="bg-black p-5 hover:bg-zinc-950 transition-colors group">
                   <div className="flex items-center gap-2 mb-2">
                     {v.isVenuePro
-                      ? <span className="text-xs font-bold text-amber-400">⭐</span>
-                      : <span className="text-xs font-bold text-indigo-400">✦</span>
+                      ? <span className="text-[9px] font-black uppercase tracking-widest text-amber-500">Pro</span>
+                      : <span className="text-[9px] font-black uppercase tracking-widest text-zinc-600">Verified</span>
                     }
                     {v.upcoming > 0 && (
-                      <span className="text-xs text-zinc-500">{v.upcoming} gig{v.upcoming !== 1 ? 's' : ''}</span>
+                      <span className="text-[9px] font-black uppercase tracking-widest text-zinc-700">{v.upcoming} gig{v.upcoming !== 1 ? 's' : ''}</span>
                     )}
                   </div>
-                  <div className="font-semibold text-white text-sm group-hover:text-violet-300 transition-colors leading-tight">{v.name}</div>
-                  {v.city && <div className="text-xs text-zinc-500 mt-0.5">{v.city}</div>}
+                  <div className="font-bold text-white text-sm group-hover:text-zinc-300 transition-colors leading-tight">{v.name}</div>
+                  {v.city && <div className="text-[10px] font-black uppercase tracking-wider text-zinc-600 mt-0.5">{v.city}</div>}
                 </Link>
               ))}
             </div>
@@ -402,145 +339,113 @@ export default function Home() {
       )}
 
       {/* Early Radar */}
-      <section className="border-t border-zinc-800 bg-zinc-900/20">
-        <div className="max-w-5xl mx-auto px-6 py-12">
-          <div className="flex items-center justify-between mb-2">
-            <div>
-              <div className="flex items-center gap-2 mb-1">
-                <span className="inline-block w-2 h-2 rounded-full bg-violet-400 animate-pulse"></span>
-                <span className="text-xs font-bold text-violet-400 uppercase tracking-widest">Early Radar</span>
-              </div>
-              <h2 className="text-2xl font-bold text-white">On the rise — playing grassroots this week</h2>
-              <p className="text-sm text-zinc-500 mt-1">Artists with the fastest growing Spotify audiences, still playing small stages.</p>
+      <section className="border-b border-zinc-900">
+        <div className="max-w-7xl mx-auto px-6 py-10">
+          <SectionHeader title="EARLY RADAR" label="On the rise" labelColor="text-violet-500" subtitle="Fastest growing artists still playing small stages" />
+          {loading ? (
+            <div className="space-y-px">
+              {Array.from({ length: 3 }).map((_, i) => <div key={i} className="h-16 bg-zinc-950 animate-pulse" />)}
             </div>
-          </div>
-
-          <div className="mt-6">
-            {loading ? (
-              <div className="space-y-3">
-                {Array.from({ length: 3 }).map((_, i) => <div key={i} className="h-20 rounded-xl bg-zinc-800 animate-pulse" />)}
-              </div>
-            ) : earlyRadar.length === 0 ? (
-              <div className="bg-zinc-900 border border-zinc-800 rounded-2xl p-8 text-center">
-                <div className="text-3xl mb-3">📡</div>
-                <p className="text-white font-semibold mb-1">Building the radar…</p>
-                <p className="text-sm text-zinc-500 max-w-sm mx-auto">
-                  Early Radar tracks how fast artists are growing on Spotify. We're collecting the first week of data — check back soon.
-                </p>
-              </div>
-            ) : (
-              <div className="space-y-3">
-                {earlyRadar.map(artist => {
-                  const gig = artist.upcomingGrassrootsGigs?.[0];
-                  return (
-                    <div key={artist.artistId} className="bg-zinc-900 border border-zinc-800 hover:border-zinc-700 rounded-2xl p-4 flex items-center gap-4 transition-colors">
-                      <Link href={`/artists/${encodeURIComponent(artist.artistId)}`} className="shrink-0">
-                        {artist.imageUrl
-                          ? <img src={artist.imageUrl} alt={artist.name} className="w-12 h-12 rounded-xl object-cover" />
-                          : <div className="w-12 h-12 rounded-xl bg-zinc-800 flex items-center justify-center text-lg font-black text-zinc-500">{artist.name?.[0]}</div>
-                        }
+          ) : earlyRadar.length === 0 ? (
+            <p className="text-xs font-bold uppercase tracking-wider text-zinc-700">Building the radar — check back soon.</p>
+          ) : (
+            <div>
+              {earlyRadar.map(artist => {
+                const gig = artist.upcomingGrassrootsGigs?.[0];
+                return (
+                  <div key={artist.artistId} className="flex items-center gap-4 border-b border-zinc-900 py-4 hover:bg-zinc-950 transition-colors px-0">
+                    <Link href={`/artists/${encodeURIComponent(artist.artistId)}`} className="shrink-0">
+                      {artist.imageUrl
+                        ? <img src={artist.imageUrl} alt={artist.name} className="w-10 h-10 object-cover" />
+                        : <div className="w-10 h-10 bg-zinc-900 flex items-center justify-center font-display text-xl text-zinc-600">{artist.name?.[0]}</div>
+                      }
+                    </Link>
+                    <div className="flex-1 min-w-0">
+                      <Link href={`/artists/${encodeURIComponent(artist.artistId)}`}
+                        className="font-black text-sm uppercase tracking-wide text-white hover:text-zinc-400 transition-colors block truncate">
+                        {artist.name}
                       </Link>
-                      <div className="flex-1 min-w-0">
-                        <Link href={`/artists/${encodeURIComponent(artist.artistId)}`}
-                          className="font-bold text-white hover:text-violet-300 transition-colors block truncate">
-                          {artist.name}
-                        </Link>
-                        {gig && (
-                          <p className="text-xs text-zinc-400 truncate mt-0.5">
-                            {gig.venueName}{gig.venueCity ? `, ${gig.venueCity}` : ''} · {new Date(gig.date).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })}
-                          </p>
-                        )}
-                      </div>
-                      <div className="text-right shrink-0">
-                        <div className="text-sm font-bold text-violet-400">+{artist.growthRate}%</div>
-                        <div className="text-xs text-zinc-500">{(artist.latestListeners || 0).toLocaleString()} listeners</div>
-                      </div>
-                      {gig?.ticketUrl && (
-                        <a href={gig.ticketUrl} target="_blank" rel="noopener noreferrer"
-                          className="shrink-0 text-xs bg-violet-600 hover:bg-violet-500 text-white font-semibold px-3 py-1.5 rounded-lg transition-colors">
-                          Tickets
-                        </a>
+                      {gig && (
+                        <p className="text-[10px] font-bold uppercase tracking-wider text-zinc-600 truncate mt-0.5">
+                          {gig.venueName}{gig.venueCity ? `, ${gig.venueCity}` : ''} · {new Date(gig.date).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })}
+                        </p>
                       )}
                     </div>
-                  );
-                })}
-              </div>
-            )}
-          </div>
+                    <div className="text-right shrink-0">
+                      <div className="font-display text-2xl text-violet-500">+{artist.growthRate}%</div>
+                      <div className="text-[10px] font-black uppercase tracking-wider text-zinc-700">{(artist.latestListeners || 0).toLocaleString()} listeners</div>
+                    </div>
+                    {gig?.ticketUrl && (
+                      <a href={gig.ticketUrl} target="_blank" rel="noopener noreferrer"
+                        className="shrink-0 text-[9px] font-black uppercase tracking-widest border border-zinc-800 text-zinc-400 hover:border-white hover:text-white px-3 py-2 transition-colors">
+                        Tickets
+                      </a>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          )}
         </div>
       </section>
 
       {/* Emerging artists */}
-      <section className="max-w-7xl mx-auto px-6 py-12">
-        <div className="flex items-center justify-between mb-6">
-          <div>
-            <h2 className="text-2xl font-bold text-white">Emerging artists</h2>
-            <p className="text-sm text-zinc-500 mt-1">Up-and-coming acts with multiple upcoming shows</p>
-          </div>
-          <Link href="/artists" className="text-sm text-violet-400 hover:text-violet-300 font-medium transition-colors">
-            Discover more →
-          </Link>
+      <section className="border-b border-zinc-900">
+        <div className="max-w-7xl mx-auto px-6 py-10">
+          <SectionHeader title="EMERGING ARTISTS" subtitle="Up-and-coming acts with multiple upcoming shows" href="/artists" linkText="Discover more" />
+          {loading ? (
+            <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 gap-px bg-zinc-900">
+              {Array.from({ length: 12 }).map((_, i) => (
+                <div key={i} className="aspect-square bg-zinc-950 animate-pulse" />
+              ))}
+            </div>
+          ) : emerging.length > 0 && (
+            <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 gap-px bg-zinc-900">
+              {emerging.slice(0, 12).map(a => <ArtistCard key={a.artistId} artist={a} />)}
+            </div>
+          )}
         </div>
-        {loading ? (
-          <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 gap-3">
-            {Array.from({ length: 12 }).map((_, i) => (
-              <div key={i} className="aspect-square rounded-xl bg-zinc-800 animate-pulse" />
-            ))}
-          </div>
-        ) : emerging.length > 0 && (
-          <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 gap-3">
-            {emerging.slice(0, 12).map(a => <ArtistCard key={a.artistId} artist={a} />)}
-          </div>
-        )}
       </section>
 
       {/* Upcoming gigs */}
-      <section className="border-t border-zinc-800">
-        <div className="max-w-5xl mx-auto px-6 py-12">
-          <div className="flex items-center justify-between mb-6">
-            <h2 className="text-2xl font-bold text-white">Upcoming gigs</h2>
-            <Link href="/gigs" className="text-sm text-violet-400 hover:text-violet-300 font-medium transition-colors">
-              See all gigs →
-            </Link>
-          </div>
-
+      <section className="border-b border-zinc-900">
+        <div className="max-w-7xl mx-auto px-6 py-10">
+          <SectionHeader title="UPCOMING GIGS" href="/gigs" linkText="See all" />
           {loading ? (
-            <div className="space-y-2">
+            <div className="space-y-px">
               {Array.from({ length: 6 }).map((_, i) => (
-                <div key={i} className="h-20 rounded-xl bg-zinc-800 animate-pulse" />
+                <div key={i} className="h-16 bg-zinc-950 animate-pulse" />
               ))}
             </div>
           ) : upcomingGigs.length > 0 ? (
             <>
-              <div className="space-y-2">
-                {upcomingGigs.map(g => <GigCard key={g.gigId} gig={g} showArtist />)}
-              </div>
-              <div className="mt-8 text-center">
-                <Link href="/gigs" className="inline-block bg-zinc-800 hover:bg-zinc-700 border border-zinc-700 text-white font-semibold px-8 py-3 rounded-xl transition-colors text-sm">
+              <div>{upcomingGigs.map(g => <GigCard key={g.gigId} gig={g} showArtist />)}</div>
+              <div className="mt-8">
+                <Link href="/gigs" className="inline-block border border-zinc-800 text-zinc-400 font-black text-[10px] uppercase tracking-widest px-8 py-3 hover:border-white hover:text-white transition-colors">
                   View all upcoming gigs →
                 </Link>
               </div>
             </>
           ) : (
-            <p className="text-zinc-500 text-sm">No upcoming gigs found.</p>
+            <p className="text-xs font-bold uppercase tracking-wider text-zinc-700">No upcoming gigs found.</p>
           )}
         </div>
       </section>
 
       {/* Feature callouts */}
-      <section className="border-t border-zinc-800">
-        <div className="max-w-5xl mx-auto px-6 py-12">
-          <div className="grid sm:grid-cols-3 gap-4">
+      <section className="border-b border-zinc-900">
+        <div className="max-w-7xl mx-auto px-6 py-10">
+          <div className="grid sm:grid-cols-3 gap-px bg-zinc-900">
             {[
-              { icon: '🔔', title: 'Instant gig alerts', desc: 'Get an email the moment a new show is announced for any artist or venue you follow. Never miss ticket day again.', cta: 'Browse artists', href: '/artists' },
-              { icon: '📍', title: 'Gigs near me', desc: 'Find every live show within 15 miles of your location across all ticket platforms, including grassroots venues.', cta: 'Find local gigs', href: '/gigs' },
-              { icon: '🎵', title: 'Spotify import', desc: 'Connect Spotify to auto-follow your top listened artists and see all their upcoming UK shows in one place.', cta: 'Connect Spotify', href: '/onboarding/connect' },
+              { icon: '🔔', title: 'INSTANT GIG ALERTS', desc: 'Get an email the moment a new show is announced for any artist or venue you follow. Never miss ticket day again.', cta: 'Browse artists', href: '/artists' },
+              { icon: '📍', title: 'GIGS NEAR ME', desc: 'Find every live show within 15 miles of your location across all ticket platforms, including grassroots venues.', cta: 'Find local gigs', href: '/gigs' },
+              { icon: '🎵', title: 'SPOTIFY IMPORT', desc: 'Connect Spotify to auto-follow your top listened artists and see all their upcoming UK shows in one place.', cta: 'Connect Spotify', href: '/onboarding/connect' },
             ].map(({ icon, title, desc, cta, href }) => (
-              <div key={title} className="bg-zinc-900 border border-zinc-800 rounded-2xl p-6 hover:border-zinc-600 transition-colors">
-                <div className="text-3xl mb-4">{icon}</div>
-                <h3 className="text-base font-bold text-white mb-2">{title}</h3>
-                <p className="text-sm text-zinc-400 leading-relaxed mb-5">{desc}</p>
-                <Link href={href} className="text-sm text-violet-400 hover:text-violet-300 font-semibold transition-colors">
+              <div key={title} className="bg-black p-8 hover:bg-zinc-950 transition-colors">
+                <div className="text-2xl mb-4">{icon}</div>
+                <h3 className="font-display text-2xl text-white mb-3">{title}</h3>
+                <p className="text-xs font-bold uppercase tracking-wider text-zinc-600 leading-relaxed mb-6">{desc}</p>
+                <Link href={href} className="text-[10px] font-black uppercase tracking-widest text-zinc-400 hover:text-white transition-colors border-b border-zinc-800 hover:border-white pb-0.5">
                   {cta} →
                 </Link>
               </div>

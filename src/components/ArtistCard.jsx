@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import FollowButton from './FollowButton.jsx';
-import { artistInitials, artistColor } from '../utils/format.js';
+import { artistColor } from '../utils/format.js';
 
 const imageCache = {};
 async function fetchWikiImage(wikipedia) {
@@ -25,38 +25,35 @@ export default function ArtistCard({ artist }) {
   }, [artist.imageUrl, artist.wikipedia]);
 
   return (
-    <div className="group rounded-xl overflow-hidden bg-zinc-900 border border-zinc-800 hover:border-zinc-600 transition-all duration-200 hover:-translate-y-0.5 hover:shadow-lg hover:shadow-black/50">
-      <Link href={`/artists/${artist.artistId}`} className="block">
-        <div className="relative aspect-square overflow-hidden" style={{ backgroundColor: color + '33' }}>
-          {imgUrl ? (
-            <img src={imgUrl} alt={artist.name}
-              className="w-full h-full object-cover object-top group-hover:scale-105 transition-transform duration-500" />
-          ) : (
-            <div className="absolute inset-0 flex items-center justify-center">
-              <span className="text-4xl font-black" style={{ color }}>{artistInitials(artist.name)}</span>
-            </div>
+    <div className="group overflow-hidden relative aspect-square bg-zinc-950">
+      <Link href={`/artists/${artist.artistId}`} className="block w-full h-full">
+        {imgUrl ? (
+          <img src={imgUrl} alt={artist.name}
+            className="w-full h-full object-cover object-top group-hover:scale-105 transition-transform duration-500" />
+        ) : (
+          <div className="w-full h-full flex items-center justify-center" style={{ backgroundColor: color + '22' }}>
+            <span className="font-display text-5xl" style={{ color }}>{artist.name?.[0]?.toUpperCase()}</span>
+          </div>
+        )}
+
+        {/* Bottom overlay */}
+        <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/20 to-transparent" />
+
+        <div className="absolute bottom-0 left-0 right-0 p-2.5">
+          <p className="font-display text-lg leading-tight text-white truncate">{artist.name}</p>
+          {artist.genres?.length > 0 && (
+            <p className="text-[10px] font-bold uppercase tracking-wider text-zinc-400 truncate">{artist.genres[0]}</p>
           )}
-          <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent" />
           {artist.upcoming > 0 && (
-            <div className="absolute bottom-2 left-2">
-              <span className="inline-flex items-center gap-1 bg-violet-600 text-white text-[10px] font-bold px-2 py-0.5 rounded-md">
-                {artist.upcoming} {artist.upcoming === 1 ? 'gig' : 'gigs'}
-              </span>
-            </div>
+            <span className="inline-block text-[9px] font-black uppercase tracking-widest bg-white text-black px-1.5 py-0.5 mt-1">
+              {artist.upcoming} {artist.upcoming === 1 ? 'gig' : 'gigs'}
+            </span>
           )}
         </div>
       </Link>
-      <div className="p-3 bg-zinc-900">
-        <div className="flex items-start justify-between gap-2">
-          <Link href={`/artists/${artist.artistId}`}
-            className="font-semibold text-sm text-white hover:text-violet-400 truncate transition-colors leading-tight">
-            {artist.name}
-          </Link>
-          <FollowButton artistId={artist.artistId} size="sm" />
-        </div>
-        {artist.genres?.length > 0 && (
-          <p className="text-xs text-zinc-500 mt-0.5 truncate">{artist.genres[0]}</p>
-        )}
+
+      <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity">
+        <FollowButton artistId={artist.artistId} size="sm" />
       </div>
     </div>
   );
