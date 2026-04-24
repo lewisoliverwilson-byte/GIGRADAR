@@ -303,33 +303,44 @@ async function getVenueGigs(slug) {
 }
 
 /* ---- GET /search?q= ---- */
+async function scanAll(params) {
+  const items = [];
+  let key;
+  do {
+    const res = await ddb.send(new ScanCommand({ ...params, ExclusiveStartKey: key }));
+    if (res.Items) items.push(...res.Items);
+    key = res.LastEvaluatedKey;
+  } while (key);
+  return items;
+}
+
 async function search(params) {
   const q = (params?.q || '').trim();
   if (q.length < 2) return ok({ artists: [], venues: [] });
   const limit = Math.min(parseInt(params?.limit || '20', 10), 50);
   const qLower = q.toLowerCase();
 
-  const [aRes, vRes] = await Promise.all([
-    ddb.send(new ScanCommand({
+  const [allArtists, allVenues] = await Promise.all([
+    scanAll({
       TableName: ARTISTS_TABLE,
       ProjectionExpression: 'artistId, #n, imageUrl, genres, upcoming',
       ExpressionAttributeNames: { '#n': 'name' },
-    })),
-    ddb.send(new ScanCommand({
+    }),
+    scanAll({
       TableName: VENUES_TABLE,
       FilterExpression: 'isActive = :t',
       ExpressionAttributeValues: { ':t': true },
       ProjectionExpression: 'venueId, slug, #n, city, upcoming',
       ExpressionAttributeNames: { '#n': 'name' },
-    })),
+    }),
   ]);
 
-  const artists = (aRes.Items || [])
+  const artists = allArtists
     .filter(a => a.name && !a.artistId.startsWith('_') && a.name.toLowerCase().includes(qLower))
     .sort((a, b) => (b.upcoming || 0) - (a.upcoming || 0))
     .slice(0, limit);
 
-  const venues = (vRes.Items || [])
+  const venues = allVenues
     .filter(v => v.name && v.name.toLowerCase().includes(qLower))
     .sort((a, b) => (b.upcoming || 0) - (a.upcoming || 0))
     .slice(0, limit);
