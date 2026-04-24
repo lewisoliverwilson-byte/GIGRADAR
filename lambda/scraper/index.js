@@ -57,6 +57,13 @@ function isTributeAct(name) {
 
 const GENERIC_ACT_RE = /^(live music|open mic|various artists?|dj night|club night|karaoke|quiz night|comedy night|open stage|acoustic night|local bands?|tribute night|unsigned night|battle of the bands|bands? night|gig night|music night|headline act tba|tba|tbc|doors? open)$/i;
 
+// Non-music event filter — event titles that indicate food, comedy, sport, dating etc.
+const NON_MUSIC_RE = /\b(pizza|cooking class|cookery|food tour|wine tasting|cocktail making|speed dating|dating event|comedy club|stand.?up comedy|stand up comedy|comedy night|open mic comedy|paint.?night|painting class|yoga|fitness class|pilates|book club|quiz night|pub quiz|escape room|murder mystery|bingo|poker|gaming|e.?sports|football|rugby|cricket|tennis|golf|boxing|wrestling|basketball|art class|drawing class|pottery class|wreath making|flower arranging|gin tasting|beer tasting|whisky tasting|cheese tasting|chocolate making|sushi making|curry night|tapas night|networking event|business event|conference|seminar|workshop|exhibition|gallery|film screening|movie night|drag brunch|bottomless brunch|afternoon tea|halloween party|christmas party|nye party|new year party)\b/i;
+
+function isNonMusicEvent(name) {
+  return NON_MUSIC_RE.test(name || '');
+}
+
 // Patterns that indicate an event title rather than an artist name
 const EVENT_TITLE_RE = /\bpresents[:\-\s]/i | / @ /;
 const isEventTitle = name => {
@@ -1143,6 +1150,10 @@ async function upsertArtist(artist) {
 }
 
 async function upsertGig(gig) {
+  if (isNonMusicEvent(gig.artistName) || isNonMusicEvent(gig.eventTitle)) {
+    console.log(`Skipping non-music event: "${gig.artistName || gig.eventTitle}"`);
+    return;
+  }
   const item = { ...gig };
   delete item.dedupKey; // don't store internal key
   await ddb.send(new PutCommand({ TableName: GIGS_TABLE, Item: item }))

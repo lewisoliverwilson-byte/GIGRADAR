@@ -314,26 +314,46 @@ async function scanAll(params) {
   return items;
 }
 
+// Tribute/cover band keywords — filter from Trending/Emerging
+const TRIBUTE_KEYWORDS = [
+  'tribute', 'cover', 'experience', 'legacy', 'celebration', 'story of',
+  'salute to', 'lives on', 'the music of', 'a night of', 'symphony of',
+  'vs ', ' vs.', 'starring', 'performed by', 'feat.', 'featuring',
+];
+function isTribute(name) {
+  if (!name) return false;
+  const n = name.toLowerCase();
+  return TRIBUTE_KEYWORDS.some(kw => n.includes(kw));
+}
+
+// Cached full artist + venue lists for fast search (5-min TTL)
+function getSearchCache() {
+  return withCache('search-artists-venues', 5 * 60000, async () => {
+    const [artists, venues] = await Promise.all([
+      scanAll({
+        TableName: ARTISTS_TABLE,
+        ProjectionExpression: 'artistId, #n, imageUrl, genres, upcoming',
+        ExpressionAttributeNames: { '#n': 'name' },
+      }),
+      scanAll({
+        TableName: VENUES_TABLE,
+        FilterExpression: 'isActive = :t',
+        ExpressionAttributeValues: { ':t': true },
+        ProjectionExpression: 'venueId, slug, #n, city, upcoming',
+        ExpressionAttributeNames: { '#n': 'name' },
+      }),
+    ]);
+    return { artists, venues };
+  });
+}
+
 async function search(params) {
   const q = (params?.q || '').trim();
   if (q.length < 2) return ok({ artists: [], venues: [] });
   const limit = Math.min(parseInt(params?.limit || '20', 10), 50);
   const qLower = q.toLowerCase();
 
-  const [allArtists, allVenues] = await Promise.all([
-    scanAll({
-      TableName: ARTISTS_TABLE,
-      ProjectionExpression: 'artistId, #n, imageUrl, genres, upcoming',
-      ExpressionAttributeNames: { '#n': 'name' },
-    }),
-    scanAll({
-      TableName: VENUES_TABLE,
-      FilterExpression: 'isActive = :t',
-      ExpressionAttributeValues: { ':t': true },
-      ProjectionExpression: 'venueId, slug, #n, city, upcoming',
-      ExpressionAttributeNames: { '#n': 'name' },
-    }),
-  ]);
+  const { allArtists, allVenues } = await getSearchCache().then(c => ({ allArtists: c.artists, allVenues: c.venues }));
 
   const artists = allArtists
     .filter(a => a.name && !a.artistId.startsWith('_') && a.name.toLowerCase().includes(qLower))
@@ -380,15 +400,16 @@ async function getSimilarArtists(artistId) {
 
 /* ---- GET /trending ---- */
 async function getTrending() {
-  const result = await ddb.send(new ScanCommand({
+  const items = await scanAll({
     TableName: ARTISTS_TABLE,
     FilterExpression: 'upcoming > :z',
     ExpressionAttributeValues: { ':z': 0 },
-    ProjectionExpression: 'artistId, #n, imageUrl, genres, upcoming, spotifyPopularity, lastfmListeners',
+    ProjectionExpression: 'artistId, #n, imageUrl, genres, upcoming, spotifyPopularity, lastfmListeners, spotify',
     ExpressionAttributeNames: { '#n': 'name' },
-  }));
-  const artists = (result.Items || [])
-    .filter(a => a.name && !a.artistId.startsWith('_'))
+  });
+  const artists = items
+    .filter(a => a.name && !a.artistId.startsWith('_') && !isTribute(a.name))
+    .filter(a => a.spotify || (a.spotifyPopularity || 0) > 0 || (a.lastfmListeners || 0) > 1000)
     .sort((a, b) => {
       const pop = (b.spotifyPopularity || 0) - (a.spotifyPopularity || 0);
       if (pop !== 0) return pop;
@@ -400,15 +421,15 @@ async function getTrending() {
 
 /* ---- GET /emerging ---- */
 async function getEmerging() {
-  const result = await ddb.send(new ScanCommand({
+  const items = await scanAll({
     TableName: ARTISTS_TABLE,
     FilterExpression: 'upcoming > :z AND (attribute_not_exists(spotifyPopularity) OR spotifyPopularity < :maxPop)',
     ExpressionAttributeValues: { ':z': 0, ':maxPop': 40 },
     ProjectionExpression: 'artistId, #n, imageUrl, genres, upcoming, spotifyPopularity',
     ExpressionAttributeNames: { '#n': 'name' },
-  }));
-  const artists = (result.Items || [])
-    .filter(a => a.name && !a.artistId.startsWith('_') && (a.upcoming || 0) >= 2)
+  });
+  const artists = items
+    .filter(a => a.name && !a.artistId.startsWith('_') && !isTribute(a.name) && (a.upcoming || 0) >= 2)
     .sort((a, b) => (b.upcoming || 0) - (a.upcoming || 0))
     .slice(0, 20);
   return ok(artists);
