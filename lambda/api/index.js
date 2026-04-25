@@ -314,16 +314,16 @@ async function scanAll(params) {
   return items;
 }
 
-// Tribute/cover band keywords — filter from Trending/Emerging
-const TRIBUTE_KEYWORDS = [
-  'tribute', 'cover', 'experience', 'legacy', 'celebration', 'story of',
-  'salute to', 'lives on', 'the music of', 'a night of', 'symphony of',
-  'vs ', ' vs.', 'starring', 'performed by', 'feat.', 'featuring',
-];
+// Tribute/cover band detection — applied to artist names in Trending/Emerging
+const TRIBUTE_RE = /tribute|cover band|covers band|\bcovers\b|salute to|the music of|celebrating the music|songs of|the songs of|in the style of|a night of|an evening of|lives on|symphony of|story of|the story of|legacy of|anniversary show|anniversary tour|anniversary concert|plays the hits|performs the hits|greatest hits show|years of hits|through the years|vs\s|feat\.|featuring|performed by|starring|experience\b|honouring|honoring|in memory of|in tribute|a tribute to|tribute to|celebrating /i;
 function isTribute(name) {
   if (!name) return false;
-  const n = name.toLowerCase();
-  return TRIBUTE_KEYWORDS.some(kw => n.includes(kw));
+  return TRIBUTE_RE.test(name);
+}
+
+// Non-music artist signal — catches comedians, presenters, TV personalities with no music metadata
+function hasMusicSignal(a) {
+  return !!(a.spotify || (a.spotifyPopularity || 0) > 0 || (a.lastfmListeners || 0) > 100 || a.imageUrl);
 }
 
 // Cached full artist + venue lists for fast search (5-min TTL)
@@ -408,7 +408,7 @@ async function getTrending() {
     ExpressionAttributeNames: { '#n': 'name' },
   });
   const artists = items
-    .filter(a => a.name && !a.artistId.startsWith('_') && !isTribute(a.name))
+    .filter(a => a.name && !a.artistId.startsWith('_') && !isTribute(a.name) && a.imageUrl)
     .filter(a => a.spotify || (a.spotifyPopularity || 0) > 0 || (a.lastfmListeners || 0) > 1000)
     .sort((a, b) => {
       const pop = (b.spotifyPopularity || 0) - (a.spotifyPopularity || 0);
@@ -429,7 +429,7 @@ async function getEmerging() {
     ExpressionAttributeNames: { '#n': 'name' },
   });
   const artists = items
-    .filter(a => a.name && !a.artistId.startsWith('_') && !isTribute(a.name) && (a.upcoming || 0) >= 2)
+    .filter(a => a.name && !a.artistId.startsWith('_') && !isTribute(a.name) && a.imageUrl && hasMusicSignal(a) && (a.upcoming || 0) >= 2)
     .sort((a, b) => (b.upcoming || 0) - (a.upcoming || 0))
     .slice(0, 20);
   return ok(artists);
@@ -603,6 +603,7 @@ async function getOnSaleGigs(params) {
   })).catch(() => ({ Items: [] }));
 
   const gigs = (result.Items || [])
+    .filter(g => !g.isSoldOut)
     .sort((a, b) => (a.onSaleDate || '').localeCompare(b.onSaleDate || ''))
     .slice(0, 50);
   return ok(gigs);

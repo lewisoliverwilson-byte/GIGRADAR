@@ -49,11 +49,16 @@ function toArtistId(name) {
 // ─── Tribute / cover band filter ────────────────────────────────────────────
 // Exclude events where the matched act name signals it's a cover/tribute act
 
-const TRIBUTE_RE = /tribute|cover band|salute to|the music of|\bcovers\b|in the style of|celebrating |legacy of |experience\b/i;
+// Comprehensive tribute/cover band detection — applied to both artist names AND event titles.
+// Catches "Nirvana Tribute Night" via event title even when TM attraction is listed as "Nirvana".
+const TRIBUTE_RE = /tribute|cover band|covers band|\bcovers\b|salute to|the music of|celebrating the music|songs of|the songs of|in the style of|a night of|an evening of|lives on|symphony of|story of|the story of|legacy of|anniversary show|anniversary tour|anniversary concert|plays the hits|performs the hits|greatest hits show|years of hits|through the years|honouring|honoring|in memory of|in tribute|a tribute to|vs\s|feat\.|featuring\s+the|experience\b|celebrating \w|performed by|starring/i;
 
 function isTributeAct(name) {
   return TRIBUTE_RE.test(name || '');
 }
+
+// Non-music event genre keywords (Skiddle/Eventbrite send genre arrays)
+const NON_MUSIC_GENRE_RE = /comedy|stand.?up|spoken word|cabaret|theatre|theater|magic|circus|variety|film|cinema|sport|fitness|quiz|bingo|gaming|esport/i;
 
 const GENERIC_ACT_RE = /^(live music|open mic|various artists?|dj night|club night|karaoke|quiz night|comedy night|open stage|acoustic night|local bands?|tribute night|unsigned night|battle of the bands|bands? night|gig night|music night|headline act tba|tba|tbc|doors? open)$/i;
 
@@ -240,6 +245,8 @@ async function fetchTicketmaster(artists) {
         const venue   = ev._embedded?.venues?.[0];
         const date    = ev.dates?.start?.localDate;
         if (!date || !venue) continue;
+        // Skip if the event title itself signals a tribute/cover ("Nirvana Tribute Night" etc.)
+        if (isTributeAct(ev.name || '')) continue;
         // Verify at least one attraction matches this artist (and isn't a tribute/cover act)
         const attract = ev._embedded?.attractions || [];
         const match   = attract.find(a => normaliseName(a.name) === normaliseName(artist.name) && !isTributeAct(a.name));
@@ -307,6 +314,8 @@ async function fetchTicketmasterBulk(nameMap) {
         const attract = ev._embedded?.attractions || [];
         const mainAct = attract[0];
         if (!mainAct?.name) continue;
+        // Skip tribute acts and tribute event titles
+        if (isTributeAct(mainAct.name) || isTributeAct(ev.name || '')) continue;
 
         const norm = normaliseName(mainAct.name);
         let artist = nameMap[norm];
@@ -373,15 +382,18 @@ async function fetchSkiddle(nameMap) {
       if (!events.length) break;
       for (const ev of events) {
         const rawName = ev.artists?.[0]?.name || '';
-        if (isGenericName(rawName)) continue;
+        if (isGenericName(rawName) || isTributeAct(rawName)) continue;
+        // Skip if the event title or Skiddle genre indicates non-music/tribute
+        if (isTributeAct(ev.eventname || ev.name || '')) continue;
+        const skiGenres  = (ev.genres || []).map(g => (g.name || g.EventCode || '').toLowerCase().trim()).filter(Boolean);
+        if (skiGenres.some(g => NON_MUSIC_GENRE_RE.test(g))) continue;
         const norm = normaliseName(rawName);
         let artist = nameMap[norm];
         if (!artist) {
           artist = await autoSeedArtist(rawName, nameMap);
           if (!artist) continue;
         }
-        const date       = ev.date;
-        const skiGenres  = (ev.genres || []).map(g => (g.name || g).toLowerCase().trim()).filter(Boolean);
+        const date = ev.date;
         gigs.push({
           gigId:        `ski-${ev.id}`,
           dedupKey:     dedupKey(artist.id, date, ev.venue?.name || ''),
@@ -508,7 +520,8 @@ async function fetchDice(nameMap) {
 
         for (const art of artists) {
           const artistName = art.name || '';
-          if (isGenericName(artistName)) continue;
+          if (isGenericName(artistName) || isTributeAct(artistName)) continue;
+          if (isTributeAct(ev.name || ev.title || '')) continue;
           const norm = normaliseName(artistName);
           let artist = nameMap[norm];
           if (!artist) {
@@ -593,7 +606,7 @@ async function fetchResidentAdvisor(nameMap) {
           if (!date || date < today) continue;
 
           for (const art of (ev.artists || [])) {
-            if (isGenericName(art.name)) continue;
+            if (isGenericName(art.name) || isTributeAct(art.name)) continue;
             const norm = normaliseName(art.name);
             let artist = nameMap[norm];
             if (!artist) {
@@ -815,6 +828,8 @@ async function fetchEventbrite(nameMap) {
             const rawName = extractArtistFromTitle(ev.name || '', ev.url || '');
 
             if (!rawName || isGenericName(rawName) || isTributeAct(rawName)) continue;
+            // Also check the full event title for tribute keywords (artist name may be "Nirvana" while title is "Nirvana Tribute Night")
+            if (isTributeAct(ev.name || '')) continue;
             const norm = normaliseName(rawName);
             let artist = nameMap[norm];
             if (!artist) {
