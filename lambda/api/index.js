@@ -1049,14 +1049,26 @@ async function matchArtists(event) {
     return ok({ artists: [] });
   }
 
-  const result = await ddb.send(new ScanCommand({ TableName: ARTISTS_TABLE }));
-  const dbArtists = (result.Items || []).filter(a => a.name && !a.artistId.startsWith('_'));
+  // Paginated scan — single scan misses ~75% of records at 47k artists
+  const dbArtists = [];
+  let lastKey;
+  do {
+    const res = await ddb.send(new ScanCommand({
+      TableName: ARTISTS_TABLE,
+      ProjectionExpression: 'artistId, #n, spotify, spotifyId, imageUrl, genres',
+      ExpressionAttributeNames: { '#n': 'name' },
+      ...(lastKey ? { ExclusiveStartKey: lastKey } : {}),
+    }));
+    if (res.Items) dbArtists.push(...res.Items.filter(a => a.name && !a.artistId.startsWith('_')));
+    lastKey = res.LastEvaluatedKey;
+  } while (lastKey);
 
-  // Index by Spotify artist ID (most precise lookup)
-  const bySpotifyId = new Map(
-    dbArtists.filter(a => a.spotify)
-      .map(a => [a.spotify.split('/').pop(), a])
-  );
+  // Index by Spotify ID — check both spotifyId field and extract from URL
+  const bySpotifyId = new Map();
+  for (const a of dbArtists) {
+    if (a.spotifyId) bySpotifyId.set(a.spotifyId, a);
+    else if (a.spotify) bySpotifyId.set(a.spotify.split('/').pop(), a);
+  }
   // Index by exact lowercase name
   const byExactName = new Map(dbArtists.map(a => [a.name.toLowerCase().trim(), a]));
   // Track all slugs to avoid collisions when creating new profiles
@@ -1093,13 +1105,20 @@ async function matchArtists(event) {
         imageUrl: match.imageUrl || sa.imageUrl || null,
         genres:   match.genres?.length ? match.genres : (sa.genres || []),
       });
-      // Opportunistically store Spotify ID if this profile didn't have one yet
+      // Opportunistically enrich profile if Spotify data not yet stored
       if (!match.spotify && sa.id) {
+        const sets = ['spotify = :s', 'spotifyId = :si'];
+        const vals = {
+          ':s':  `https://open.spotify.com/artist/${sa.id}`,
+          ':si': sa.id,
+        };
+        if (sa.imageUrl && !match.imageUrl)  { sets.push('imageUrl = :img'); vals[':img'] = sa.imageUrl; }
+        if (sa.genres?.length && !match.genres?.length) { sets.push('genres = :g'); vals[':g'] = sa.genres; }
         ddb.send(new UpdateCommand({
           TableName: ARTISTS_TABLE,
           Key: { artistId: match.artistId },
-          UpdateExpression: 'SET spotify = :s',
-          ExpressionAttributeValues: { ':s': `https://open.spotify.com/artist/${sa.id}` },
+          UpdateExpression: `SET ${sets.join(', ')}`,
+          ExpressionAttributeValues: vals,
         })).catch(() => {});
       }
     } else if (!match) {
@@ -1124,6 +1143,7 @@ async function matchArtists(event) {
       artistId:  slug,
       name:      sa.name,
       spotify:   `https://open.spotify.com/artist/${sa.id}`,
+      spotifyId: sa.id,
       upcoming:  0,
       source:    'spotify',
       createdAt: new Date().toISOString(),

@@ -254,6 +254,7 @@ async function fetchTicketmaster(artists) {
         const pr    = ev.priceRanges?.[0];
         const sym   = currSym(pr?.currency);
         const price = pr ? `${sym}${Math.round(pr.min)}${pr.max !== pr.min ? `–${sym}${Math.round(pr.max)}` : ''}` : null;
+        const onSaleDate = ev.sales?.public?.startDateTime?.split('T')[0] || null;
         gigs.push({
           gigId:        `tm-${ev.id}`,
           dedupKey:     dedupKey(artist.artistId, date, venue.name),
@@ -267,6 +268,8 @@ async function fetchTicketmaster(artists) {
           venueCountry: venue.country?.countryCode || '',
           isSoldOut:    ev.dates?.status?.code === 'offsale',
           supportActs:  [],
+          ...(onSaleDate ? { onSaleDate } : {}),
+          ...(pr?.min != null ? { minPrice: pr.min } : {}),
           tickets: [{ seller: 'Ticketmaster', url: ev.url || '#', available: ev.dates?.status?.code !== 'offsale', price: price || 'See site' }],
           sources:      ['ticketmaster'],
           lastUpdated:  new Date().toISOString(),
@@ -326,6 +329,7 @@ async function fetchTicketmasterBulk(nameMap) {
 
         const pr  = ev.priceRanges?.[0];
         const sym = currSym(pr?.currency);
+        const onSaleDate = ev.sales?.public?.startDateTime?.split('T')[0] || null;
         gigs.push({
           gigId:        `tm-${ev.id}`,
           dedupKey:     dedupKey(artist.id, date, venue.name),
@@ -339,6 +343,8 @@ async function fetchTicketmasterBulk(nameMap) {
           venueCountry: 'GB',
           isSoldOut:    ev.dates?.status?.code === 'offsale',
           supportActs:  attract.slice(1).map(a => a.name).filter(Boolean),
+          ...(onSaleDate ? { onSaleDate } : {}),
+          ...(pr?.min != null ? { minPrice: pr.min } : {}),
           tickets: [{ seller: 'Ticketmaster', url: ev.url || '#', available: ev.dates?.status?.code !== 'offsale', price: pr ? `${sym}${Math.round(pr.min)}` : 'See site' }],
           sources:      ['ticketmaster'],
           lastUpdated:  new Date().toISOString(),
@@ -408,6 +414,8 @@ async function fetchSkiddle(nameMap) {
           isSoldOut:    ev.soldout === '1',
           supportActs:  [],
           ...(skiGenres.length ? { genre: skiGenres } : {}),
+          ...(ev.mineticketprice ? { minPrice: parseFloat(ev.mineticketprice) } : {}),
+          ...(ev.onsaledate ? { onSaleDate: ev.onsaledate.split('T')[0] } : {}),
           tickets: [{
             seller:    'Skiddle',
             url:       ev.link || '#',
@@ -1419,6 +1427,8 @@ async function fetchVenueSkiddleGigs(venue, nameMap) {
         isSoldOut:        !ev.tickets,
         supportActs:      [],
         ...(skiGenres.length ? { genre: skiGenres } : {}),
+        ...(ev.mineticketprice ? { minPrice: parseFloat(ev.mineticketprice) } : {}),
+        ...(ev.onsaledate ? { onSaleDate: ev.onsaledate.split('T')[0] } : {}),
         tickets: [{
           seller:    'Skiddle',
           url:       ev.link || 'https://www.skiddle.com',
@@ -1456,6 +1466,7 @@ async function fetchVenueTMGigs(venue, nameMap) {
       if (!artist) { artist = await autoSeedArtist(mainAct.name, nameMap); if (!artist) continue; }
       const pr  = ev.priceRanges?.[0];
       const sym = currSym(pr?.currency);
+      const onSaleDate = ev.sales?.public?.startDateTime?.split('T')[0] || null;
       gigs.push({
         gigId:            `tm-${ev.id}`,
         dedupKey:         dedupKey(artist.id, date, venue.name),
@@ -1470,6 +1481,8 @@ async function fetchVenueTMGigs(venue, nameMap) {
         canonicalVenueId: venue.venueId,
         isSoldOut:        ev.dates?.status?.code === 'offsale',
         supportActs:      attract.slice(1).map(a => a.name).filter(Boolean),
+        ...(onSaleDate ? { onSaleDate } : {}),
+        ...(pr?.min != null ? { minPrice: pr.min } : {}),
         tickets: [{ seller: 'Ticketmaster', url: ev.url || '#', available: ev.dates?.status?.code !== 'offsale', price: pr ? `${sym}${Math.round(pr.min)}` : 'See site' }],
         sources:          ['ticketmaster-venue'],
         lastUpdated:      new Date().toISOString(),
@@ -1633,6 +1646,9 @@ async function fetchVenueStoredUrls(venue, nameMap) {
         const support   = performers.slice(1).map(p => p.name).filter(n => isValidVenueArtist(n));
         const ticketUrl = Array.isArray(ev.offers) ? ev.offers[0]?.url : ev.offers?.url;
         const price     = Array.isArray(ev.offers) ? ev.offers[0]?.price : ev.offers?.price;
+        const priceNum  = price ? parseFloat(price) : null;
+        const validityStart = Array.isArray(ev.offers) ? ev.offers[0]?.validFrom : ev.offers?.validFrom;
+        const onSaleDate = validityStart ? validityStart.split('T')[0] : null;
 
         gigs.push({
           gigId:            `${platform}-${normaliseName(venue.name)}-${artist.id}-${date}`,
@@ -1648,6 +1664,8 @@ async function fetchVenueStoredUrls(venue, nameMap) {
           canonicalVenueId: venue.venueId,
           isSoldOut:        false,
           supportActs:      support,
+          ...(onSaleDate ? { onSaleDate } : {}),
+          ...(priceNum != null && !isNaN(priceNum) ? { minPrice: priceNum } : {}),
           tickets: [{
             seller:    platform.charAt(0).toUpperCase() + platform.slice(1),
             url:       ticketUrl || pageUrl,
