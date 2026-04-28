@@ -320,6 +320,21 @@ export default function ArtistDetail({ initialArtist = null }) {
           </div>
         </div>
 
+        {/* Spotify embed */}
+        {artist.spotifyId && (
+          <div className="mt-6 mb-2">
+            <iframe
+              src={`https://open.spotify.com/embed/artist/${artist.spotifyId}?utm_source=generator&theme=0`}
+              width="100%"
+              height="152"
+              frameBorder="0"
+              allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture"
+              loading="lazy"
+              className="rounded-xl"
+            />
+          </div>
+        )}
+
         <div className="border-t border-zinc-800 mt-10 mb-6" />
 
         {/* Tabs */}

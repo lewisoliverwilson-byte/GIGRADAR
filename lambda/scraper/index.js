@@ -788,7 +788,114 @@ async function fetchWeGotTickets(nameMap) {
   return [];
 }
 
-// ─── 10. Eventbrite (JSON-LD scrape) ─────────────────────────────────────────
+// ─── 10. Fatsoma (public API) ─────────────────────────────────────────────────
+
+async function fetchFatsoma(nameMap) {
+  const gigs  = [];
+  const today = new Date().toISOString().split('T')[0];
+  const seen  = new Set();
+
+  const FATSOMA_KEY  = 'fk_ui_cust_aff50532-bbb5-45ed-9d0a-4ad144814b9f';
+  const FATSOMA_BASE = 'https://api.fatsoma.com/v1/events';
+  const PAGE_SIZE    = 50;
+  const headers      = { Accept: 'application/json', 'X-API-Key': FATSOMA_KEY, 'User-Agent': 'Mozilla/5.0' };
+
+  async function fetchPage(n) {
+    const url = `${FATSOMA_BASE}?category=gigs&country=gb&page%5Bsize%5D=${PAGE_SIZE}&page%5Bnumber%5D=${n}&include=lineups,location`;
+    for (let attempt = 1; attempt <= 3; attempt++) {
+      try {
+        const r = await fetch(url, { headers });
+        if (r.status === 429) { await sleep(30000); continue; }
+        if (!r.ok) { await sleep(3000 * attempt); continue; }
+        return await r.json();
+      } catch { if (attempt === 3) return null; await sleep(2000 * attempt); }
+    }
+    return null;
+  }
+
+  const first = await fetchPage(1);
+  if (!first) { console.log('Fatsoma: failed to fetch first page'); return gigs; }
+  const totalPages = first.meta?.['total-pages'] || Math.ceil((first.meta?.['total-count'] || 0) / PAGE_SIZE);
+
+  for (let p = 1; p <= totalPages; p++) {
+    const data = p === 1 ? first : await fetchPage(p);
+    if (!data) continue;
+
+    const locationById = {};
+    for (const inc of (data.included || [])) {
+      if (inc.type === 'locations') locationById[inc.id] = inc.attributes;
+    }
+    const lineupsByEvent = {};
+    for (const inc of (data.included || [])) {
+      if (inc.type !== 'lineups' || !inc.attributes?.name) continue;
+      for (const evRef of (inc.relationships?.events?.data || [])) {
+        (lineupsByEvent[evRef.id] = lineupsByEvent[evRef.id] || []).push(inc.attributes.name.trim());
+      }
+    }
+
+    for (const ev of (data.data || [])) {
+      const attrs = ev.attributes;
+      const date  = (attrs['starts-at'] || '').split('T')[0];
+      if (!date || date < today) continue;
+
+      const locId   = ev.relationships?.location?.data?.id;
+      const locAttr = locId ? locationById[locId] : null;
+      if (!locAttr || !locAttr.city || locAttr.country !== 'United Kingdom') continue;
+
+      const venueName = locAttr.name;
+      const venueCity = locAttr.city;
+      const canonicalVenueId = toVenueId(venueName, venueCity);
+
+      let artists = (lineupsByEvent[ev.id] || []).filter(n => n.length >= 2 && n.length <= 100 && !isGenericName(n) && !isTributeAct(n));
+      if (artists.length === 0) continue;
+
+      const ticketUrl = `https://www.fatsoma.com/e/${attrs['vanity-name'] || ev.id}`;
+      const priceMin  = attrs['price-min'] ? attrs['price-min'] / 100 : null;
+      const priceStr  = priceMin != null ? `£${priceMin.toFixed(2)}` : 'See site';
+
+      for (const artistName of artists) {
+        const norm = normaliseName(artistName);
+        let artist = nameMap[norm];
+        if (!artist) {
+          artist = await autoSeedArtist(artistName, nameMap);
+          if (!artist) continue;
+        }
+        const gigId = `fatsoma-${ev.id}-${artist.id}`.replace(/[^a-z0-9-]/gi, '-').substring(0, 100);
+        if (seen.has(gigId)) continue;
+        seen.add(gigId);
+        gigs.push({
+          gigId,
+          dedupKey:     dedupKey(artist.id, date, venueName),
+          artistId:     artist.id,
+          artistName:   artist.name,
+          date,
+          doorsTime:    null,
+          venueName,
+          venueCity,
+          venueCountry: 'GB',
+          canonicalVenueId,
+          isSoldOut:    attrs['on-sale'] === false,
+          minPrice:     priceMin,
+          supportActs:  artists.filter(a => a !== artistName),
+          tickets: [{
+            seller:    'Fatsoma',
+            url:       ticketUrl,
+            available: attrs['on-sale'] !== false,
+            price:     priceStr,
+          }],
+          sources:     ['fatsoma'],
+          lastUpdated: new Date().toISOString(),
+        });
+      }
+    }
+    await sleep(100);
+  }
+
+  console.log(`Fatsoma: ${gigs.length} gigs`);
+  return gigs;
+}
+
+// ─── 11. Eventbrite (JSON-LD scrape) ─────────────────────────────────────────
 
 async function fetchEventbrite(nameMap) {
   const gigs  = [];
@@ -1790,11 +1897,12 @@ exports.handler = async () => {
   const seeGigs    = await fetchSeeTickets(nameMap);        console.log(t(), 'Ticketweb done');
   const gigGigs    = await fetchGigantic(nameMap);          console.log(t(), 'Songkick metro done');
   const wgtGigs    = await fetchWeGotTickets(nameMap);      console.log(t(), 'WGT done');
+  const fatGigs    = await fetchFatsoma(nameMap);            console.log(t(), 'Fatsoma done');
   const ebGigs     = await fetchEventbrite(nameMap);        console.log(t(), 'Eventbrite done');
   const slmGigs    = await fetchSetlistFm(artists);         console.log(t(), 'Setlist.fm done');
 
   // 3. Merge & deduplicate
-  const merged = mergeGigs([tmGigs, tmBulkGigs, bitGigs, skiGigs, skGigs, diceGigs, raGigs, seeGigs, gigGigs, wgtGigs, ebGigs, slmGigs]);
+  const merged = mergeGigs([tmGigs, tmBulkGigs, bitGigs, skiGigs, skGigs, diceGigs, raGigs, seeGigs, gigGigs, wgtGigs, fatGigs, ebGigs, slmGigs]);
   console.log(`Merged: ${merged.length} unique gigs`);
 
   // 4. Upsert gigs (stamping canonicalVenueId for venue pages)

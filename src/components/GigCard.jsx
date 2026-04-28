@@ -42,6 +42,10 @@ export default function GigCard({ gig, showArtist = false, distanceMiles, isGras
     return 0;
   });
   const d = gig.date ? new Date(gig.date + 'T12:00:00') : null;
+  const onSaleFuture = gig.onSaleDate && gig.onSaleDate > today ? gig.onSaleDate : null;
+  const onSaleLabel = onSaleFuture
+    ? (() => { const s = new Date(onSaleFuture + 'T12:00:00'); return `On sale ${s.getDate()} ${s.toLocaleDateString('en-GB', { month: 'short' })}`; })()
+    : null;
 
   return (
     <div className={`flex bg-black border-b border-zinc-900 hover:bg-zinc-950 transition-colors ${isPast ? 'opacity-30' : ''}`}>
@@ -79,6 +83,7 @@ export default function GigCard({ gig, showArtist = false, distanceMiles, isGras
           {gig.venueCity && <span className="text-[10px] font-bold uppercase tracking-wider text-zinc-600">{gig.venueCity}</span>}
           {distanceMiles != null && <span className="text-[10px] font-bold uppercase tracking-wider text-zinc-500">{distanceMiles} mi</span>}
           {showGrassroots && <span className="text-[10px] font-black uppercase tracking-wider text-emerald-500">Grassroots</span>}
+          {onSaleLabel && <span className="text-[10px] font-black uppercase tracking-wider text-amber-400">{onSaleLabel}</span>}
         </div>
       </div>
 
